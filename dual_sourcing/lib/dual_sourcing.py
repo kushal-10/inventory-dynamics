@@ -25,8 +25,8 @@ class DualSourcingModel:
         b (int): shortage cost per unit 
         T (int): number of periods
         I0 (int): initial inventory level
-        Delta (int): difference between expedited and 
-        regular target order level (i.e., zr-ze) 
+        Delta (int): difference between regular and 
+        and expedited target order level (i.e., zr-ze) 
         zr (int): regular target order level
       
         """
@@ -88,9 +88,6 @@ class DualSourcingModel:
         self.Delta = Delta
         self.target_order_level_r = zr
         self.target_order_level_e = self.target_order_level_r-self.Delta
-        
-        self.current_inventory = self.target_order_level_r
-        self.current_inventory_position = self.target_order_level_r
             
         if self.lead_time_e <= 1:
             self.qe = [self.current_qe]
@@ -155,9 +152,9 @@ class DualSourcingModel:
         """
         
         for t in range(self.period):
-
+            
             # (1) place orders
-            if self.single_index == True:
+            if self.single_index:
                 if self.current_inventory_position < self.target_order_level_e:
                     self.qe.append(max(0,self.current_demand-self.Delta))
                 else:
@@ -224,23 +221,23 @@ def single_index_zr_Delta(samples,
         D_Delta_arr = []
         
         for i in range(samples):
-            S1 = DualSourcingModel(ce=ce, 
-                                   cr=cr, 
-                                   le=le, 
-                                   lr=lr, 
-                                   h=h, 
-                                   b=b,
-                                   T=T,
-                                   I0=zr,
-                                   zr=zr,
-                                   Delta=Delta,
-                                   single_index=True)
+            S = DualSourcingModel(ce=ce, 
+                                  cr=cr, 
+                                  le=le, 
+                                  lr=lr, 
+                                  h=h, 
+                                  b=b,
+                                  T=T,
+                                  I0=zr,
+                                  zr=zr,
+                                  Delta=Delta,
+                                  single_index=True)
         
-            S1.simulate()  
-            D_Delta_arr.append(S1.single_index_D_Delta)
+            S.simulate()  
+            D_Delta_arr.append(S.single_index_D_Delta)
     
         sort = sorted(D_Delta_arr)
-        z_r = sort[int(len(D_Delta_arr) * S1.critical_fractile)]
+        z_r = sort[int(len(D_Delta_arr) * S.critical_fractile)]
         z_r_arr.append(z_r)
             
     cost_arr = []
@@ -248,20 +245,20 @@ def single_index_zr_Delta(samples,
         cost_tmp = []
     
         for j in range(samples):
-                S1 = DualSourcingModel(ce=ce, 
-                                       cr=cr, 
-                                       le=le, 
-                                       lr=lr, 
-                                       h=h, 
-                                       b=b,
-                                       T=T, 
-                                       I0=z_r_arr[i],
-                                       zr=z_r_arr[i],
-                                       Delta=Delta_arr[i],
-                                       single_index=True)
+                S = DualSourcingModel(ce=ce, 
+                                      cr=cr, 
+                                      le=le, 
+                                      lr=lr, 
+                                      h=h, 
+                                      b=b,
+                                      T=T, 
+                                      I0=z_r_arr[i],
+                                      zr=z_r_arr[i],
+                                      Delta=Delta_arr[i],
+                                      single_index=True)
             
-                S1.simulate()
-                cost_tmp.append(S1.total_cost)
+                S.simulate()
+                cost_tmp.append(S.total_cost)
     
         cost_arr.append(np.mean(cost_tmp))
         

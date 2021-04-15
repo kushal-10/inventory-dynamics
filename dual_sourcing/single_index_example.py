@@ -1,8 +1,14 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from lib.dual_sourcing import *
 
 np.random.seed(10)
 
+# parameters are taken from Table 2 from
+# Scheller-Wolf, A., Veeraraghavan, S., & van Houtum, G. J. (2007). 
+# Effective dual sourcing with a single index policy. 
+# Working Paper, Tepper School of Business, 
+# Carnegie Mellon University, Pittsburgh.)
 ce = 1020
 cr = 1000
 le = 0
@@ -26,27 +32,26 @@ optimal_z_r, optimal_Delta = single_index_zr_Delta(samples,
                                                    T,
                                                    zr)
 
-S1 = DualSourcingModel(ce, 
-                       cr, 
-                       le, 
-                       lr, 
-                       h, 
-                       b,
-                       T, 
-                       optimal_z_r,
-                       optimal_z_r,
-                       optimal_Delta,
-                       single_index=True)
+S = DualSourcingModel(ce, 
+                      cr, 
+                      le, 
+                      lr, 
+                      h, 
+                      b,
+                      T, 
+                      optimal_z_r,
+                      optimal_z_r,
+                      optimal_Delta,
+                      single_index=True)
 
-S1.simulate()  
+S.simulate()  
 
-print("total cost (order always):", S1.total_cost)
+print("total cost (single index policy):", S.total_cost)
 
-import matplotlib.pyplot as plt
 plt.figure()
-plt.plot(S1.cost, '-o', label = r"cost s1")
-plt.plot(S1.inventory, '-o', label = r"inventory s1")
-plt.plot(S1.inventory_position, '-o', label = r"inventory position s1")
+plt.plot(S.cost, '-o', label = r"cost")
+plt.plot(S.inventory, '-o', label = r"inventory")
+plt.plot(S.inventory_position, '-o', label = r"inventory position")
 plt.xlabel(r"time")
 plt.ylabel(r"value")
 plt.legend(loc = 4, ncol = 3)
