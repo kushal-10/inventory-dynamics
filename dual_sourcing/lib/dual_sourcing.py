@@ -183,7 +183,7 @@ class DualSourcingModel:
             self.current_inventory_position_r -= self.current_demand
             self.current_inventory_position_r += self.qe[-1]
             self.current_inventory_position_r += self.qr[-1]
-            
+                        
         self.cost_update()
 
         self.current_inventory += self.current_qe + self.current_qr - \
