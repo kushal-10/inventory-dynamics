@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from lib.dual_sourcing import *
 
 np.random.seed(10)
@@ -7,7 +8,7 @@ ce = 1020
 cr = 1000
 le = 0
 lr = 2
-zr = 100
+ze = 100
 h = 5
 b = 495
 T = 50
@@ -15,38 +16,38 @@ T = 50
 samples = 4000
 Delta_arr = [0,1,2,3,4]
 
-optimal_z_r, optimal_Delta = single_index_zr_Delta(samples,
-                                                   Delta_arr,
-                                                   ce, 
-                                                   cr, 
-                                                   le, 
-                                                   lr,
-                                                   h, 
-                                                   b, 
-                                                   T,
-                                                   zr)
+optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
+                                                Delta_arr,
+                                                ce, 
+                                                cr, 
+                                                le, 
+                                                lr,
+                                                h, 
+                                                b, 
+                                                T,
+                                                ze)
 
-S1 = DualSourcingModel(ce, 
-                       cr, 
-                       le, 
-                       lr, 
-                       h, 
-                       b,
-                       T, 
-                       optimal_z_r,
-                       optimal_z_r,
-                       optimal_Delta,
-                       single_index=True)
+S = DualSourcingModel(ce=ce, 
+                      cr=cr, 
+                      le=le, 
+                      lr=lr, 
+                      h=h, 
+                      b=b,
+                      T=T, 
+                      I0=optimal_ze,
+                      ze=optimal_ze,
+                      Delta=optimal_Delta,
+                      dual_index=True)
 
-S1.simulate()  
+S.simulate()  
 
-print("total cost (order always):", S1.total_cost)
+print("total cost (dual index):", S.total_cost)
 
-import matplotlib.pyplot as plt
 plt.figure()
-plt.plot(S1.cost, '-o', label = r"cost s1")
-plt.plot(S1.inventory, '-o', label = r"inventory s1")
-plt.plot(S1.inventory_position, '-o', label = r"inventory position s1")
+plt.plot(S.cost, '-o', label = r"cost")
+plt.plot(S.inventory, '-o', label = r"inventory")
+plt.plot(S.inventory_position_e, '-o', label = r"inventory position (e)")
+plt.plot(S.inventory_position_r, '-o', label = r"inventory position (r)")
 plt.xlabel(r"time")
 plt.ylabel(r"value")
 plt.legend(loc = 4, ncol = 3)

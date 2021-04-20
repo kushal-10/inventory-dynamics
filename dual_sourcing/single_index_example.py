@@ -41,7 +41,7 @@ S = DualSourcingModel(ce=ce,
 
 S.simulate()  
 
-print("total cost (order always):", S.total_cost)
+print("total cost (single index):", S.total_cost)
 
 plt.figure()
 plt.plot(S.cost, '-o', label = r"cost")

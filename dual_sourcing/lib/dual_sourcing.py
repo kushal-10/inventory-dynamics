@@ -57,7 +57,7 @@ class DualSourcingModel:
         self.period = T
         self.inventory = [self.current_inventory]
         self.inventory_position = [self.current_inventory_position]
-        
+
         self.cost = [self.current_cost]
         self.demand = [self.current_demand]
         self.total_cost = 0
@@ -98,6 +98,7 @@ class DualSourcingModel:
         
         self.current_inventory = self.target_order_level_r
         self.current_inventory_position = self.target_order_level_r
+        self.inventory_position = [self.current_inventory_position]
             
         if self.lead_time_e <= 1:
             self.qe = [self.current_qe]
@@ -139,9 +140,13 @@ class DualSourcingModel:
         self.target_order_level_r = ze+self.Delta
         self.target_order_level_e = ze
         
-        self.current_inventory = self.target_order_level_r
-        self.current_inventory_position = self.target_order_level_r
-            
+        self.current_inventory = self.target_order_level_e
+        self.current_inventory_position_e = self.target_order_level_e
+        self.current_inventory_position_r = self.target_order_level_e
+
+        self.inventory_position_e = [self.current_inventory_position_e]
+        self.inventory_position_r = [self.current_inventory_position_r]
+
         if self.lead_time_e <= 1:
             self.qe = [self.current_qe]
         else:
@@ -186,8 +191,13 @@ class DualSourcingModel:
                                                            
         self.inventory.append(self.current_inventory)
     
-        self.inventory_position.append(self.current_inventory_position)
+        if self.single_index:
+            self.inventory_position.append(self.current_inventory_position)
             
+        elif self.dual_index:
+            self.inventory_position_e.append(self.current_inventory_position_e)
+            self.inventory_position_r.append(self.current_inventory_position_r)
+
     def cost_update(self):
         self.current_cost = self.cost_e * self.qe[-1] + \
                             self.cost_r * self.qr[-1] + \
@@ -228,7 +238,7 @@ class DualSourcingModel:
             
             elif self.dual_index:
                 self.qe.append(max(0,self.target_order_level_e-\
-                               self.inventory_position_e-\
+                               self.current_inventory_position_e-\
                                self.qr[-self.lead_time_r+self.lead_time_e]))
                 self.qr.append(self.current_demand-self.qe[-1])
             
@@ -343,6 +353,7 @@ def single_index_zr_Delta(samples,
     optimal_Delta = Delta_arr[cost_arr == min(cost_arr)][0]   
     optimal_zr = zr_arr[cost_arr == min(cost_arr)][0]
     
+    print(cost_arr)
     print("Delta*", optimal_Delta)
     print("z_r*", optimal_zr)
     
@@ -436,6 +447,7 @@ def dual_index_ze_Delta(samples,
     optimal_Delta = Delta_arr[cost_arr == min(cost_arr)][0]   
     optimal_ze = ze_arr[cost_arr == min(cost_arr)][0]
     
+    print(cost_arr)
     print("Delta*", optimal_Delta)
     print("z_e*", optimal_ze)
     
