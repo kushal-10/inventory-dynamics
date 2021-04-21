@@ -4,8 +4,8 @@ from lib.dual_sourcing import *
 
 np.random.seed(10)
 
-ce = 1020
-cr = 1000
+ce = 20
+cr = 0
 le = 0
 lr = 2
 zr = 100
@@ -41,7 +41,7 @@ S = DualSourcingModel(ce=ce,
 
 S.simulate()  
 
-print("total cost (single index):", S.total_cost)
+print("average cost (single index):", S.total_cost/T)
 
 plt.figure()
 plt.plot(S.cost, '-o', label = r"cost")

@@ -4,8 +4,8 @@ from lib.dual_sourcing import *
 
 np.random.seed(10)
 
-ce = 1020
-cr = 1000
+ce = 20
+cr = 0
 le = 0
 lr = 2
 ze = 100
@@ -13,7 +13,7 @@ h = 5
 b = 495
 T = 50
 
-samples = 4000
+samples = 1000
 Delta_arr = [0,1,2,3,4]
 
 optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
@@ -41,7 +41,7 @@ S = DualSourcingModel(ce=ce,
 
 S.simulate()  
 
-print("total cost (dual index):", S.total_cost)
+print("average cost (dual index):", S.total_cost/T)
 
 plt.figure()
 plt.plot(S.cost, '-o', label = r"cost")

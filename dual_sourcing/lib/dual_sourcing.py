@@ -46,7 +46,7 @@ class DualSourcingModel:
         
         self.current_demand = 0
         self.current_inventory = I0
-        self.current_inventory_position = I0
+        self.current_inventory_position = self.current_inventory
         self.current_cost = 0
 
         # current order quantities
@@ -96,16 +96,15 @@ class DualSourcingModel:
         self.target_order_level_r = zr
         self.target_order_level_e = self.target_order_level_r-self.Delta
         
-        self.current_inventory = self.target_order_level_r
-        self.current_inventory_position = self.target_order_level_r
+        self.current_inventory_position = self.current_inventory
         self.inventory_position = [self.current_inventory_position]
             
-        if self.lead_time_e <= 1:
+        if self.lead_time_e == 0:
             self.qe = [self.current_qe]
         else:
             self.qe = self.lead_time_e*[self.current_qe]
         
-        if self.lead_time_r <= 1:
+        if self.lead_time_r == 0:
             self.qr = [self.current_qr]
         else:
             self.qr = self.lead_time_r*[self.current_qr]
@@ -140,22 +139,21 @@ class DualSourcingModel:
         self.target_order_level_r = ze+self.Delta
         self.target_order_level_e = ze
         
-        self.current_inventory = self.target_order_level_e
-        self.current_inventory_position_e = self.target_order_level_e
-        self.current_inventory_position_r = self.target_order_level_e
+        self.current_inventory_position_e = self.current_inventory
+        self.current_inventory_position_r = self.current_inventory
 
         self.inventory_position_e = [self.current_inventory_position_e]
         self.inventory_position_r = [self.current_inventory_position_r]
 
-        if self.lead_time_e <= 1:
+        if self.lead_time_e == 0:
             self.qe = [self.current_qe]
         else:
             self.qe = self.lead_time_e*[self.current_qe]
         
-        if self.lead_time_r <= 1:
+        if self.lead_time_r == 0:
             self.qr = [self.current_qr]
         else:
-            self.qr = self.lead_time_r*[self.current_qr]
+            self.qr = (self.lead_time_r+1)*[self.current_qr]
             
         # measure of the difference between zr and inventory level (Eq. 6 in 
         # Scheller-Wolf, A., Veeraraghavan, S., & van Houtum, G. J. (2007). 
@@ -178,7 +176,7 @@ class DualSourcingModel:
             self.current_inventory_position_e -= self.current_demand
             self.current_inventory_position_e += self.qe[-1]
             self.current_inventory_position_e += self.qr[-self.lead_time_r+\
-                                                         self.lead_time_e]
+                                                         self.lead_time_e-2]
         
             self.current_inventory_position_r -= self.current_demand
             self.current_inventory_position_r += self.qe[-1]
@@ -239,9 +237,11 @@ class DualSourcingModel:
             elif self.dual_index:
                 self.qe.append(max(0,self.target_order_level_e-\
                                self.current_inventory_position_e-\
-                               self.qr[-self.lead_time_r+self.lead_time_e]))
-                self.qr.append(self.current_demand-self.qe[-1])
-            
+                               self.qr[-self.lead_time_r+self.lead_time_e-1]))
+                self.qr.append(self.target_order_level_r-\
+                               self.current_inventory_position_r-self.qe[-1])
+                #print(self.current_demand, self.qe[-1]+self.qr[-1], self.qe[-1], self.qr[-1], self.target_order_level_e, self.current_inventory_position_e, self.qr[-self.lead_time_r+self.lead_time_e-1])
+
             # (2) receive shipments
             self.current_qe = self.qe[-self.lead_time_e-1]
             self.current_qr = self.qr[-self.lead_time_r-1]
@@ -324,7 +324,8 @@ def single_index_zr_Delta(samples,
         zr_ = sort[int(len(D_Delta_arr) * S.critical_fractile)]
         zr_arr.append(zr_)
             
-    cost_arr = []
+    cost_arr_mean = []
+    cost_arr_std = []
     for i in range(len(Delta_arr)):
         cost_tmp = []
     
@@ -342,18 +343,19 @@ def single_index_zr_Delta(samples,
                                       single_index=True)
             
                 S.simulate()
-                cost_tmp.append(S.total_cost)
+                cost_tmp.append(S.total_cost/T)
     
-        cost_arr.append(np.mean(cost_tmp))
+        cost_arr_mean.append(np.mean(cost_tmp))
+        cost_arr_std.append(np.std(cost_tmp, ddof=1))
         
     Delta_arr = np.asarray(Delta_arr)
     zr_arr = np.asarray(zr_arr)
-    cost_arr = np.asarray(cost_arr)
+    cost_arr_mean = np.asarray(cost_arr_mean)
     
-    optimal_Delta = Delta_arr[cost_arr == min(cost_arr)][0]   
-    optimal_zr = zr_arr[cost_arr == min(cost_arr)][0]
+    optimal_Delta = Delta_arr[cost_arr_mean == min(cost_arr_mean)][0]   
+    optimal_zr = zr_arr[cost_arr_mean == min(cost_arr_mean)][0]
     
-    print(cost_arr)
+    print("costs (mean/std)", cost_arr_mean, cost_arr_std)
     print("Delta*", optimal_Delta)
     print("z_r*", optimal_zr)
     
@@ -418,7 +420,8 @@ def dual_index_ze_Delta(samples,
         ze_ = sort[int(len(G_Delta_arr) * S.critical_fractile)]
         ze_arr.append(ze_)
             
-    cost_arr = []
+    cost_arr_mean = []
+    cost_arr_std = []
     for i in range(len(Delta_arr)):
         cost_tmp = []
     
@@ -438,16 +441,17 @@ def dual_index_ze_Delta(samples,
                 S.simulate()
                 cost_tmp.append(S.total_cost)
     
-        cost_arr.append(np.mean(cost_tmp))
+        cost_arr_mean.append(np.mean(cost_tmp))
+        cost_arr_std.append(np.std(cost_tmp, ddof=1))
         
     Delta_arr = np.asarray(Delta_arr)
     ze_arr = np.asarray(ze_arr)
-    cost_arr = np.asarray(cost_arr)
+    cost_arr_mean = np.asarray(cost_arr_mean)
     
-    optimal_Delta = Delta_arr[cost_arr == min(cost_arr)][0]   
-    optimal_ze = ze_arr[cost_arr == min(cost_arr)][0]
+    optimal_Delta = Delta_arr[cost_arr_mean == min(cost_arr_mean)][0]   
+    optimal_ze = ze_arr[cost_arr_mean == min(cost_arr_mean)][0]
     
-    print(cost_arr)
+    print("costs (mean/std)", cost_arr_mean, cost_arr_std)
     print("Delta*", optimal_Delta)
     print("z_e*", optimal_ze)
     
