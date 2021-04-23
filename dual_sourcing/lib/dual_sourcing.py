@@ -176,7 +176,7 @@ class DualSourcingModel:
             self.current_inventory_position_e -= self.current_demand
             self.current_inventory_position_e += self.qe[-1]
             self.current_inventory_position_e += self.qr[-self.lead_time_r+\
-                                                         self.lead_time_e-2]
+                                                         self.lead_time_e-1]
         
             self.current_inventory_position_r -= self.current_demand
             self.current_inventory_position_r += self.qe[-1]
@@ -237,10 +237,9 @@ class DualSourcingModel:
             elif self.dual_index:
                 self.qe.append(max(0,self.target_order_level_e-\
                                self.current_inventory_position_e-\
-                               self.qr[-self.lead_time_r+self.lead_time_e-1]))
+                               self.qr[-self.lead_time_r+self.lead_time_e]))
                 self.qr.append(self.target_order_level_r-\
                                self.current_inventory_position_r-self.qe[-1])
-                #print(self.current_demand, self.qe[-1]+self.qr[-1], self.qe[-1], self.qr[-1], self.target_order_level_e, self.current_inventory_position_e, self.qr[-self.lead_time_r+self.lead_time_e-1])
 
             # (2) receive shipments
             self.current_qe = self.qe[-self.lead_time_e-1]
@@ -439,7 +438,7 @@ def dual_index_ze_Delta(samples,
                                       dual_index=True)
             
                 S.simulate()
-                cost_tmp.append(S.total_cost)
+                cost_tmp.append(S.total_cost/T)
     
         cost_arr_mean.append(np.mean(cost_tmp))
         cost_arr_std.append(np.std(cost_tmp, ddof=1))
