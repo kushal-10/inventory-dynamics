@@ -11,10 +11,10 @@ lr = 2
 ze = 100
 h = 5
 b = 495
-T = 50
+T = 100
 
 samples = 4000
-Delta_arr = [0,1,2,3,4]
+Delta_arr = [0,1,2,3,4,5,6]
 
 optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
                                                 Delta_arr,
