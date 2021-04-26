@@ -1,4 +1,6 @@
 import numpy as np
+from itertools import product
+from scipy.optimize import brute
 
 class DualSourcingModel:
     def __init__(self, 
@@ -14,7 +16,8 @@ class DualSourcingModel:
                  ze=0,
                  Delta=0,
                  single_index=False,
-                 dual_index=False):
+                 dual_index=False,
+                 dynamic_program=False):
         """ 
         Initialization of dual sourcing model. 
         
@@ -71,6 +74,11 @@ class DualSourcingModel:
         self.dual_index = dual_index
         if self.dual_index:
             self.initialize_dual_index(Delta,ze)
+        
+        # initialize dynamic program parameters
+        self.dynamic_program = dynamic_program
+        if self.dynamic_program:
+            self.initialize_dynamic_program()
             
     def initialize_single_index(self,
                                 Delta,
@@ -132,6 +140,8 @@ class DualSourcingModel:
       
         """
         
+        self.lead_time_difference = self.lead_time_r - self.lead_time_e
+
         self.critical_fractile = self.shortage_cost/ \
         (self.holding_cost+self.shortage_cost)
         
@@ -161,6 +171,12 @@ class DualSourcingModel:
         # Working Paper, Tepper School of Business, 
         # Carnegie Mellon University, Pittsburgh.)
         self.dual_index_G_Delta = 0
+    
+    def initialize_dynamic_program(self):
+        """ 
+        Initialize dynamic program parameters.
+        """
+        self.lead_time_difference = self.lead_time_r - self.lead_time_e
      
     def inventory_evolution(self):
         """ 
@@ -175,8 +191,8 @@ class DualSourcingModel:
         elif self.dual_index:
             self.current_inventory_position_e -= self.current_demand
             self.current_inventory_position_e += self.qe[-1]
-            self.current_inventory_position_e += self.qr[-self.lead_time_r+\
-                                                         self.lead_time_e-1]
+            self.current_inventory_position_e += \
+            self.qr[-self.lead_time_difference-1]
         
             self.current_inventory_position_r -= self.current_demand
             self.current_inventory_position_r += self.qe[-1]
@@ -237,7 +253,7 @@ class DualSourcingModel:
             elif self.dual_index:
                 self.qe.append(max(0,self.target_order_level_e-\
                                self.current_inventory_position_e-\
-                               self.qr[-self.lead_time_r+self.lead_time_e]))
+                               self.qr[-self.lead_time_difference]))
                 self.qr.append(self.target_order_level_r-\
                                self.current_inventory_position_r-self.qe[-1])
 
@@ -262,6 +278,77 @@ class DualSourcingModel:
                                       self.current_inventory
                                                 
         self.calculate_total_cost()
+    
+    def optimization_func(self,
+                             demand,
+                             orders_qe,
+                             orders_qr):
+        """ 
+        Iteration function.
+        """
+        
+        self.cost = []
+        
+        for t in range(len(demand)):
+            
+            self.current_demand = demand[t]
+            self.current_qe = orders_qe[t]
+            self.current_qr = orders_qr[t]
+            self.qe = [orders_qe[t]]
+            self.qr = [orders_qr[t]]
+            
+            self.current_cost = self.current_qe * self.cost_e + \
+                                self.current_qr * self.cost_r + \
+                                self.holding_cost * \
+                                max(0, self.current_qe + \
+                                self.current_qr - \
+                                self.current_demand) + \
+                                self.shortage_cost * \
+                                max(0, self.current_demand - \
+                                self.current_qe - \
+                                self.current_qr)
+                                    
+            self.cost.append(self.current_cost)
+            
+        self.calculate_total_cost()
+                
+    def dynamic_program_solve(self):
+        
+        # possible demands
+        D_comb = [x for x in product([0,1,2,3,4], \
+                 repeat=self.lead_time_difference)]
+        
+        # possible expedited orders made t-le periods ago
+        qe_comb = [x for x in product(range(0,8), \
+                  repeat=self.lead_time_difference)]    
+        
+        # possible regular orders made t-lr periods ago
+        qr_comb = [x for x in product(range(0,8), \
+                  repeat=self.lead_time_difference)]    
+        
+        # dictionaries that store optimal orders
+        optimal_qe = {}
+        optimal_qr = {}
+        optimal_cost = {}
+        
+        for i in range(len(D_comb)):          
+            previous_total_cost = 1e9
+            for j in range(len(qe_comb)):
+                for k in range(len(qr_comb)):
+                    self.optimization_func(D_comb[i], 
+                                           qe_comb[j], 
+                                           qr_comb[k])
+                    
+                    if self.total_cost < previous_total_cost:
+                        optimal_qe[i] =  qe_comb[j]
+                        optimal_qr[i] =  qr_comb[k]
+                        optimal_cost[i] = self.total_cost
+                        previous_total_cost = self.total_cost
+                        
+        
+        print(optimal_qe)
+        print(optimal_qr)
+        print(optimal_cost)
 
 def single_index_zr_Delta(samples,
                           Delta_arr,
