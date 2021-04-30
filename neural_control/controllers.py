@@ -6,9 +6,9 @@ def imitatation_learn(controller,
                       lr,
                       le,
                       optimizer,
-                      state_trajectories,
-                      qr_trajectories,
-                      qe_trajectories,
+                      state_trajectories, # shape: minibatch_size x T + 1
+                      qr_trajectories,    # shape: minibatch_size x T + 1 + lr
+                      qe_trajectories,    # shape: minibatch_size x T + 1 + le
                       minibatch_size=256,
                       epochs=1000
                       ):
@@ -20,29 +20,19 @@ def imitatation_learn(controller,
                                           size=[minibatch_size]
                                           )
 
-        end_time_indices = torch.randint(low=0,
+        end_time_indices = torch.randint(low=1, # because of provided trajectory being T+1 steps
                                          high=state_trajectories.shape[1],
                                          size=[minibatch_size]
                                          )
-        ds_inv = state_trajectories[minibatch_indices, end_time_indices, 0].unsqueeze(-1)
+        ds_inv    = state_trajectories[minibatch_indices, end_time_indices, 0].unsqueeze(-1)
         ds_demand = state_trajectories[minibatch_indices, end_time_indices, 1].unsqueeze(-1)
 
-        ds_past_qr = None
-        if lr > 0:
-            qr_steps = end_time_indices.unsqueeze(-1) - torch.arange(lr, 0,
-                                                                     step=-1).unsqueeze(-0) - 1
-            ds_past_qr = qr_trajectories[minibatch_indices.unsqueeze(-1),
-                                         qr_steps
-            ]
-        ds_past_qe = None
-        if le > 0:
-            qe_steps = end_time_indices.unsqueeze(-1) - torch.arange(le, 0,
-                                                                     step=-1).unsqueeze(-0) - 1
-            ds_past_qe = qe_trajectories[minibatch_indices.unsqueeze(-1),
-                                         qe_steps
-            ]
-        target_qr = qr_trajectories[minibatch_indices, end_time_indices + lr]
-        target_qe = qe_trajectories[minibatch_indices, end_time_indices + le]
+        qr_steps = end_time_indices.unsqueeze(-1) - torch.arange(lr+1, 0, step=-1).unsqueeze(-0) - 1
+        ds_past_qr = qr_trajectories[minibatch_indices.unsqueeze(-1), qr_steps]
+        qe_steps = end_time_indices.unsqueeze(-1) - torch.arange(le+1, 0, step=-1).unsqueeze(-0) - 1
+        ds_past_qe = qe_trajectories[minibatch_indices.unsqueeze(-1), qe_steps]
+        target_qr  = qr_trajectories[minibatch_indices, end_time_indices]
+        target_qe  = qe_trajectories[minibatch_indices, end_time_indices]
         Q = controller(ds_inv, ds_demand, ds_past_qr, ds_past_qe)
         loss = ((torch.stack(Q, -1) - torch.stack([target_qr, target_qe], -1)) ** 2).mean()
         loss.backward()
@@ -92,7 +82,7 @@ class FullyConnectedRegressionController(DualSourcingController):
                 self.layers.append(intermediate_layer)
             output_layer = torch.nn.Linear(in_features=n_hidden_units[-1], out_features=2)
             self.layers.append(output_layer)
-        input_layer = torch.nn.Linear(in_features=lr + le + 1 + 1,
+        input_layer = torch.nn.Linear(in_features=lr + 1 +  le + 1 + 1,
                                       out_features=out_features_l0)
         self.layers.insert(0, input_layer)
         self.layers = torch.nn.ModuleList(self.layers)
@@ -100,7 +90,7 @@ class FullyConnectedRegressionController(DualSourcingController):
         if activations is not None:
             self.activations = activations
         elif isinstance(n_hidden_units, list):
-            self.activations = [torch.relu] * (len(n_hidden_units) + 2)
+            self.activations = [torch.relu] * (len(n_hidden_units) + 1)
         else:
             self.activations = [torch.relu]
 
@@ -119,31 +109,31 @@ class FullyConnectedRegressionController(DualSourcingController):
                 past_expendited_orders
                 ):
         observation_list = [
-            current_demand,
-            current_inventory,
+            current_inventory
         ]
+        if isinstance(past_regular_orders, list):
+            reg_order_obs = torch.cat(past_regular_orders[-1-self.lr:], dim=-1)
+        else:
+            reg_order_obs = past_regular_orders[:, -1-self.lr:]
+        observation_list.append(reg_order_obs)
 
-        if self.lr > 0:
-            if isinstance(past_regular_orders, list):
-                reg_order_obs = torch.cat(past_regular_orders[-self.lr:], dim=-1)
-            else:
-                reg_order_obs = past_regular_orders[:, -self.lr:]
-            observation_list.append(reg_order_obs)
-
-        if self.le > 0:
-            if isinstance(past_expendited_orders, list):
-                exp_order_obs = torch.cat(past_regular_orders[-self.le:], dim=-1)
-            else:
-                exp_order_obs = past_regular_orders[:, -self.le:]
-            observation_list.append(exp_order_obs)
+        if isinstance(past_expendited_orders, list):
+            exp_order_obs = torch.cat(past_regular_orders[-1-self.le:], dim=-1)
+        else:
+            exp_order_obs = past_regular_orders[:, -1-self.le:]
+        observation_list.append(exp_order_obs)
 
         observation = torch.cat(observation_list, dim=-1)
         h = observation
         for j, layer in enumerate(self.layers):
             h = layer(h)
-            h = self.activations[j](h)
+            if j < len(self.layers) - 1:
+                h = self.activations[j](h)
+            else:
+                h = torch.relu(h)  # we need the outputs to always be positive
         if self.allow_rounding_correction:
             h = h - torch.frac(h).clone().detach()
+
         qr = h[:, 0].unsqueeze(-1)
         qe = h[:, 1].unsqueeze(-1)
         return qr, qe

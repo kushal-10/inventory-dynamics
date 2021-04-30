@@ -1,5 +1,4 @@
 import torch
-
 class DualSourcingModel(torch.nn.Module):
     def __init__(self,
                  controller: torch.nn.Module,
@@ -32,7 +31,9 @@ class DualSourcingModel(torch.nn.Module):
 
     def simulate(self):
         sample_size = self.I_i.shape[0]
-        D = self.all_demands[-1]
+        D = self.demand_generator.sample(
+            [sample_size, 1]).int()  # here we round a continuous sample
+        self.all_demands.append(D)
         qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
 
         # orders are persisted for the current timestep
@@ -40,12 +41,9 @@ class DualSourcingModel(torch.nn.Module):
         self.previous_qe.append(qe)
 
         # past/current  orders are retrieved based on the arrival delays
-        qra = self.previous_qr[self.current_timestep - self.lr-1]
-        qea = self.previous_qe[self.current_timestep - self.le-1]
+        qra = self.previous_qr[self.current_timestep - self.lr - 1]
+        qea = self.previous_qe[self.current_timestep - self.le - 1]
 
-        D = self.demand_generator.sample(
-            [sample_size, 1]).int()  # here we round a continuous sample
-        self.all_demands.append(D)
         # inventory update
         self.I_i = self.I_i + qra + qea
 
@@ -76,15 +74,16 @@ class DualSourcingModel(torch.nn.Module):
         if not seed is None:
             torch.manual_seed(seed)
         self.current_timestep = 0
-        self.previous_qr = [torch.zeros([minibatch_size, 1])]
-        self.previous_qe = [torch.zeros([minibatch_size, 1])]
 
         if self.lr > 0:
-            self.previous_qr = self.previous_qr  * (self.lr+1)
+            self.previous_qr = [torch.zeros([minibatch_size, 1])] * self.lr
+        else:
+            self.previous_qr = []
 
         if self.le > 0:
-            self.previous_qe = self.previous_qe * (self.lr+1)
-
+            self.previous_qe = [torch.zeros([minibatch_size, 1])] * self.le
+        else:
+            self.previous_qe = []
         self.learned_I_0 =  self.I_0.repeat([minibatch_size, 1]) - torch.frac(self.I_0).clone().detach()
         self.I_i = self.learned_I_0
-        self.all_demands = [torch.zeros([minibatch_size, 1])]
+        self.all_demands = []
