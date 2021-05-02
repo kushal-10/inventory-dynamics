@@ -17,24 +17,25 @@ def sample_trajectories(n_trajectories,
                         h = 5,
                         b = 495,
                         T = 100,
-                        zr=100
-                        ):
+                        zr=100):
+                        
     np.random.seed(seed)
     Delta_arr = [0,1,2,3,4,5,6]
     optimal_ze, optimal_Delta = dual_index_ze_Delta(optimization_samples,
-                                                Delta_arr,
-                                                ce,
-                                                cr,
-                                                le,
-                                                lr,
-                                                h,
-                                                b,
-                                                T,
-                                                ze)
+	                                            Delta_arr,
+	                                            ce,
+	                                            cr,
+	                                            le,
+	                                            lr,
+	                                            h,
+	                                            b,
+	                                            T,
+	                                            ze)
     # each trajectory consists of T timesteps
     state_trajectories  = torch.zeros([n_trajectories, T+1, 3])
     qr_trajectories = torch.zeros([n_trajectories, T+1+lr])
     qe_trajectories  = torch.zeros([n_trajectories, T+1+le])
+    
     for i in range(n_trajectories):
         S = DualSourcingModel(ce=ce,
                               cr=cr,
@@ -59,4 +60,5 @@ def sample_trajectories(n_trajectories,
         qe_trajectories[i, :] = qe
         qr_trajectories[i, :] = qr
         state_trajectories[i, :, 2] = c
+        
     return state_trajectories, qr_trajectories, qe_trajectories
