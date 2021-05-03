@@ -57,17 +57,6 @@ class DualSourcingModel(torch.nn.Module):
 
         return c_i, D, self.I_i, qr, qra, qe, qea
 
-
-    def calculate_cost(self, 
-                       qe, 
-                       qr, 
-                       current_demand, 
-                       current_inventory):
-        
-        return  self.ce * qe + self.cr * qr + \
-                self.h * torch.relu(current_inventory - current_demand) + \
-                self.b * torch.relu(current_demand - current_inventory)
-
     def replay_step(self, 
                     previous_inventory, 
                     current_demand, 
