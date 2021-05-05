@@ -8,25 +8,25 @@ ce = 20
 cr = 0
 le = 0
 lr = 2
-zr = 100
 h = 5
 b = 495
-T = 50
+T = 10000
 
-samples = 4000
-Delta_arr = [0,1,2,3,4]
+Q_arr = np.arange(10)
+s_arr = np.arange(10)
 
-optimal_zr, optimal_Delta = single_index_zr_Delta(samples,
-                                                  Delta_arr,
-                                                  ce, 
-                                                  cr, 
-                                                  le, 
-                                                  lr,
-                                                  h, 
-                                                  b, 
-                                                  T,
-                                                  zr)
+optimal_Q, optimal_s = tailored_base_surge_Q_S(Q_arr,
+                                               s_arr,
+                                               ce, 
+                                               cr, 
+                                               le, 
+                                               lr,
+                                               h, 
+                                               b, 
+                                               T)
 
+
+T = 100
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 
@@ -34,10 +34,10 @@ S = DualSourcingModel(ce=ce,
                       h=h, 
                       b=b,
                       T=T, 
-                      I0=optimal_zr,
-                      zr=optimal_zr,
-                      Delta=optimal_Delta,
-                      single_index=True)
+                      I0=optimal_s,
+                      Q=optimal_Q,
+                      s=optimal_s,
+                      tailored_base_surge=True)
 
 S.simulate()  
 

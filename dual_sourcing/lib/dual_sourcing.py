@@ -15,8 +15,11 @@ class DualSourcingModel:
                  zr=0,
                  ze=0,
                  Delta=0,
+                 Q=0,
+                 s=0,
                  single_index=False,
                  dual_index=False,
+                 tailored_base_surge=False,
                  dynamic_program=False):
         """ 
         Initialization of dual sourcing model. 
@@ -32,7 +35,14 @@ class DualSourcingModel:
         I0 (int): initial inventory level
         Delta (int): difference between expedited and 
         regular target order level (i.e., zr-ze) 
-        zr (int): regular target order level
+        zr (int): regular target order level (single index)
+        ze (int): expedited target order level (dual index)
+        Q (int): regular order quantity (tailored base surge)
+        s (int): underlying single base-stock level (tailored base surge)
+        single_index (bool): single index yes/no
+        dual_index (bool): dual index yes/no
+        tailored_base_surge (bool): tailored base surge yes/no
+        dynamic_program (bool): dynamic program yes/no
       
         """
 
@@ -74,6 +84,11 @@ class DualSourcingModel:
         self.dual_index = dual_index
         if self.dual_index:
             self.initialize_dual_index(Delta,ze)
+            
+        # initialize tailored base surge parameters
+        self.tailored_base_surge = tailored_base_surge
+        if self.tailored_base_surge:
+            self.initialize_tailored_base_surge(Q,s)
         
         # initialize dynamic program parameters
         self.dynamic_program = dynamic_program
@@ -172,6 +187,37 @@ class DualSourcingModel:
         # Carnegie Mellon University, Pittsburgh.)
         self.dual_index_G_Delta = 0
     
+    def initialize_tailored_base_surge(self,
+                                       Q,
+                                       s):
+        """ 
+        Initialization of tailored base-surge policy. 
+        (for more information, see Allon, G., & Van Mieghem, J. A. (2010). 
+        Global dual sourcing: Tailored base-surge allocation to near- 
+        and offshore production. Management Science, 56(1), 110-124. and
+        Chen, B., & Shi, C. (2019). Tailored base-surge policies in 
+        dual-sourcing inventory systems with demand learning. 
+        Available at SSRN 3456834.)
+        
+        Parameters: 
+        Q (int): regular order quantity
+        s (int): underlying single base-stock level
+      
+        """
+        
+        self.regular_order_Q = Q
+        self.single_base_stock_level = s
+        
+        if self.lead_time_e == 0:
+            self.qe = [self.current_qe]
+        else:
+            self.qe = self.lead_time_e*[self.current_qe]
+        
+        if self.lead_time_r == 0:
+            self.qr = [self.current_qr]
+        else:
+            self.qr = (self.lead_time_r+1)*[self.current_qr]
+    
     def initialize_dynamic_program(self):
         """ 
         Initialize dynamic program parameters.
@@ -256,6 +302,12 @@ class DualSourcingModel:
                                self.qr[-self.lead_time_difference]))
                 self.qr.append(self.target_order_level_r-\
                                self.current_inventory_position_r-self.qe[-1])
+            
+            elif self.tailored_base_surge:
+                self.qe.append(max(0,self.single_base_stock_level \
+                                   -self.current_inventory \
+                                   -self.regular_order_Q))
+                self.qr.append(self.regular_order_Q)
 
             # (2) receive shipments
             self.current_qe = self.qe[-self.lead_time_e-1]
@@ -542,3 +594,74 @@ def dual_index_ze_Delta(samples,
     print("z_e*", optimal_ze)
     
     return optimal_ze, optimal_Delta
+
+def tailored_base_surge_Q_S(Q_arr,
+                            s_arr,
+                            ce=0, 
+                            cr=0, 
+                            le=0, 
+                            lr=0,
+                            h=0, 
+                            b=0,
+                            T=200):
+    """ 
+    This function calculates the dual index expedited target order level ze
+    and corresponding target order level difference Delta
+    (for more information, see see Allon, G., & Van Mieghem, J. A. (2010). 
+    Global dual sourcing: Tailored base-surge allocation to near- 
+    and offshore production. Management Science, 56(1), 110-124. and
+    Chen, B., & Shi, C. (2019). Tailored base-surge policies in 
+    dual-sourcing inventory systems with demand learning. 
+    Available at SSRN 3456834.)
+    
+    Parameters: 
+    Q_arr (list): list of regular order quantities
+    s_arr (list): list of single base-stock target level
+    ce (int): per unit cost of expedited supply
+    cr (int): per unit cost of regular supply 
+    le (int): expedited supply lead time
+    lr (int): regular supply lead time
+    h (int): holding cost per unit
+    b (int): shortage cost per unit 
+    T (int): number of periods
+    
+    Returns:
+    optimal_Q (int), optimal_S (int): optimal tailored base-surge parameters
+  
+    """
+            
+    cost_arr = []
+    min_cost = 1e9
+    
+    optimal_Q = 0
+    optimal_s = 0
+    for Q in Q_arr:
+        for s in s_arr:
+                    
+            S = DualSourcingModel(ce=ce, 
+                                  cr=cr, 
+                                  le=le, 
+                                  lr=lr, 
+                                  h=h, 
+                                  b=b,
+                                  T=T, 
+                                  I0=s,
+                                  Q=Q,
+                                  s=s,
+                                  tailored_base_surge=True)
+        
+            S.simulate()
+            cost_tmp = S.total_cost/T
+        
+            if cost_tmp < min_cost:
+                optimal_Q = Q
+                optimal_s = s
+                min_cost = cost_tmp
+                
+            cost_arr.append(cost_tmp)
+        
+    print("minimum cost", min_cost)
+    print("Q*", optimal_Q)
+    print("s*", optimal_s)
+    
+    return optimal_Q, optimal_s

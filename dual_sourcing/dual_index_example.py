@@ -41,7 +41,7 @@ S = DualSourcingModel(ce=ce,
 
 S.simulate()  
 
-print("average cost (dual index):", np.mean(S.total_cost))
+print("average cost (dual index):", S.total_cost/T)
 
 plt.figure()
 plt.plot(S.inventory, '-o', label = r"inventory")
