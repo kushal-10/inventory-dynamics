@@ -332,9 +332,9 @@ class DualSourcingModel:
     def capped_dual_index_sum(self, k):
         
         Itk = self.current_inventory
-        Itk += sum(self.qr[-self.lead_time_r+1+i] for i in range(k+1))
+        Itk += sum(self.qr[-self.lead_time_r+i] for i in range(k+1))
         if self.lead_time_e > max(1,self.lead_time_e-k):
-            Itk += sum(self.qe[-self.lead_time_e+1+i] for i in \
+            Itk += sum(self.qe[-self.lead_time_e+i] for i in \
                    range(min(k,self.lead_time_e-1)+1))
 
         return Itk
@@ -464,7 +464,6 @@ class DualSourcingModel:
                         optimal_cost[i] = self.total_cost
                         previous_total_cost = self.total_cost
                         
-        
         print(optimal_qe)
         print(optimal_qr)
         print(optimal_cost)
@@ -560,9 +559,9 @@ def single_index_zr_Delta(samples,
     optimal_Delta = Delta_arr[cost_arr_mean == min(cost_arr_mean)][0]   
     optimal_zr = zr_arr[cost_arr_mean == min(cost_arr_mean)][0]
     
-    print("costs (mean/std)", cost_arr_mean, cost_arr_std)
-    print("Delta*", optimal_Delta)
-    print("z_r*", optimal_zr)
+    print("costs (mean/std):", cost_arr_mean, cost_arr_std)
+    print("Delta*:", optimal_Delta)
+    print("z_r*:", optimal_zr)
     
     return optimal_zr, optimal_Delta
 
@@ -656,9 +655,9 @@ def dual_index_ze_Delta(samples,
     optimal_Delta = Delta_arr[cost_arr_mean == min(cost_arr_mean)][0]   
     optimal_ze = ze_arr[cost_arr_mean == min(cost_arr_mean)][0]
     
-    print("costs (mean/std)", cost_arr_mean, cost_arr_std)
-    print("Delta*", optimal_Delta)
-    print("z_e*", optimal_ze)
+    print("costs (mean/std):", cost_arr_mean, cost_arr_std)
+    print("Delta*:", optimal_Delta)
+    print("z_e*:", optimal_ze)
     
     return optimal_ze, optimal_Delta
 
@@ -697,7 +696,6 @@ def tailored_base_surge_Q_S(Q_arr,
   
     """
             
-    cost_arr = []
     min_cost = 1e9
     
     optimal_Q = 0
@@ -724,12 +722,10 @@ def tailored_base_surge_Q_S(Q_arr,
                 optimal_Q = Q
                 optimal_s = s
                 min_cost = cost_tmp
-                
-            cost_arr.append(cost_tmp)
-        
-    print("minimum cost", min_cost)
-    print("Q*", optimal_Q)
-    print("s*", optimal_s)
+                        
+    print("minimum cost:", min_cost)
+    print("Q*:", optimal_Q)
+    print("s*:", optimal_s)
     
     return optimal_Q, optimal_s
 
@@ -768,7 +764,6 @@ def capped_dual_index_parameters(u1_arr,
   
     """
             
-    cost_arr = []
     min_cost = 1e9
     
     optimal_u1 = 0
@@ -800,11 +795,9 @@ def capped_dual_index_parameters(u1_arr,
                     optimal_u3 = u3
                     min_cost = cost_tmp
                     
-                cost_arr.append(cost_tmp)
-        
-    print("minimum cost", min_cost)
-    print("u1*", optimal_u1)
-    print("u2*", optimal_u2)
-    print("u3*", optimal_u3)
+    print("minimum cost:", min_cost)
+    print("u1*:", optimal_u1)
+    print("u2*:", optimal_u2)
+    print("u3*:", optimal_u3)
 
     return optimal_u1, optimal_u2, optimal_u3

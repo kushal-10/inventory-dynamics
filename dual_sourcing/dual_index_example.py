@@ -4,7 +4,7 @@ from lib.dual_sourcing import *
 
 np.random.seed(10)
 
-ce = 20
+ce = 5
 cr = 0
 le = 0
 lr = 2
@@ -13,7 +13,7 @@ h = 5
 b = 495
 T = 100
 
-samples = 4000
+samples = 1000
 Delta_arr = [0,1,2,3,4,5,6]
 
 optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,

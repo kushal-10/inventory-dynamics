@@ -11,11 +11,11 @@ lr = 2
 ze = 100
 h = 5
 b = 495
-T = 5000
+T = 30000
 
-u1_arr = np.arange(4,8)
-u2_arr = np.arange(8,15)
-u3_arr = np.arange(4)
+u1_arr = np.arange(1,5)
+u2_arr = np.arange(8,12)
+u3_arr = np.arange(5)
 
 optimal_u1, optimal_u2, optimal_u3 = capped_dual_index_parameters(u1_arr,
                                                                   u2_arr,
@@ -28,7 +28,7 @@ optimal_u1, optimal_u2, optimal_u3 = capped_dual_index_parameters(u1_arr,
                                                                   b, 
                                                                   T)
 
-T = 5000
+T = 20000
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 
