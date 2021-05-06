@@ -28,7 +28,7 @@ optimal_u1, optimal_u2, optimal_u3 = capped_dual_index_parameters(u1_arr,
                                                                   b, 
                                                                   T)
 
-T = 20000
+T = 100
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 
