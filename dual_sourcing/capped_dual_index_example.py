@@ -4,29 +4,14 @@ from lib.dual_sourcing import *
 
 np.random.seed(10)
 
-ce = 20
+ce = 5
 cr = 0
 le = 0
 lr = 2
 h = 5
 b = 495
-T = 10000
+T = 200
 
-Q_arr = np.arange(10)
-s_arr = np.arange(10)
-
-optimal_Q, optimal_s = tailored_base_surge_Q_S(Q_arr,
-                                               s_arr,
-                                               ce, 
-                                               cr, 
-                                               le, 
-                                               lr,
-                                               h, 
-                                               b, 
-                                               T)
-
-
-T = 100
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 
@@ -34,14 +19,12 @@ S = DualSourcingModel(ce=ce,
                       h=h, 
                       b=b,
                       T=T, 
-                      I0=optimal_s,
-                      Q=optimal_Q,
-                      s=optimal_s,
-                      tailored_base_surge=True)
+                      I0=10,
+                      capped_dual_index=True)
 
 S.simulate()  
 
-print("average cost (tailored base surge):", S.total_cost/T)
+print("average cost (capped dual index):", S.total_cost/T)
 
 plt.figure()
 plt.plot(S.inventory, '-o', label = r"inventory")

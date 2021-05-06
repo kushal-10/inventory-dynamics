@@ -20,6 +20,7 @@ class DualSourcingModel:
                  single_index=False,
                  dual_index=False,
                  tailored_base_surge=False,
+                 capped_dual_index=False,
                  dynamic_program=False):
         """ 
         Initialization of dual sourcing model. 
@@ -42,6 +43,7 @@ class DualSourcingModel:
         single_index (bool): single index yes/no
         dual_index (bool): dual index yes/no
         tailored_base_surge (bool): tailored base surge yes/no
+        capped_dual_index (bool): capped dual index yes/no
         dynamic_program (bool): dynamic program yes/no
       
         """
@@ -75,6 +77,9 @@ class DualSourcingModel:
         self.demand = [self.current_demand]
         self.total_cost = 0
         
+        self.demand_support = [0,1,2,3,4]
+        self.demand_distribution = lambda: np.random.choice(self.demand_support)
+        
         # initialize single index policy parameters
         self.single_index = single_index
         if self.single_index:
@@ -89,6 +94,11 @@ class DualSourcingModel:
         self.tailored_base_surge = tailored_base_surge
         if self.tailored_base_surge:
             self.initialize_tailored_base_surge(Q,s)
+        
+        # initialize capped dual index
+        self.capped_dual_index = capped_dual_index
+        if self.capped_dual_index:
+            self.initialize_capped_dual_index()
         
         # initialize dynamic program parameters
         self.dynamic_program = dynamic_program
@@ -218,6 +228,57 @@ class DualSourcingModel:
         else:
             self.qr = (self.lead_time_r+1)*[self.current_qr]
     
+    def initialize_capped_dual_index(self):
+        """ 
+        Initialization of capped dual index policy. 
+        (for more information, see Sun, J., & Van Mieghem, J. A. (2019). 
+        Robust dual sourcing inventory management: Optimality of capped dual 
+        index policies and smoothing. Manufacturing & Service 
+        Operations Management, 21(4), 912-931.)
+        
+        """
+        
+        self.lead_time_difference = self.lead_time_r - self.lead_time_e
+
+        self.s_e_optimal = (self.holding_cost*min(self.demand_support) \
+                            + self.shortage_cost*max(self.demand_support))
+        self.s_e_optimal /= (self.holding_cost+self.shortage_cost)
+
+        self.s_e_optimal = np.ceil(self.s_e_optimal)
+        
+        self.s_r_optimal = (self.holding_cost*min(self.demand_support) * \
+                            self.lead_time_difference + \
+                            self.shortage_cost*max(self.demand_support) * \
+                            self.lead_time_difference)
+            
+        self.s_r_optimal /= (self.holding_cost+self.shortage_cost)
+        
+        self.s_r_optimal = np.ceil(self.s_r_optimal)
+
+        self.q_r_ast = self.holding_cost*(min(self.demand_support) * \
+                                          self.lead_time_difference - \
+                                          min(self.demand_support) * \
+                                          (self.lead_time_difference-1))
+        
+        self.q_r_ast += self.shortage_cost*(min(self.demand_support) * \
+                                           self.lead_time_difference - \
+                                           min(self.demand_support) * \
+                                           (self.lead_time_difference-1))
+        
+        self.q_r_ast /= (self.holding_cost+self.shortage_cost)
+        
+        self.q_r_ast = np.ceil(self.q_r_ast)
+        
+        if self.lead_time_e == 0:
+            self.qe = [self.current_qe]
+        else:
+            self.qe = self.lead_time_e*[self.current_qe]
+        
+        if self.lead_time_r == 0:
+            self.qr = [self.current_qr]
+        else:
+            self.qr = (self.lead_time_r+1)*[self.current_qr]
+    
     def initialize_dynamic_program(self):
         """ 
         Initialize dynamic program parameters.
@@ -278,6 +339,16 @@ class DualSourcingModel:
         
         self.total_cost = sum(self.cost)
         
+    def capped_dual_index_sum(self, k):
+        
+        Itk = self.current_inventory
+        Itk += sum(self.qr[-self.lead_time_r+i+1] for i in range(k+1))
+        if self.lead_time_e > max(1,self.lead_time_e-k):
+            Itk += sum(self.qe[-self.lead_time_e+i+1] for i in \
+                   range(min(k,self.lead_time_e-1)+1))
+
+        return Itk
+        
     def simulate(self):
         """ 
         Simulate dual sourcing dynamics. Each period consists of the following
@@ -308,13 +379,19 @@ class DualSourcingModel:
                                    -self.current_inventory \
                                    -self.regular_order_Q))
                 self.qr.append(self.regular_order_Q)
+                
+            elif self.capped_dual_index:
+                Itt = self.capped_dual_index_sum(0)
+                ItLm1 = self.capped_dual_index_sum(self.lead_time_difference-1)
+                self.qe.append(max(0,self.s_e_optimal-Itt))
+                self.qr.append(min(max(0,self.s_r_optimal-ItLm1),self.q_r_ast))
 
             # (2) receive shipments
             self.current_qe = self.qe[-self.lead_time_e-1]
             self.current_qr = self.qr[-self.lead_time_r-1]
             
             # (3) reveal demand
-            self.current_demand = np.random.choice([0,1,2,3,4])
+            self.current_demand = self.demand_distribution()
             self.demand.append(self.current_demand)
         
             # (4) update inventory and costs
