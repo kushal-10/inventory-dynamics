@@ -4,17 +4,17 @@ from lib.dual_sourcing import *
 
 np.random.seed(10)
 
-ce = 5
+ce = 20
 cr = 0
 le = 0
 lr = 2
 ze = 100
 h = 5
 b = 495
-T = 100
+T = 200
 
 samples = 1000
-Delta_arr = [0,1,2,3,4,5,6]
+Delta_arr = np.arange(0,7)
 
 optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
                                                 Delta_arr,
@@ -27,6 +27,7 @@ optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
                                                 T,
                                                 ze)
 
+T = 100
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 

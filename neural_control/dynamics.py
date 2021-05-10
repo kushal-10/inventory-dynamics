@@ -86,10 +86,10 @@ class DualSourcingModel(torch.nn.Module):
         self.previous_qe = [torch.zeros([minibatch_size, 1])]
 
         if self.lr > 0:
-            self.previous_qr = self.previous_qr  * (self.lr+1)
+            self.previous_qr = self.previous_qr  * self.lr
 
         if self.le > 0:
-            self.previous_qe = self.previous_qe * (self.lr+1)
+            self.previous_qe = self.previous_qe * self.le
 
         self.learned_I_0 =  self.I_0.repeat([minibatch_size, 1]) - torch.frac(self.I_0).clone().detach()
         self.I_i = self.learned_I_0

@@ -11,10 +11,10 @@ lr = 2
 zr = 100
 h = 5
 b = 495
-T = 50
+T = 200
 
-samples = 4000
-Delta_arr = [0,1,2,3,4]
+samples = 1000
+Delta_arr = np.arange(0,5)
 
 optimal_zr, optimal_Delta = single_index_zr_Delta(samples,
                                                   Delta_arr,
@@ -27,6 +27,7 @@ optimal_zr, optimal_Delta = single_index_zr_Delta(samples,
                                                   T,
                                                   zr)
 
+T = 100
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 

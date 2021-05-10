@@ -26,9 +26,9 @@ def imitatation_learn(controller,
         ds_inv    = state_trajectories[minibatch_indices, end_time_indices, 0].unsqueeze(-1)
         ds_demand = state_trajectories[minibatch_indices, end_time_indices, 1].unsqueeze(-1)
 
-        qr_steps = end_time_indices.unsqueeze(-1) - torch.arange(lr+1, 0, step=-1).unsqueeze(-0) - 1
+        qr_steps = end_time_indices.unsqueeze(-1) - torch.arange(lr, 0, step=-1).unsqueeze(-0) - 1
         ds_past_qr = qr_trajectories[minibatch_indices.unsqueeze(-1), qr_steps]
-        qe_steps = end_time_indices.unsqueeze(-1) - torch.arange(le+1, 0, step=-1).unsqueeze(-0) - 1
+        qe_steps = end_time_indices.unsqueeze(-1) - torch.arange(le, 0, step=-1).unsqueeze(-0) - 1
         ds_past_qe = qe_trajectories[minibatch_indices.unsqueeze(-1), qe_steps]
         target_qr  = qr_trajectories[minibatch_indices, end_time_indices]
         target_qe  = qe_trajectories[minibatch_indices, end_time_indices]
@@ -50,7 +50,7 @@ class DualSourcingController(torch.nn.Module):
                 current_demand,
                 current_inventory,
                 past_regular_orders,
-                past_expendited_orders
+                past_expedited_orders
                 ):
         pass
 
@@ -81,7 +81,8 @@ class FullyConnectedRegressionController(DualSourcingController):
                 self.layers.append(intermediate_layer)
             output_layer = torch.nn.Linear(in_features=n_hidden_units[-1], out_features=2)
             self.layers.append(output_layer)
-        input_layer = torch.nn.Linear(in_features=lr + 1 +  le + 1 + 1,
+
+        input_layer = torch.nn.Linear(in_features=lr + le + 1,
                                       out_features=out_features_l0)
         self.layers.insert(0, input_layer)
         self.layers = torch.nn.ModuleList(self.layers)
@@ -105,23 +106,25 @@ class FullyConnectedRegressionController(DualSourcingController):
                 current_demand,
                 current_inventory,
                 past_regular_orders,
-                past_expendited_orders
+                past_expedited_orders
                 ):
         observation_list = [
             current_inventory
         ]
         if isinstance(past_regular_orders, list):
-            reg_order_obs = torch.cat(past_regular_orders[-1-self.lr:], dim=-1)
+            reg_order_obs = torch.cat(past_regular_orders[-self.lr:], dim=-1)
         else:
-            reg_order_obs = past_regular_orders[:, -1-self.lr:]
+            reg_order_obs = past_regular_orders[:,-self.lr:]
         observation_list.append(reg_order_obs)
 
-        if isinstance(past_expendited_orders, list):
-            exp_order_obs = torch.cat(past_regular_orders[-1-self.le:], dim=-1)
+        if isinstance(past_expedited_orders, list):
+            exp_order_obs = torch.cat(past_expedited_orders[-self.le:], dim=-1)
         else:
-            exp_order_obs = past_regular_orders[:, -1-self.le:]
-        observation_list.append(exp_order_obs)
-
+            exp_order_obs = past_expedited_orders[:,-self.le:]
+        
+        if self.le > 0:
+            observation_list.append(exp_order_obs)
+        
         observation = torch.cat(observation_list, dim=-1)
         h = observation
         for j, layer in enumerate(self.layers):
