@@ -74,6 +74,16 @@ class DualSourcingModel:
         self.current_qe = 0
         self.current_qr = 0
         
+        if self.lead_time_e == 0:
+            self.qe = [self.current_qe]
+        else:
+            self.qe = self.lead_time_e*[self.current_qe]
+        
+        if self.lead_time_r == 0:
+            self.qr = [self.current_qr]
+        else:
+            self.qr = self.lead_time_r*[self.current_qr]
+            
         # simulation period and containers
         self.period = T
         self.inventory = [self.current_inventory]
@@ -138,16 +148,6 @@ class DualSourcingModel:
         self.current_inventory_position = self.current_inventory
         self.inventory_position = [self.current_inventory_position]
             
-        if self.lead_time_e == 0:
-            self.qe = [self.current_qe]
-        else:
-            self.qe = self.lead_time_e*[self.current_qe]
-        
-        if self.lead_time_r == 0:
-            self.qr = [self.current_qr]
-        else:
-            self.qr = self.lead_time_r*[self.current_qr]
-            
         # measure of the difference between zr and inventory level (Eq. 6 in 
         # Scheller-Wolf, A., Veeraraghavan, S., & van Houtum, G. J. (2007). 
         # Effective dual sourcing with a single index policy. 
@@ -185,16 +185,6 @@ class DualSourcingModel:
 
         self.inventory_position_e = [self.current_inventory_position_e]
         self.inventory_position_r = [self.current_inventory_position_r]
-
-        if self.lead_time_e == 0:
-            self.qe = [self.current_qe]
-        else:
-            self.qe = self.lead_time_e*[self.current_qe]
-        
-        if self.lead_time_r == 0:
-            self.qr = [self.current_qr]
-        else:
-            self.qr = (self.lead_time_r+1)*[self.current_qr]
             
         # measure of the difference between zr and inventory level (Eq. 6 in 
         # Scheller-Wolf, A., Veeraraghavan, S., & van Houtum, G. J. (2007). 
@@ -223,16 +213,6 @@ class DualSourcingModel:
         
         self.regular_order_Q = Q
         self.single_base_stock_level = s
-        
-        if self.lead_time_e == 0:
-            self.qe = [self.current_qe]
-        else:
-            self.qe = self.lead_time_e*[self.current_qe]
-        
-        if self.lead_time_r == 0:
-            self.qr = [self.current_qr]
-        else:
-            self.qr = (self.lead_time_r+1)*[self.current_qr]
     
     def initialize_capped_dual_index(self,
                                      u1,
@@ -258,16 +238,6 @@ class DualSourcingModel:
         self.s_r_optimal = u2
 
         self.q_r_ast = u3
-        
-        if self.lead_time_e == 0:
-            self.qe = [self.current_qe]
-        else:
-            self.qe = self.lead_time_e*[self.current_qe]
-        
-        if self.lead_time_r == 0:
-            self.qr = [self.current_qr]
-        else:
-            self.qr = (self.lead_time_r+1)*[self.current_qr]
     
     def initialize_dynamic_program(self):
         """ 
@@ -330,6 +300,13 @@ class DualSourcingModel:
         self.total_cost = sum(self.cost)
         
     def capped_dual_index_sum(self, k):
+        
+        """ 
+        Implementation of Eq. (3) Sun, J., & Van Mieghem, J. A. (2019). 
+        Robust dual sourcing inventory management: Optimality of capped dual 
+        index policies and smoothing. Manufacturing & Service 
+        Operations Management, 21(4), 912-931.
+        """
         
         Itk = self.current_inventory
         Itk += sum(self.qr[-self.lead_time_r+i] for i in range(k+1))

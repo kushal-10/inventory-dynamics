@@ -3,24 +3,24 @@ import matplotlib.pyplot as plt
 import torch
 import os
 
-from dual_sourcing.lib.dual_sourcing import dual_index_ze_Delta, DualSourcingModel
+from dual_sourcing.lib.dual_sourcing import single_index_zr_Delta, \
+					      dual_index_ze_Delta, DualSourcingModel
 
-
-def sample_trajectories(n_trajectories,
-                        optimization_samples = 100,
-                        seed= 1,
-                        ce = 20,
-                        cr = 0,
-                        le = 0,
-                        lr = 2,
-                        ze = 100,
-                        h = 5,
-                        b = 495,
-                        T = 100,
-                        zr=100):
+def sample_trajectories_dual_index(n_trajectories,
+                                   optimization_samples = 100,
+                                   seed = 1,
+                                   ce = 20,
+                                   cr = 0,
+                                   le = 0,
+                                   lr = 2,
+                                   ze = 100,
+                                   h = 5,
+                                   b = 495,
+                                   T = 100,
+                                   zr = 100):
                         
     np.random.seed(seed)
-    Delta_arr = [0,1,2,3,4,5,6]
+    Delta_arr = np.arange(0,7)
     optimal_ze, optimal_Delta = dual_index_ze_Delta(optimization_samples,
 	                                            Delta_arr,
 	                                            ce,
@@ -29,12 +29,20 @@ def sample_trajectories(n_trajectories,
 	                                            lr,
 	                                            h,
 	                                            b,
-	                                            T,
+	                                            2000,
 	                                            ze)
     # each trajectory consists of T timesteps
-    state_trajectories  = torch.zeros([n_trajectories, T+1, 3])
-    qr_trajectories = torch.zeros([n_trajectories, T+1+lr])
-    qe_trajectories  = torch.zeros([n_trajectories, T+1+le])
+    if le == 0:
+        qe_trajectories = torch.zeros([n_trajectories, T+1])
+    else:
+        qe_trajectories = torch.zeros([n_trajectories, T+le])
+    
+    if lr == 0:
+        qr_trajectories = torch.zeros([n_trajectories, T+1])
+    else:
+        qr_trajectories = torch.zeros([n_trajectories, T+lr])
+        
+    state_trajectories  = torch.zeros([n_trajectories, T, 3])
     
     for i in range(n_trajectories):
         S = DualSourcingModel(ce=ce,
@@ -50,6 +58,7 @@ def sample_trajectories(n_trajectories,
                               dual_index=True)
 
         S.simulate()
+        
         I  = torch.tensor(S.inventory)
         D  = torch.tensor(S.demand)
         qe = torch.tensor(S.qe)
@@ -62,3 +71,70 @@ def sample_trajectories(n_trajectories,
         state_trajectories[i, :, 2] = c
         
     return state_trajectories, qr_trajectories, qe_trajectories
+    
+def sample_trajectories_single_index(n_trajectories,
+                                     optimization_samples = 100,
+                                     seed = 1,
+                                     ce = 20,
+                                     cr = 0,
+                                     le = 0,
+                                     lr = 2,
+                                     h = 5,
+                                     b = 495,
+                                     T = 100,
+                                     zr = 100):
+    
+    Delta_arr = np.arange(0,5)
+
+    optimal_zr, optimal_Delta = single_index_zr_Delta(optimization_samples,
+                                                      Delta_arr,
+                                                      ce, 
+                                                      cr, 
+                                                      le, 
+                                                      lr,
+                                                      h, 
+                                                      b, 
+                                                      2000,
+                                                      zr)
+
+    # each trajectory consists of T timesteps
+    if le == 0:
+        qe_trajectories = torch.zeros([n_trajectories, T+1])
+    else:
+        qe_trajectories = torch.zeros([n_trajectories, T+le])
+    
+    if lr == 0:
+        qr_trajectories = torch.zeros([n_trajectories, T+1])
+    else:
+        qr_trajectories = torch.zeros([n_trajectories, T+lr])
+        
+    state_trajectories = torch.zeros([n_trajectories, T+1, 3])
+    
+    for i in range(n_trajectories):
+        S = DualSourcingModel(ce=ce, 
+                              cr=cr, 
+                              le=le, 
+                              lr=lr, 
+                              h=h, 
+                              b=b,
+                              T=T, 
+                              I0=optimal_zr,
+                              zr=optimal_zr,
+                              Delta=optimal_Delta,
+                              single_index=True)
+
+        S.simulate()
+
+        I = torch.tensor(S.inventory)
+        D = torch.tensor(S.demand)
+        qe = torch.tensor(S.qe)
+        qr = torch.tensor(S.qr)
+        c = torch.tensor(S.cost)
+        state_trajectories[i, :, 0] = I
+        state_trajectories[i, :, 1] = D
+        qe_trajectories[i, :] = qe
+        qr_trajectories[i, :] = qr
+        state_trajectories[i, :, 2] = c
+    
+    return state_trajectories, qr_trajectories, qe_trajectories
+

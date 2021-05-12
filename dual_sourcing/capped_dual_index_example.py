@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lib.dual_sourcing import *
 
-np.random.seed(10)
+#np.random.seed(10)
 
 ce = 20
 cr = 0
@@ -50,6 +50,13 @@ plt.figure()
 plt.plot(S.inventory, '-o', label = r"inventory")
 plt.plot(S.inventory_position, '-o', label = r"inventory position")
 plt.plot(S.demand, '-o', label = r"demand")
+plt.xlabel(r"time")
+plt.ylabel(r"value")
+plt.legend(loc = 4, ncol = 3)
+plt.tight_layout()
+plt.show()
+
+plt.figure()
 plt.plot(S.qe, '-o', label = r"expedited order")
 plt.plot(S.qr, '-o', label = r"regular order")
 plt.xlabel(r"time")
