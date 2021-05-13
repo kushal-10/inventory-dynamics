@@ -68,12 +68,12 @@ class DualSourcingModel:
         # initialize single index policy parameters
         self.single_index = single_index
         if self.single_index:
-            self.initialize_single_index(Delta,zr)
+            self.initialize_single_index(Delta, zr)
         
         # initialize dual index policy parameters
         self.dual_index = dual_index
         if self.dual_index:
-            self.initialize_dual_index(Delta,ze)
+            self.initialize_dual_index(Delta, ze)
         
         # initialize dynamic program parameters
         self.dynamic_program = dynamic_program
@@ -315,15 +315,15 @@ class DualSourcingModel:
     def dynamic_program_solve(self):
         
         # possible demands
-        D_comb = [x for x in product([0,1,2,3,4], \
+        D_comb = [x for x in product([0, 1, 2, 3, 4], \
                  repeat=self.lead_time_difference)]
         
         # possible expedited orders made t-le periods ago
-        qe_comb = [x for x in product(range(0,8), \
+        qe_comb = [x for x in product(range(0, 8), \
                   repeat=self.lead_time_difference)]    
         
         # possible regular orders made t-lr periods ago
-        qr_comb = [x for x in product(range(0,8), \
+        qr_comb = [x for x in product(range(0, 8), \
                   repeat=self.lead_time_difference)]    
         
         # dictionaries that store optimal orders
@@ -340,8 +340,8 @@ class DualSourcingModel:
                                            qr_comb[k])
                     
                     if self.total_cost < previous_total_cost:
-                        optimal_qe[i] =  qe_comb[j]
-                        optimal_qr[i] =  qr_comb[k]
+                        optimal_qe[i] = qe_comb[j]
+                        optimal_qr[i] = qr_comb[k]
                         optimal_cost[i] = self.total_cost
                         previous_total_cost = self.total_cost
                         
