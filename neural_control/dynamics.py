@@ -1,0 +1,96 @@
+import torch
+
+class DualSourcingModel(torch.nn.Module):
+    def __init__(self,
+                 controller: torch.nn.Module,
+                 ce=20,
+                 cr=0,
+                 le=0,
+                 lr=2,
+                 h=5,
+                 b=495,
+                 T=50,
+                 I_0=0,
+                 learn_I_0=True,
+                 demand_generator=torch.distributions.Uniform(low=0, high=4 + 1)
+                 # high is exclusive
+                 ):
+        
+        super().__init__()
+        self.controller = controller
+        self.ce = ce
+        self.cr = cr
+        self.le = le
+        self.lr = lr
+        self.h = h
+        self.b = b
+        self.T = T
+        self.I_0 = torch.tensor([I_0], requires_grad=learn_I_0, dtype=torch.float)
+        self.demand_generator = demand_generator
+        self.controller = controller
+
+    def simulate(self):
+        sample_size = self.I_i.shape[0]
+        D = self.all_demands[-1]
+        qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
+
+        # orders are added to corresponding vectors
+        self.previous_qr.append(qr)
+        self.previous_qe.append(qe)
+
+        # orders arrive
+        qra = self.previous_qr[self.current_timestep-self.lr-1]
+        qea = self.previous_qe[self.current_timestep-self.le-1]
+
+        # demand is generated
+        D = self.demand_generator.sample(
+            [sample_size, 1]).int() # here we round a continuous sample
+        self.all_demands.append(D)
+        
+        # inventory and cost updates
+        self.I_i = self.I_i + qra + qea
+
+        c_i = self.ce * qe + self.cr * qr + self.h * torch.relu(self.I_i - D) \
+              + self.b * torch.relu(D - self.I_i)
+              
+        self.I_i = self.I_i - D
+
+        return c_i, D, self.I_i, qr, qra, qe, qea
+
+    def replay_step(self, 
+                    previous_inventory, 
+                    current_demand, 
+                    qra, 
+                    qea, 
+                    qr, 
+                    qe):
+
+        current_inventory = previous_inventory + qra + qea
+
+        c_i = self.ce * qe + self.cr * qr + \
+              self.h * torch.relu(current_inventory - current_demand) + \
+              self.b * torch.relu(current_demand - current_inventory)
+        
+        current_inventory = current_inventory - current_demand
+
+        return c_i, current_inventory
+
+    def reset(self, 
+              minibatch_size=16, 
+              seed=None):
+
+        if not seed is None:
+            torch.manual_seed(seed)
+        self.current_timestep = 0
+        self.previous_qr = [torch.zeros([minibatch_size, 1])]
+        self.previous_qe = [torch.zeros([minibatch_size, 1])]
+
+        if self.lr > 0:
+            self.previous_qr = self.previous_qr  * self.lr
+
+        if self.le > 0:
+            self.previous_qe = self.previous_qe * self.le
+
+        self.learned_I_0 =  self.I_0.repeat([minibatch_size, 1]) - torch.frac(self.I_0).clone().detach()
+        self.I_i = self.learned_I_0
+        self.all_demands = [torch.zeros([minibatch_size, 1])]

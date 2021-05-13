@@ -8,24 +8,23 @@ ce = 20
 cr = 0
 le = 0
 lr = 2
-zr = 100
 h = 5
 b = 495
-T = 200
+T = 10000
 
-samples = 1000
-Delta_arr = np.arange(0,5)
+Q_arr = np.arange(10)
+s_arr = np.arange(10)
 
-optimal_zr, optimal_Delta = single_index_zr_Delta(samples,
-                                                  Delta_arr,
-                                                  ce, 
-                                                  cr, 
-                                                  le, 
-                                                  lr,
-                                                  h, 
-                                                  b, 
-                                                  T,
-                                                  zr)
+optimal_Q, optimal_s = tailored_base_surge_Q_S(Q_arr,
+                                               s_arr,
+                                               ce, 
+                                               cr, 
+                                               le, 
+                                               lr,
+                                               h, 
+                                               b, 
+                                               T)
+
 
 T = 100
 S = DualSourcingModel(ce=ce, 
@@ -35,18 +34,17 @@ S = DualSourcingModel(ce=ce,
                       h=h, 
                       b=b,
                       T=T, 
-                      I0=optimal_zr,
-                      zr=optimal_zr,
-                      Delta=optimal_Delta,
-                      single_index=True)
+                      I0=optimal_s,
+                      Q=optimal_Q,
+                      s=optimal_s,
+                      tailored_base_surge=True)
 
 S.simulate()  
 
-print("average cost (single index):", S.total_cost/T)
+print("average cost (tailored base surge):", S.total_cost/T)
 
 plt.figure()
 plt.plot(S.inventory, '-o', label = r"inventory")
-plt.plot(S.inventory_position, '-o', label = r"inventory position")
 plt.plot(S.demand, '-o', label = r"demand")
 plt.xlabel(r"time")
 plt.ylabel(r"value")

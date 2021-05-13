@@ -15,8 +15,15 @@ class DualSourcingModel:
                  zr=0,
                  ze=0,
                  Delta=0,
+                 Q=0,
+                 s=0,
+                 u1=0,
+                 u2=0,
+                 u3=0,
                  single_index=False,
                  dual_index=False,
+                 tailored_base_surge=False,
+                 capped_dual_index=False,
                  dynamic_program=False):
         """ 
         Initialization of dual sourcing model. 
@@ -32,7 +39,18 @@ class DualSourcingModel:
         I0 (int): initial inventory level
         Delta (int): difference between expedited and 
         regular target order level (i.e., zr-ze) 
-        zr (int): regular target order level
+        zr (int): regular target order level (single index)
+        ze (int): expedited target order level (dual index)
+        Q (int): regular order quantity (tailored base surge)
+        s (int): underlying single base-stock level (tailored base surge)
+        u1 (int): capped dual index parameter 1
+        u2 (int): capped dual index parameter 2
+        u3 (int): capped dual index parameter 3
+        single_index (bool): single index yes/no
+        dual_index (bool): dual index yes/no
+        tailored_base_surge (bool): tailored base surge yes/no
+        capped_dual_index (bool): capped dual index yes/no
+        dynamic_program (bool): dynamic program yes/no
       
         """
 
@@ -56,6 +74,16 @@ class DualSourcingModel:
         self.current_qe = 0
         self.current_qr = 0
         
+        if self.lead_time_e == 0:
+            self.qe = [self.current_qe]
+        else:
+            self.qe = self.lead_time_e*[self.current_qe]
+        
+        if self.lead_time_r == 0:
+            self.qr = [self.current_qr]
+        else:
+            self.qr = self.lead_time_r*[self.current_qr]
+            
         # simulation period and containers
         self.period = T
         self.inventory = [self.current_inventory]
@@ -65,15 +93,28 @@ class DualSourcingModel:
         self.demand = [self.current_demand]
         self.total_cost = 0
         
+        self.demand_support = [0,1,2,3,4]
+        self.demand_distribution = lambda: np.random.choice(self.demand_support)
+        
         # initialize single index policy parameters
         self.single_index = single_index
         if self.single_index:
-            self.initialize_single_index(Delta, zr)
+            self.initialize_single_index(Delta,zr)
         
         # initialize dual index policy parameters
         self.dual_index = dual_index
         if self.dual_index:
-            self.initialize_dual_index(Delta, ze)
+            self.initialize_dual_index(Delta,ze)
+            
+        # initialize tailored base surge parameters
+        self.tailored_base_surge = tailored_base_surge
+        if self.tailored_base_surge:
+            self.initialize_tailored_base_surge(Q,s)
+        
+        # initialize capped dual index
+        self.capped_dual_index = capped_dual_index
+        if self.capped_dual_index:
+            self.initialize_capped_dual_index(u1,u2,u3)
         
         # initialize dynamic program parameters
         self.dynamic_program = dynamic_program
@@ -106,16 +147,6 @@ class DualSourcingModel:
         
         self.current_inventory_position = self.current_inventory
         self.inventory_position = [self.current_inventory_position]
-            
-        if self.lead_time_e == 0:
-            self.qe = [self.current_qe]
-        else:
-            self.qe = self.lead_time_e*[self.current_qe]
-        
-        if self.lead_time_r == 0:
-            self.qr = [self.current_qr]
-        else:
-            self.qr = self.lead_time_r*[self.current_qr]
             
         # measure of the difference between zr and inventory level (Eq. 6 in 
         # Scheller-Wolf, A., Veeraraghavan, S., & van Houtum, G. J. (2007). 
@@ -154,16 +185,6 @@ class DualSourcingModel:
 
         self.inventory_position_e = [self.current_inventory_position_e]
         self.inventory_position_r = [self.current_inventory_position_r]
-
-        if self.lead_time_e == 0:
-            self.qe = [self.current_qe]
-        else:
-            self.qe = self.lead_time_e*[self.current_qe]
-        
-        if self.lead_time_r == 0:
-            self.qr = [self.current_qr]
-        else:
-            self.qr = (self.lead_time_r+1)*[self.current_qr]
             
         # measure of the difference between zr and inventory level (Eq. 6 in 
         # Scheller-Wolf, A., Veeraraghavan, S., & van Houtum, G. J. (2007). 
@@ -171,6 +192,52 @@ class DualSourcingModel:
         # Working Paper, Tepper School of Business, 
         # Carnegie Mellon University, Pittsburgh.)
         self.dual_index_G_Delta = 0
+    
+    def initialize_tailored_base_surge(self,
+                                       Q,
+                                       s):
+        """ 
+        Initialization of tailored base-surge policy. 
+        (for more information, see Allon, G., & Van Mieghem, J. A. (2010). 
+        Global dual sourcing: Tailored base-surge allocation to near- 
+        and offshore production. Management Science, 56(1), 110-124. and
+        Chen, B., & Shi, C. (2019). Tailored base-surge policies in 
+        dual-sourcing inventory systems with demand learning. 
+        Available at SSRN 3456834.)
+        
+        Parameters: 
+        Q (int): regular order quantity
+        s (int): underlying single base-stock level
+      
+        """
+        
+        self.regular_order_Q = Q
+        self.single_base_stock_level = s
+    
+    def initialize_capped_dual_index(self,
+                                     u1,
+                                     u2,
+                                     u3):
+        """ 
+        Initialization of capped dual index policy. 
+        (for more information, see Sun, J., & Van Mieghem, J. A. (2019). 
+        Robust dual sourcing inventory management: Optimality of capped dual 
+        index policies and smoothing. Manufacturing & Service 
+        Operations Management, 21(4), 912-931.)
+        
+        u1 (int): capped dual index parameter 1
+        u2 (int): capped dual index parameter 2
+        u3 (int): capped dual index parameter 3
+        
+        """
+        
+        self.lead_time_difference = self.lead_time_r - self.lead_time_e
+
+        self.s_e_optimal = u1
+        
+        self.s_r_optimal = u2
+
+        self.q_r_ast = u3
     
     def initialize_dynamic_program(self):
         """ 
@@ -232,6 +299,23 @@ class DualSourcingModel:
         
         self.total_cost = sum(self.cost)
         
+    def capped_dual_index_sum(self, k):
+        
+        """ 
+        Implementation of Eq. (3) Sun, J., & Van Mieghem, J. A. (2019). 
+        Robust dual sourcing inventory management: Optimality of capped dual 
+        index policies and smoothing. Manufacturing & Service 
+        Operations Management, 21(4), 912-931.
+        """
+        
+        Itk = self.current_inventory
+        Itk += sum(self.qr[-self.lead_time_r+i] for i in range(k+1))
+        if self.lead_time_e > max(1,self.lead_time_e-k):
+            Itk += sum(self.qe[-self.lead_time_e+i] for i in \
+                   range(min(k,self.lead_time_e-1)+1))
+
+        return Itk
+        
     def simulate(self):
         """ 
         Simulate dual sourcing dynamics. Each period consists of the following
@@ -256,13 +340,25 @@ class DualSourcingModel:
                                self.qr[-self.lead_time_difference]))
                 self.qr.append(self.target_order_level_r-\
                                self.current_inventory_position_r-self.qe[-1])
+            
+            elif self.tailored_base_surge:
+                self.qe.append(max(0,self.single_base_stock_level \
+                                   -self.current_inventory \
+                                   -self.regular_order_Q))
+                self.qr.append(self.regular_order_Q)
+                
+            elif self.capped_dual_index:
+                Itt = self.capped_dual_index_sum(0)
+                ItLm1 = self.capped_dual_index_sum(self.lead_time_difference-1)
+                self.qe.append(max(0,self.s_e_optimal-Itt))
+                self.qr.append(min(max(0,self.s_r_optimal-ItLm1),self.q_r_ast))
 
             # (2) receive shipments
             self.current_qe = self.qe[-self.lead_time_e-1]
             self.current_qr = self.qr[-self.lead_time_r-1]
             
             # (3) reveal demand
-            self.current_demand = np.random.choice([0,1,2,3,4])
+            self.current_demand = self.demand_distribution()
             self.demand.append(self.current_demand)
         
             # (4) update inventory and costs
@@ -315,15 +411,15 @@ class DualSourcingModel:
     def dynamic_program_solve(self):
         
         # possible demands
-        D_comb = [x for x in product([0, 1, 2, 3, 4], \
+        D_comb = [x for x in product([0,1,2,3,4], \
                  repeat=self.lead_time_difference)]
         
         # possible expedited orders made t-le periods ago
-        qe_comb = [x for x in product(range(0, 8), \
+        qe_comb = [x for x in product(range(0,8), \
                   repeat=self.lead_time_difference)]    
         
         # possible regular orders made t-lr periods ago
-        qr_comb = [x for x in product(range(0, 8), \
+        qr_comb = [x for x in product(range(0,8), \
                   repeat=self.lead_time_difference)]    
         
         # dictionaries that store optimal orders
@@ -340,12 +436,11 @@ class DualSourcingModel:
                                            qr_comb[k])
                     
                     if self.total_cost < previous_total_cost:
-                        optimal_qe[i] = qe_comb[j]
-                        optimal_qr[i] = qr_comb[k]
+                        optimal_qe[i] =  qe_comb[j]
+                        optimal_qr[i] =  qr_comb[k]
                         optimal_cost[i] = self.total_cost
                         previous_total_cost = self.total_cost
                         
-        
         print(optimal_qe)
         print(optimal_qr)
         print(optimal_cost)
@@ -441,9 +536,9 @@ def single_index_zr_Delta(samples,
     optimal_Delta = Delta_arr[cost_arr_mean == min(cost_arr_mean)][0]   
     optimal_zr = zr_arr[cost_arr_mean == min(cost_arr_mean)][0]
     
-    print("costs (mean/std)", cost_arr_mean, cost_arr_std)
-    print("Delta*", optimal_Delta)
-    print("z_r*", optimal_zr)
+    print("costs (mean/std):", cost_arr_mean, cost_arr_std)
+    print("Delta*:", optimal_Delta)
+    print("z_r*:", optimal_zr)
     
     return optimal_zr, optimal_Delta
 
@@ -537,8 +632,149 @@ def dual_index_ze_Delta(samples,
     optimal_Delta = Delta_arr[cost_arr_mean == min(cost_arr_mean)][0]   
     optimal_ze = ze_arr[cost_arr_mean == min(cost_arr_mean)][0]
     
-    print("costs (mean/std)", cost_arr_mean, cost_arr_std)
-    print("Delta*", optimal_Delta)
-    print("z_e*", optimal_ze)
+    print("costs (mean/std):", cost_arr_mean, cost_arr_std)
+    print("Delta*:", optimal_Delta)
+    print("z_e*:", optimal_ze)
     
     return optimal_ze, optimal_Delta
+
+def tailored_base_surge_Q_S(Q_arr,
+                            s_arr,
+                            ce=0, 
+                            cr=0, 
+                            le=0, 
+                            lr=0,
+                            h=0, 
+                            b=0,
+                            T=200):
+    """ 
+    This function calculates the dual index expedited target order level ze
+    and corresponding target order level difference Delta
+    (for more information, see Allon, G., & Van Mieghem, J. A. (2010). 
+    Global dual sourcing: Tailored base-surge allocation to near- 
+    and offshore production. Management Science, 56(1), 110-124. and
+    Chen, B., & Shi, C. (2019). Tailored base-surge policies in 
+    dual-sourcing inventory systems with demand learning. 
+    Available at SSRN 3456834.)
+    
+    Parameters: 
+    Q_arr (list): list of regular order quantities
+    s_arr (list): list of single base-stock target level
+    ce (int): per unit cost of expedited supply
+    cr (int): per unit cost of regular supply 
+    le (int): expedited supply lead time
+    lr (int): regular supply lead time
+    h (int): holding cost per unit
+    b (int): shortage cost per unit 
+    T (int): number of periods
+    
+    Returns:
+    optimal_Q (int), optimal_S (int): optimal tailored base-surge parameters
+  
+    """
+            
+    min_cost = 1e9
+    
+    optimal_Q = 0
+    optimal_s = 0
+    for Q in Q_arr:
+        for s in s_arr:
+                    
+            S = DualSourcingModel(ce=ce, 
+                                  cr=cr, 
+                                  le=le, 
+                                  lr=lr, 
+                                  h=h, 
+                                  b=b,
+                                  T=T, 
+                                  I0=s,
+                                  Q=Q,
+                                  s=s,
+                                  tailored_base_surge=True)
+        
+            S.simulate()
+            cost_tmp = S.total_cost/T
+        
+            if cost_tmp < min_cost:
+                optimal_Q = Q
+                optimal_s = s
+                min_cost = cost_tmp
+                        
+    print("minimum cost:", min_cost)
+    print("Q*:", optimal_Q)
+    print("s*:", optimal_s)
+    
+    return optimal_Q, optimal_s
+
+def capped_dual_index_parameters(u1_arr,
+                                 u2_arr,
+                                 u3_arr,
+                                 ce=0, 
+                                 cr=0, 
+                                 le=0, 
+                                 lr=0,
+                                 h=0, 
+                                 b=0,
+                                 T=200):
+    """ 
+    This function calculates the dual index expedited target order level ze
+    and corresponding target order level difference Delta
+    (for more information, see Sun, J., & Van Mieghem, J. A. (2019). 
+    Robust dual sourcing inventory management: Optimality of capped dual 
+    index policies and smoothing. Manufacturing & Service 
+    Operations Management, 21(4), 912-931.)
+    
+    Parameters: 
+    u1_arr (list): list of capped dual index parameter 1
+    u2_arr (list): list of capped dual index parameter 2
+    u3_arr (list): list of capped dual index parameter 3
+    ce (int): per unit cost of expedited supply
+    cr (int): per unit cost of regular supply 
+    le (int): expedited supply lead time
+    lr (int): regular supply lead time
+    h (int): holding cost per unit
+    b (int): shortage cost per unit 
+    T (int): number of periods
+    
+    Returns:
+    optimal_Q (int), optimal_S (int): optimal tailored base-surge parameters
+  
+    """
+            
+    min_cost = 1e9
+    
+    optimal_u1 = 0
+    optimal_u2 = 0
+    optimal_u3 = 0
+    for u1 in u1_arr:
+        for u2 in u2_arr:
+            for u3 in u3_arr:
+           
+                S = DualSourcingModel(ce=ce, 
+                                      cr=cr, 
+                                      le=le, 
+                                      lr=lr, 
+                                      h=h, 
+                                      b=b,
+                                      T=T, 
+                                      I0=0,
+                                      u1=u1,
+                                      u2=u2,
+                                      u3=u3,
+                                      capped_dual_index=True)
+            
+                S.simulate()
+                cost_tmp = S.total_cost/T
+            
+                if cost_tmp < min_cost:
+                    optimal_u1 = u1
+                    optimal_u2 = u2
+                    optimal_u3 = u3
+                    min_cost = cost_tmp
+                    
+    print("minimum cost:", min_cost)
+    print("u1*:", optimal_u1)
+    print("u2*:", optimal_u2)
+    print("u3*:", optimal_u3)
+
+    return optimal_u1, optimal_u2, optimal_u3

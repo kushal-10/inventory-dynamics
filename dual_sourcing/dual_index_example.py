@@ -11,10 +11,10 @@ lr = 2
 ze = 100
 h = 5
 b = 495
-T = 100
+T = 200
 
-samples = 4000
-Delta_arr = [0,1,2,3,4,5,6]
+samples = 1000
+Delta_arr = np.arange(0,7)
 
 optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
                                                 Delta_arr,
@@ -27,6 +27,7 @@ optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
                                                 T,
                                                 ze)
 
+T = 100
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 
@@ -45,9 +46,14 @@ print("average cost (dual index):", S.total_cost/T)
 
 plt.figure()
 plt.plot(S.inventory, '-o', label = r"inventory")
-plt.plot(S.inventory_position_e, '-o', label = r"inventory position (e)")
-plt.plot(S.inventory_position_r, '-o', label = r"inventory position (r)")
 plt.plot(S.demand, '-o', label = r"demand")
+plt.xlabel(r"time")
+plt.ylabel(r"value")
+plt.legend(loc = 4, ncol = 3)
+plt.tight_layout()
+plt.show()
+
+plt.figure()
 plt.plot(S.qe, '-o', label = r"expedited order")
 plt.plot(S.qr, '-o', label = r"regular order")
 plt.xlabel(r"time")
