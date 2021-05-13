@@ -1,6 +1,7 @@
 from collections import namedtuple
 import numpy as np
 import time
+from sys import argv
 from itertools import product
 
 data = namedtuple('data', 'c_e c_r l_e l_r h b demand')
@@ -93,12 +94,12 @@ def main(filename='ds1.in'):
     # If we land in such a state we will remove it
     states = list(product(range(-8, 15+1), range(5+1)))
     # SW mention we never need to order more than max demand for any mode
-    actions = list(product(range(5), range(5)))
+    actions = list(product(range(5+1), range(5+1)))
     # Values can be initiated arbitrarily
     vals = np.repeat(1, len(states))
     vf = dict(zip(states, vals))
 
-    max_iterations, tolerance, delta = 300000, 10e-8, 10.
+    max_iterations, tolerance, delta = 200000, 10e-8, 10.
     all_values = np.zeros(max_iterations)
     these_values = np.zeros(len(states))
 
@@ -118,18 +119,16 @@ def main(filename='ds1.in'):
         this_average = values.mean()
         all_values[iteration] = this_average/(iteration+1)
 
-        if iteration:
-            delta = all_values[iteration - 1] - all_values[iteration]
-
-        if (iteration % 100) == 0:
+        if (iteration > 99) and (iteration % 100 == 0):
             print(f'iteration: {iteration} average cost: {all_values[iteration]}')
-
-        if delta <= tolerance:
-            break
+            delta = all_values[iteration - 1] - all_values[iteration]
+            if delta <= tolerance:
+                break
 
     end_time = time.time() - stat_time
     print(f'DP terminated after {end_time} seconds. Tolerance: {delta} Iterations: {iteration}')
 
 
 if __name__ == '__main__':
-    main()
+    filename = 'ds1.in' if not len(argv) > 1 else argv[1]
+    main(filename)
