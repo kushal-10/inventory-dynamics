@@ -163,7 +163,7 @@ def sample_trajectories_capped_dual_index(n_trajectories,
                                                                       lr,
                                                                       h, 
                                                                       b, 
-                                                                      30000)
+                                                                      50000)
     # each trajectory consists of T timesteps
     if le == 0:
         qe_trajectories = torch.zeros([n_trajectories, T+1])

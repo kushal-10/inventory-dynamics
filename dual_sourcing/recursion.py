@@ -3,6 +3,7 @@ import numpy as np
 import time
 from sys import argv
 from itertools import product
+import parmap
 
 data = namedtuple('data', 'c_e c_r l_e l_r h b demand')
 demand = namedtuple('demand', 'min max support')
@@ -39,7 +40,7 @@ def load_data(filename):
     data.demand = demand
     return data
 
-
+@njit
 def vf_update(state, vf, actions, states, this_data):
     """
     Calculation of value iteration for a single update.
@@ -85,6 +86,8 @@ def vf_update(state, vf, actions, states, this_data):
         states.remove(state)
 
     return best_cost, best_action
+
+def multiprocessing_vf_update():
 
 
 def main(filename='ds1.in'):

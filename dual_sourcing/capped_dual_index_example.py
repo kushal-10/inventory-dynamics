@@ -8,9 +8,9 @@ ce = 20
 cr = 0
 le = 0
 lr = 2
-ze = 100
 h = 5
 b = 495
+
 T = 30000
 
 u1_arr = np.arange(1,5)
@@ -37,12 +37,21 @@ S = DualSourcingModel(ce=ce,
                       b=b,
                       T=T, 
                       I0=0,
-                      u1=optimal_u1,
-                      u2=optimal_u2,
-                      u3=optimal_u3,
+                      u1=4,
+                      u2=9,
+                      u3=3,
                       capped_dual_index=True)
 
 S.simulate()  
+
+# plt.figure()
+# plt.plot([np.mean(S.cost[:i]) for i in range(1,len(S.cost),100000)])
+# plt.hlines(np.mean(S.cost),0,T/100000)
+# plt.ylim(23.18,23.26)
+# plt.xlabel(r"time [in 100000 periods]")
+# plt.ylabel(r"average cost")
+# plt.tight_layout()
+# plt.show()
 
 print("average cost (capped dual index):", S.total_cost/T)
 
