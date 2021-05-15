@@ -4,12 +4,14 @@ import time
 from sys import argv
 from itertools import product
 import parmap
+from numba import njit
+from numba.types import Dict
 
 data = namedtuple('data', 'c_e c_r l_e l_r h b demand')
 demand = namedtuple('demand', 'min max support')
 
 
-def load_data(filename):
+def load_data(file_name):
     """
     Sample file structure:
     100 (c_e)
@@ -21,7 +23,7 @@ def load_data(filename):
     0   (min demand)
     4   (max demand)
     """
-    with open(filename, 'r') as f:
+    with open(file_name, 'r') as f:
         data.c_e = int(f.readline())
         data.c_r = int(f.readline())
         data.l_e = int(f.readline())
@@ -39,6 +41,7 @@ def load_data(filename):
         demand.prob = dict(zip(np.arange(d_min, d_max + 1), np.repeat(1 / (support+1), support+1)))
     data.demand = demand
     return data
+
 
 @njit
 def vf_update(state, vf, actions, states, this_data):
@@ -87,11 +90,13 @@ def vf_update(state, vf, actions, states, this_data):
 
     return best_cost, best_action
 
+
 def multiprocessing_vf_update():
+    pass
 
 
-def main(filename='ds1.in'):
-    instance_data = load_data(filename)
+def main(file_name='ds1.in'):
+    instance_data = load_data(file_name)
     # In problems where demand in [0, 4], the expedited inventory position is between -8 and 13
     # Note that some of the states should never be reached (the ones with high inventory and high qr)
     # If we land in such a state we will remove it
@@ -133,5 +138,5 @@ def main(filename='ds1.in'):
 
 
 if __name__ == '__main__':
-    filename = 'ds1.in' if not len(argv) > 1 else argv[1]
+    filename = 'input_file.dat' if not len(argv) > 1 else argv[1]
     main(filename)
