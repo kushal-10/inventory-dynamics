@@ -1,6 +1,5 @@
 import numpy as np
 from itertools import product
-from scipy.optimize import brute
 
 class DualSourcingModel:
     def __init__(self, 
@@ -23,8 +22,7 @@ class DualSourcingModel:
                  single_index=False,
                  dual_index=False,
                  tailored_base_surge=False,
-                 capped_dual_index=False,
-                 dynamic_program=False):
+                 capped_dual_index=False):
         """ 
         Initialization of dual sourcing model. 
         
@@ -50,7 +48,6 @@ class DualSourcingModel:
         dual_index (bool): dual index yes/no
         tailored_base_surge (bool): tailored base surge yes/no
         capped_dual_index (bool): capped dual index yes/no
-        dynamic_program (bool): dynamic program yes/no
       
         """
 
@@ -115,11 +112,6 @@ class DualSourcingModel:
         self.capped_dual_index = capped_dual_index
         if self.capped_dual_index:
             self.initialize_capped_dual_index(u1,u2,u3)
-        
-        # initialize dynamic program parameters
-        self.dynamic_program = dynamic_program
-        if self.dynamic_program:
-            self.initialize_dynamic_program()
             
     def initialize_single_index(self,
                                 Delta,
@@ -239,12 +231,6 @@ class DualSourcingModel:
 
         self.q_r_ast = u3
     
-    def initialize_dynamic_program(self):
-        """ 
-        Initialize dynamic program parameters.
-        """
-        self.lead_time_difference = self.lead_time_r - self.lead_time_e
-     
     def inventory_evolution(self):
         """ 
         Update inventory position, inventory, and cost.
@@ -450,7 +436,7 @@ def single_index_zr_Delta(samples,
                                       T=T, 
                                       I0=zr_arr[i],
                                       zr=zr_arr[i],
-                                      Delta=Delta_arr[i],
+                                      DeltaFalse=Delta_arr[i],
                                       single_index=True)
             
                 S.simulate()

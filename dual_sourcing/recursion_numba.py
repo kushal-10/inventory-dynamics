@@ -3,43 +3,12 @@ import numpy as np
 import time
 from sys import argv
 from itertools import product
+from numba import njit
+from numba import types
+from numba.typed import Dict
 
-data = namedtuple('data', 'c_e c_r l_e l_r h b demand')
-demand = namedtuple('demand', 'min max support')
-
-
-def load_data(filename):
-    """
-    Sample file structure:
-    100 (c_e)
-    0   (c_r)
-    0   (le)
-    2   (lr)
-    5   (h)
-    95  (b)
-    0   (min demand)
-    4   (max demand)
-    """
-    with open(filename, 'r') as f:
-        data.c_e = int(f.readline())
-        data.c_r = int(f.readline())
-        data.l_e = int(f.readline())
-        data.l_r = int(f.readline())
-        data.h = int(f.readline())
-        data.b = int(f.readline())
-        d_min = int(f.readline())
-        d_max = int(f.readline())
-        # demand can be modeled in a better way (needs to be a class)
-        # I will keep it like this for now
-        demand.min = d_min
-        demand.max = d_max
-        support = d_max - d_min
-        demand.support = support
-        demand.prob = dict(zip(np.arange(d_min, d_max + 1), np.repeat(1 / (support+1), support+1)))
-    data.demand = demand
-    return data
-
-def vf_update(state, vf, actions, states, this_data):
+@njit
+def vf_update(state, vf, demand_prob, actions, states):
     """
     Calculation of value iteration for a single update.
     state:   tuple of integers of length l=lf-le: [IPe, qr(t-l+1), ..., qr(t-1)]
@@ -51,15 +20,13 @@ def vf_update(state, vf, actions, states, this_data):
 
     best_action, best_cost = None, 10e9
 
-    max_d, min_d, prob = this_data.demand.max, this_data.demand.min, this_data.demand.prob
-
     for qe, qr in actions:
         # Immediate cost of action
-        cost = qe * this_data.c_e
+        cost = qe * ce
         # Partial state update
         ip_e = state[0] + qe + state[1]
 
-        for dem in range(min_d, max_d + 1):
+        for dem in range(d_min, d_max + 1):
             ipe_new = ip_e - dem
             # This works only for l = 2, need to work out the general case
             this_state = (ipe_new, qr)
@@ -71,22 +38,28 @@ def vf_update(state, vf, actions, states, this_data):
             else:
                 # Careful: qr(t-1) has not arrived yet, we need to take it out
                 inv_on_hand = ipe_new - state[1]
-                inv_cost = inv_on_hand * this_data.h if inv_on_hand >= 0 else -inv_on_hand * this_data.b
-                cost += prob[dem] * (inv_cost + vf[this_state])
+                inv_cost = inv_on_hand * h if inv_on_hand >= 0 else -inv_on_hand * b
+                cost += demand_prob[dem] * (inv_cost + vf[this_state])
         if cost < best_cost:
             best_cost = cost
             best_action = (qe, qr)
 
-    if not best_action:
+    #if not best_action:
         # If there is no best action it means we were left in a state we were not supposed 
         # to ever get there with optimal play; we can remove it
-        vf.pop(state, None)
-        states.remove(state)
+        #vf.pop(state, None)
+        #states.remove(state)
 
     return best_cost, best_action
 
-def main(filename='ds1.in'):
-    instance_data = load_data(filename)
+def main():
+    """
+    Value iteration function.
+    
+    Parameters: 
+    filename (str): filename of parameter file.
+    
+    """
     # In problems where demand in [0, 4], the expedited inventory position is between -8 and 13
     # Note that some of the states should never be reached (the ones with high inventory and high qr)
     # If we land in such a state we will remove it
@@ -95,39 +68,58 @@ def main(filename='ds1.in'):
     actions = list(product(range(5+1), range(5+1)))
     # Values can be initiated arbitrarily
     vals = np.repeat(1, len(states))
-    vf = dict(zip(states, vals))
+    vf_ = dict(zip(states,vals))
+    
+    vf = Dict.empty(key_type=types.UniTuple(types.int64, 2),value_type=types.float64)       
+    for k, v in vf_.items():
+        vf[k] = v 
+        
+    demand_prob_ = dict(zip(np.arange(d_min, d_max + 1), np.repeat(1 / (support+1), support+1)))
 
+    demand_prob = Dict.empty(key_type=types.float64,value_type=types.float64)       
+    for k, v in demand_prob_.items():
+        demand_prob[k] = v
+    
     max_iterations, tolerance, delta = 200000, 10e-8, 10.
     all_values = np.zeros(max_iterations)
     these_values = np.zeros(len(states))
 
-    stat_time = time.time()
+    start_time = time.time()
 
     # Main value iteration loop
-    for iteration in range(max_iterations):
+    for iteration in range(120):
         # We first store the each newly updated state
+        
         for idx, state in enumerate(states):
-            these_values[idx], best_action = vf_update(state, vf, actions, states, instance_data)
+            #print(idx, state, len(states))
+            these_values[idx], best_action = vf_update(state, vf, demand_prob, actions, states)
         # After the minimum for each state has been calculated, we update the states
         # If done in the same loop, converge sucks even more
         for idx, state in enumerate(states):
             vf[state] = these_values[idx]
 
-        values = np.array([val for val in vf.values()])
-        this_average = values.mean()
+        this_average = np.mean([val for val in vf.values()])
+        
         all_values[iteration] = this_average/(iteration+1)
 
-        if (iteration > 99) and (iteration % 100 == 0):
-            print(f'iteration: {iteration} average cost: {all_values[iteration]}')
+        if iteration > 1 and iteration % 100 == 0:
+            print('iteration: %d average cost: %1.2f'%(iteration,all_values[iteration]))
             delta = all_values[iteration - 1] - all_values[iteration]
             if delta <= tolerance:
                 break
 
-    end_time = time.time() - stat_time
-    print(f'DP terminated after {end_time} seconds. Tolerance: {delta} Iterations: {iteration}')
+    end_time = time.time() - start_time
+    print('DP terminated after %1.2f seconds. Tolerance: %1.9f Iterations: %d'%(end_time,delta,iteration))
 
 
 if __name__ == '__main__':
-    filename = 'ds1.in' if not len(argv) > 1 else argv[1]
-    main(filename)
-
+   ce = 20
+   cr = 0
+   le = 0
+   lr = 2
+   h = 5
+   b = 495
+   d_min = 0
+   d_max = 4
+   support = d_max - d_min
+   main()
