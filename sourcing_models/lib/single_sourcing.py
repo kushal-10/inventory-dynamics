@@ -65,7 +65,7 @@ class SingleSourcingModel:
         self.current_inventory = self.target_inventory_position_level
         self.current_inventory_position = self.current_inventory
         self.inventory = [self.current_inventory]
-        self.inventory_position = [self.current_inventory_position]             
+        self.inventory_position = [self.current_inventory_position] 
         
     def inventory_evolution(self):
         """ 
@@ -96,6 +96,24 @@ class SingleSourcingModel:
         
         self.total_cost = sum(self.cost)
         
+    def calculate_optimal_cost(self):
+        
+        expected_backorder = 0
+        prob = (1/len(self.demand_support))**(self.lead_time+1)
+        demands = product(self.demand_support, repeat=self.lead_time+1)
+        for demand in demands:
+            sum_demand = sum(demand)
+            if sum_demand >= self.target_inventory_position_level:
+                expected_backorder += sum_demand - \
+                    self.target_inventory_position_level 
+        
+        expected_backorder *= prob        
+        
+        self.optimal_cost = self.holding_cost * \
+            ( self.target_inventory_position_level - \
+             (self.lead_time+1) * np.mean(self.demand_support) ) + \
+            (self.holding_cost + self.shortage_cost)*expected_backorder
+        
     def simulate(self):
         """ 
         Simulate single sourcing dynamics. Each period consists of the following
@@ -124,3 +142,5 @@ class SingleSourcingModel:
             self.inventory_evolution()
                                                 
         self.calculate_total_cost()
+        
+        self.calculate_optimal_cost()

@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lib.single_sourcing import *
 
-np.random.seed(10)
+np.random.seed(20)
 
 l = 2
 h = 5
 b = 495
 r = 10
-T = 100
+T = 1000
 
 S = SingleSourcingModel(l=l, 
                         h=h, 
@@ -20,6 +20,7 @@ S = SingleSourcingModel(l=l,
 
 S.simulate()  
 
+print("optimal cost:", S.optimal_cost)
 print("average cost (base stock):", S.total_cost/T)
 
 plt.figure()

@@ -54,8 +54,7 @@ class DualSourcingController(torch.nn.Module):
                 ):
         pass
 
-
-class FullyConnectedRegressionController(DualSourcingController):
+class DualFullyConnectedRegressionController(DualSourcingController):
     def __init__(self,
                  lr,
                  le,
@@ -139,3 +138,90 @@ class FullyConnectedRegressionController(DualSourcingController):
         qr = h[:, 0].unsqueeze(-1)
         qe = h[:, 1].unsqueeze(-1)
         return qr, qe
+    
+class SingleSourcingController(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+    @abc.abstractmethod
+    def forward(self,
+                current_demand,
+                current_inventory,
+                past_orders
+                ):
+        pass
+
+class SingleFullyConnectedRegressionController(DualSourcingController):
+    def __init__(self,
+                 l,
+                 n_hidden_units=None,
+                 activations=None,
+                 initializations=None,
+                 allow_rounding_correction=True
+                 ):
+        super().__init__()
+        is_shallow = (n_hidden_units is None)
+        out_features_l0 = 1
+        self.layers = []
+
+        self.l = l
+        
+        if not is_shallow:
+            out_features_l0 = n_hidden_units[0]
+            for i in range(len(n_hidden_units) - 1):
+                intermediate_layer = torch.nn.Linear(in_features=n_hidden_units[i],
+                                                     out_features=n_hidden_units[i + 1]
+                                                     )
+                self.layers.append(intermediate_layer)
+            output_layer = torch.nn.Linear(in_features=n_hidden_units[-1], out_features=2)
+            self.layers.append(output_layer)
+
+        input_layer = torch.nn.Linear(in_features=l + 1,
+                                      out_features=out_features_l0)
+        self.layers.insert(0, input_layer)
+        self.layers = torch.nn.ModuleList(self.layers)
+
+        if activations is not None:
+            self.activations = activations
+        elif isinstance(n_hidden_units, list):
+            self.activations = [torch.relu] * (len(n_hidden_units) + 1)
+        else:
+            self.activations = [torch.relu]
+
+        self.initializations = initializations
+        if self.initializations is not None:
+            for layer in self.layers:
+                for j, name, param in enumerate(layer.named_parameters()):
+                    if not ('bias' in name or (torch.tensor(param.shape) < 2).all()):
+                        self.initializations[j](param)
+        self.allow_rounding_correction = allow_rounding_correction
+
+    def forward(self,
+                current_demand,
+                current_inventory,
+                past_orders,
+                ):
+        observation_list = [
+            current_inventory
+        ]
+        if isinstance(past_orders, list):
+            order_obs = torch.cat(past_orders[-self.l:], dim=-1)
+        else:
+            order_obs = past_orders[:,-self.lr:]
+        observation_list.append(order_obs)
+        
+        observation = torch.cat(observation_list, dim=-1)
+        h = observation
+        for j, layer in enumerate(self.layers):
+            h = layer(h)
+            if j < len(self.layers) - 1:
+                h = self.activations[j](h)
+            else:
+                h = torch.relu(h)  # we need the outputs to always be positive
+        if self.allow_rounding_correction:
+            h = h - torch.frac(h).clone().detach()
+
+        q = h[:, 0].unsqueeze(-1)
+        return q
+    
