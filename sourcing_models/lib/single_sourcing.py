@@ -53,7 +53,7 @@ class SingleSourcingModel:
         
         if optimal_base_stock:
             sort = sorted([sum([self.demand_distribution() for j in \
-                                range(self.lead_time+1)]) for i in range(1000)])
+                                range(self.lead_time+1)]) for i in range(100000)])
 
             self.target_inventory_position_level = sort[int(len(sort) * \
                                                    self.critical_fractile)]

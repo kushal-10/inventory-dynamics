@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import torch
 import os
 
-from dual_sourcing.lib.dual_sourcing import single_index_zr_Delta, \
+from sourcing_models.lib.dual_sourcing import single_index_zr_Delta, \
 					      dual_index_ze_Delta, DualSourcingModel, \
                           capped_dual_index_parameters
+
+from sourcing_models.lib.single_sourcing import SingleSourcingModel
     
 def sample_trajectories_single_index(n_trajectories,
                                      optimization_samples = 100,
@@ -205,3 +207,43 @@ def sample_trajectories_capped_dual_index(n_trajectories,
         state_trajectories[i, :, 2] = c
         
     return state_trajectories, qr_trajectories, qe_trajectories
+
+def sample_trajectories_single_sourcing(n_trajectories,
+                                        seed = 1,
+                                        l = 2,
+                                        h = 5,
+                                        b = 495,
+                                        T = 100,
+                                        r = 10):
+                        
+    np.random.seed(seed)
+    
+    # each trajectory consists of T timesteps
+    if l == 0:
+        q_trajectories = torch.zeros([n_trajectories, T+1])
+    else:
+        q_trajectories = torch.zeros([n_trajectories, T+l])
+        
+    state_trajectories  = torch.zeros([n_trajectories, T+1, 3])
+    
+    for i in range(n_trajectories):
+        S = SingleSourcingModel(l=l, 
+                                h=h, 
+                                b=b,
+                                T=T, 
+                                r=r,
+                                I0=0,
+                                optimal_base_stock=False)
+
+        S.simulate()
+        
+        I  = torch.tensor(S.inventory)
+        D  = torch.tensor(S.demand)
+        q = torch.tensor(S.q)
+        c  = torch.tensor(S.cost)
+        state_trajectories[i, :, 0] = I
+        state_trajectories[i, :, 1] = D
+        q_trajectories[i, :] = q
+        state_trajectories[i, :, 2] = c
+        
+    return state_trajectories, q_trajectories

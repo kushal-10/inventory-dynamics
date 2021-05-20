@@ -208,8 +208,10 @@ class SingleFullyConnectedRegressionController(DualSourcingController):
         if isinstance(past_orders, list):
             order_obs = torch.cat(past_orders[-self.l:], dim=-1)
         else:
-            order_obs = past_orders[:,-self.lr:]
-        observation_list.append(order_obs)
+            order_obs = past_orders[:,-self.l:]
+        
+        if self.l > 0:
+            observation_list.append(order_obs)
         
         observation = torch.cat(observation_list, dim=-1)
         h = observation

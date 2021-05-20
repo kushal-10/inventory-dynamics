@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lib.single_sourcing import *
 
-np.random.seed(20)
+np.random.seed(10)
 
 l = 2
 h = 5
@@ -34,7 +34,7 @@ plt.tight_layout()
 plt.show()
 
 plt.figure()
-plt.plot(S.q, '-o', label = r"expedited order")
+plt.plot(S.q, '-o', label = r"order")
 plt.xlabel(r"time")
 plt.ylabel(r"value")
 plt.legend(loc = 4, ncol = 3)
