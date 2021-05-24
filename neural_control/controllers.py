@@ -174,7 +174,7 @@ class SingleFullyConnectedRegressionController(DualSourcingController):
                                                      out_features=n_hidden_units[i + 1]
                                                      )
                 self.layers.append(intermediate_layer)
-            output_layer = torch.nn.Linear(in_features=n_hidden_units[-1], out_features=2)
+            output_layer = torch.nn.Linear(in_features=n_hidden_units[-1], out_features=1, bias=False)
             self.layers.append(output_layer)
 
         input_layer = torch.nn.Linear(in_features=l + 1,
