@@ -435,7 +435,7 @@ def single_index_zr_Delta(samples,
                                       T=T, 
                                       I0=zr_arr[i],
                                       zr=zr_arr[i],
-                                      DeltaFalse=Delta_arr[i],
+                                      Delta=Delta_arr[i],
                                       single_index=True)
             
                 S.simulate()

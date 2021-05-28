@@ -65,7 +65,7 @@ class DualFullyConnectedRegressionController(DualSourcingController):
                  ):
         super().__init__()
         is_shallow = (n_hidden_units is None)
-        out_features_l0 = 2
+        out_features_l0 = 1
         self.layers = []
 
         self.lr = lr

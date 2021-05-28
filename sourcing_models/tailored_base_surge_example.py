@@ -26,7 +26,7 @@ optimal_Q, optimal_s = tailored_base_surge_Q_S(Q_arr,
                                                T)
 
 
-T = 100
+T = 1000
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 

@@ -4,10 +4,75 @@ import torch
 import os
 
 from sourcing_models.lib.dual_sourcing import single_index_zr_Delta, \
-					      dual_index_ze_Delta, DualSourcingModel, \
-                          capped_dual_index_parameters
+					       dual_index_ze_Delta, DualSourcingModel, \
+                          		       capped_dual_index_parameters, \
+                          		       tailored_base_surge_Q_S
 
 from sourcing_models.lib.single_sourcing import SingleSourcingModel
+
+def sample_trajectories_tailored_base_surge(n_trajectories,
+                                            ce = 20,
+                                            cr = 0,
+                                            le = 0,
+                                            lr = 2,
+                                            h = 5,
+                                            b = 495,
+                                            T = 100,
+                                            I0 = 0):
+    
+    Q_arr = np.arange(10)
+    s_arr = np.arange(10)
+
+    optimal_Q, optimal_s = tailored_base_surge_Q_S(Q_arr,
+                                               	   s_arr,
+                                               	   ce, 
+                                               	   cr, 
+                                               	   le, 
+                                               	   lr,
+                                               	   h, 
+                                               	   b, 
+                                               	   T)
+
+    # each trajectory consists of T timesteps
+    if le == 0:
+        qe_trajectories = torch.zeros([n_trajectories, T+1])
+    else:
+        qe_trajectories = torch.zeros([n_trajectories, T+le])
+    
+    if lr == 0:
+        qr_trajectories = torch.zeros([n_trajectories, T+1])
+    else:
+        qr_trajectories = torch.zeros([n_trajectories, T+lr])
+        
+    state_trajectories = torch.zeros([n_trajectories, T+1, 3])
+    
+    for i in range(n_trajectories):
+        S = DualSourcingModel(ce=ce, 
+                              cr=cr, 
+                              le=le, 
+                              lr=lr, 
+                              h=h, 
+                              b=b,
+                              T=T, 
+                              I0=I0,
+                              Q=optimal_Q,
+                              s=optimal_s,
+                              tailored_base_surge=True)
+
+        S.simulate()
+
+        I = torch.tensor(S.inventory)
+        D = torch.tensor(S.demand)
+        qe = torch.tensor(S.qe)
+        qr = torch.tensor(S.qr)
+        c = torch.tensor(S.cost)
+        state_trajectories[i, :, 0] = I
+        state_trajectories[i, :, 1] = D
+        qe_trajectories[i, :] = qe
+        qr_trajectories[i, :] = qr
+        state_trajectories[i, :, 2] = c
+    
+    return state_trajectories, qr_trajectories, qe_trajectories
     
 def sample_trajectories_single_index(n_trajectories,
                                      optimization_samples = 100,
@@ -19,7 +84,8 @@ def sample_trajectories_single_index(n_trajectories,
                                      h = 5,
                                      b = 495,
                                      T = 100,
-                                     zr = 100):
+                                     zr = 100,
+                                     I0 = 0):
     
     Delta_arr = np.arange(0,5)
 
@@ -149,10 +215,11 @@ def sample_trajectories_capped_dual_index(n_trajectories,
                                           lr = 2,
                                           h = 5,
                                           b = 495,
-                                          T = 100):
+                                          T = 100,
+                                          I0 = 0):
                         
     np.random.seed(seed)
-    u1_arr = np.arange(1,5)
+    u1_arr = np.arange(1,6)
     u2_arr = np.arange(8,12)
     u3_arr = np.arange(5)
 
@@ -165,7 +232,7 @@ def sample_trajectories_capped_dual_index(n_trajectories,
                                                                       lr,
                                                                       h, 
                                                                       b, 
-                                                                      50000)
+                                                                      10000)
     # each trajectory consists of T timesteps
     if le == 0:
         qe_trajectories = torch.zeros([n_trajectories, T+1])
@@ -187,7 +254,7 @@ def sample_trajectories_capped_dual_index(n_trajectories,
                               h=h, 
                               b=b,
                               T=T, 
-                              I0=0,
+                              I0=I0,
                               u1=optimal_u1,
                               u2=optimal_u2,
                               u3=optimal_u3,
