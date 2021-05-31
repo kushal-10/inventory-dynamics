@@ -59,10 +59,12 @@ def vf_update(state, vf, actions, states, this_data):
         # Partial state update
         ip_e = state[0] + qe + state[1]
 
+        pipeline = [*state[2:], qr] if state[2:] else qr
+
         for dem in range(min_d, max_d + 1):
             ipe_new = ip_e - dem
-            # This works only for l = 2, need to work out the general case
-            this_state = (ipe_new, qr)
+            # This should work for the general case
+            this_state = (ipe_new, *pipeline)
             # If we jump to a state that is not in our list, we are not playing optimal
             # so we can safely get out of here. 
             if this_state not in states:
@@ -90,7 +92,8 @@ def main(filename='ds1.in'):
     # In problems where demand in [0, 4], the expedited inventory position is between -8 and 13
     # Note that some of the states should never be reached (the ones with high inventory and high qr)
     # If we land in such a state we will remove it
-    states = list(product(range(-8, 15+1), range(5+1)))
+    dim_pipeline = instance_data.l_r - instance_data.l_e - 1
+    states = list(product(range(-8, 15 + 1), *(range(5 + 1),) * dim_pipeline))
     # SW mention we never need to order more than max demand for any mode
     actions = list(product(range(5+1), range(5+1)))
     # Values can be initiated arbitrarily
