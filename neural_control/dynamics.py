@@ -94,3 +94,84 @@ class DualSourcingModel(torch.nn.Module):
         self.learned_I_0 =  self.I_0.repeat([minibatch_size, 1]) - torch.frac(self.I_0).clone().detach()
         self.I_i = self.learned_I_0
         self.all_demands = [torch.zeros([minibatch_size, 1])]
+        
+class SingleSourcingModel(torch.nn.Module):
+    def __init__(self,
+                 controller: torch.nn.Module,
+                 l=2,
+                 h=5,
+                 b=495,
+                 T=50,
+                 I_0=0,
+                 learn_I_0=True,
+                 demand_generator=torch.distributions.Uniform(low=0, high=4 + 1)
+                 # high is exclusive
+                 ):
+        
+        super().__init__()
+        self.controller = controller
+        self.l = l
+        self.h = h
+        self.b = b
+        self.T = T
+        self.I_0 = torch.tensor([I_0], requires_grad=learn_I_0, dtype=torch.float)
+        self.demand_generator = demand_generator
+        self.controller = controller
+
+    def simulate(self):
+        sample_size = self.I_i.shape[0]
+        D = self.all_demands[-1]
+        q = self.controller(D, self.I_i, self.previous_q)
+
+        # orders are added to corresponding vectors
+        self.previous_q.append(q)
+
+        # orders arrive
+        qa = self.previous_q[self.current_timestep-self.l-1]
+
+        # demand is generated
+        D = self.demand_generator.sample(
+            [sample_size, 1]).int() # here we round a continuous sample
+        self.all_demands.append(D)
+        
+        # inventory and cost updates
+        self.I_i = self.I_i + qa
+
+        c_i = self.h * torch.relu(self.I_i - D) \
+              + self.b * torch.relu(D - self.I_i)
+              
+        self.I_i = self.I_i - D
+        
+        return c_i, D, self.I_i, q, qa
+
+    def replay_step(self, 
+                    previous_inventory, 
+                    current_demand, 
+                    qa, 
+                    q):
+
+        current_inventory = previous_inventory + qa
+
+        c_i = self.h * torch.relu(current_inventory - current_demand) + \
+              self.b * torch.relu(current_demand - current_inventory)
+        
+        current_inventory = current_inventory - current_demand
+
+        return c_i, current_inventory
+
+    def reset(self, 
+              minibatch_size=16, 
+              seed=None):
+
+        if not seed is None:
+            torch.manual_seed(seed)
+        self.current_timestep = 0
+        self.previous_q = [torch.zeros([minibatch_size, 1])]
+
+        if self.l > 0:
+            self.previous_q = self.previous_q  * self.l
+
+        self.learned_I_0 =  self.I_0.repeat([minibatch_size, 1]) - torch.frac(self.I_0).clone().detach()
+        self.I_i = self.learned_I_0
+        self.all_demands = [torch.zeros([minibatch_size, 1])]
+
