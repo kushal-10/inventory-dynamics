@@ -64,7 +64,7 @@ def vf_update(state, vf, actions, states, this_data):
         for dem in range(min_d, max_d + 1):
             ipe_new = ip_e - dem
             # This should work for the general case
-            this_state = (ipe_new, *pipeline)
+            this_state = (ipe_new, *pipeline) if state[2:] else (ipe_new, qr)
             # If we jump to a state that is not in our list, we are not playing optimal
             # so we can safely get out of here. 
             if this_state not in states:
