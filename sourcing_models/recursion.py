@@ -95,7 +95,9 @@ def main(filename='ds1.in'):
     # Note that some of the states should never be reached (the ones with high inventory and high qr)
     # If we land in such a state we will remove it
     dim_pipeline = instance_data.l_r - instance_data.l_e - 1
-    states = list(product(range(-8, 15 + 1), *(range(5 + 1),) * int(dim_pipeline)))
+    min_ip = instance_data.demand.max * instance_data.l_r
+    max_ip = (instance_data.l_r + 1) * (instance_data.demand.max + 1) + instance_data.demand.max
+    states = list(product(range(-int(min_ip), int(max_ip) + 1), *(range(5 + 1),) * int(dim_pipeline)))
     # SW mention we never need to order more than max demand for any mode
     actions = list(product(range(5+1), range(5+1)))
     # Values can be initiated arbitrarily
