@@ -26,10 +26,20 @@ def vf_update(state, vf, demand_prob, actions, states):
         # Partial state update
         ip_e = state[0] + qe + state[1]
 
+        if state[2:]:
+            pipeline = state[2:]
+        else: 
+            pipeline = qr
+
         for dem in range(d_min, d_max + 1):
             ipe_new = ip_e - dem
             # This works only for l = 2, need to work out the general case
-            this_state = (ipe_new, qr)
+            # this_state = (ipe_new, qr)
+            # This should work for the general case
+            if state[2:]:
+                pass # this_state = (ipe_new, pipeline[0], qr) 
+            else:
+                this_state = (ipe_new, qr)
             # If we jump to a state that is not in our list, we are not playing optimal
             # so we can safely get out of here. 
             if this_state not in states:
@@ -63,11 +73,12 @@ def main():
     # In problems where demand in [0, 4], the expedited inventory position is between -8 and 13
     # Note that some of the states should never be reached (the ones with high inventory and high qr)
     # If we land in such a state we will remove it
-    states = list(product(range(-8, 15+1), range(5+1)))
+    dim_pipeline = lr - le - 1
+    states = list(product(range(-8, 15 + 1), *(range(5 + 1),) * int(dim_pipeline)))
     # SW mention we never need to order more than max demand for any mode
     actions = list(product(range(5+1), range(5+1)))
     # Values can be initiated arbitrarily
-    vals = np.repeat(1, len(states))
+    vals = np.repeat(1., len(states))
     vf_ = dict(zip(states,vals))
     
     vf = Dict.empty(key_type=types.UniTuple(types.int64, 2),value_type=types.float64)       
@@ -87,8 +98,8 @@ def main():
     start_time = time.time()
 
     # Main value iteration loop
-    for iteration in range(120):
-        # We first store the each newly updated state
+    for iteration in range(5000):
+        # We first store each newly updated state
         
         for idx, state in enumerate(states):
             #print(idx, state, len(states))
@@ -98,7 +109,7 @@ def main():
         for idx, state in enumerate(states):
             vf[state] = these_values[idx]
 
-        this_average = np.mean([val for val in vf.values()])
+        this_average = np.mean([val for val in vf.values() if val < 10e8])
         
         all_values[iteration] = this_average/(iteration+1)
 
