@@ -62,17 +62,12 @@ def vf_update(state, vf, demand_prob, actions):
         # Partial state update
         ip_e = state[0] + qe + state[1]
 
-        if lr > 2:
-            pipeline = state[2:]
-        else:
-            pipeline = qr
+        pipeline = state[2:] if lr > 2 else qr
 
         for dem in range(d_min, d_max + 1):
             ipe_new = ip_e - dem
-            if lr > 2:
-                this_state = (ipe_new, *pipeline, qr)
-            else:
-                this_state = (ipe_new, qr)
+            this_state = (ipe_new, *pipeline, qr) if lr > 2 else (ipe_new, qr)
+
             # If we jump to a state that is not in our list, we are not playing optimal
             # so we can safely get out of here. 
             if this_state not in vf:
