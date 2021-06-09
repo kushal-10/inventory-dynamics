@@ -53,6 +53,7 @@ def vf_update(state, vf, actions, states, this_data):
     best_action, best_cost = None, 10e9
 
     max_d, min_d, prob = this_data.demand.max, this_data.demand.min, this_data.demand.prob
+    l_r = this_data.l_r
 
     for qe, qr in actions:
         # Immediate cost of action
@@ -60,12 +61,12 @@ def vf_update(state, vf, actions, states, this_data):
         # Partial state update
         ip_e = state[0] + qe + state[1]
 
-        pipeline = [*state[2:], qr] if state[2:] else qr
+        pipeline = [*state[2:], qr] if l_r > 2 else qr
 
         for dem in np.arange(min_d, max_d + 1):
             ipe_new = ip_e - dem
             # This should work for the general case
-            this_state = (ipe_new, *pipeline) if state[2:] else (ipe_new, qr)
+            this_state = (ipe_new, *pipeline) if l_r > 2 else (ipe_new, qr)
             # If we jump to a state that is not in our list, we are not playing optimal
             # so we can safely get out of here. 
             if this_state in vf:

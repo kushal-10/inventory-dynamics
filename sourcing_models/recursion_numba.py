@@ -70,7 +70,7 @@ def vf_update(state, vf, demand_prob, actions):
 
             # If we jump to a state that is not in our list, we are not playing optimal
             # so we can safely get out of here. 
-            if this_state not in vf:
+            if (this_state not in vf) or (vf[this_state] > 10e9 - 1.):
                 cost = 10e9
                 break
             else:
@@ -156,7 +156,6 @@ def main():
 
 if __name__ == '__main__':
     filename = 'ds1.in' if not len(argv) > 1 else argv[1]
-    # filename = '..\..\Instances\ce20lr_3_b495.in'
     instance_data = load_data()
     ce, cr, lr, le = instance_data.c_e, instance_data.c_r, instance_data.l_r, instance_data.l_e
     d_min, d_max, demand = instance_data.demand.min, instance_data.demand.max, instance_data.demand
