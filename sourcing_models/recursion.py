@@ -39,7 +39,7 @@ def load_data(filename):
     data.demand = demand
     return data
 
-# @profile
+
 def vf_update(state, vf, actions, states, this_data):
     """
     Calculation of value iteration for a single update.
