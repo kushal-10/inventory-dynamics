@@ -122,12 +122,16 @@ def main():
     for k, v in demand_prob_.items():
         demand_prob[k] = v
 
-    max_iterations, tolerance, delta = 200000, 10e-9, 10.
+    max_iterations, tolerance, delta = 400000, 10e-9, 10.
     all_values = np.zeros(max_iterations)
     these_values = np.zeros(len(states))
 
     start_time = time.time()
-
+    
+    iteration_arr = []
+    time_arr = []
+    value_arr = []
+    
     # Main value iteration loop
     for iteration in range(max_iterations):
         # We first store each newly updated state
@@ -145,12 +149,20 @@ def main():
         all_values[iteration] = this_average / (iteration + 1)
 
         if iteration > 1 and iteration % 100 == 0:
-            print('iteration: %d average cost: %1.2f' % (iteration, all_values[iteration]))
+            
+            iteration_arr.append(iteration)
+            time_arr.append(time.time() - start_time)
+            value_arr.append(all_values[iteration])
+
+            print('iteration: %d average cost: %1.3f' % (iteration, all_values[iteration]))
+            
             delta = all_values[iteration - 1] - all_values[iteration]
+            
             if delta <= tolerance:
                 break
 
     end_time = time.time() - start_time
+    np.savetxt('recursion_output/iteration_output_lr=%d_ce=%d.csv'%(lr,ce),np.c_[iteration_arr,time_arr,value_arr],fmt="%d,%1.2f,%1.9f",header="iteration,run time [seconds],cost")
     print('DP terminated after %1.2f seconds. Tolerance: %1.9f Iterations: %d' % (end_time, delta, iteration))
 
 
