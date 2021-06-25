@@ -219,8 +219,8 @@ def sample_trajectories_capped_dual_index(n_trajectories,
                                           I0 = 0):
                         
     np.random.seed(seed)
-    u1_arr = np.arange(1,6)
-    u2_arr = np.arange(8,12)
+    u1_arr = np.arange(10)
+    u2_arr = np.arange(8,16)
     u3_arr = np.arange(5)
 
     optimal_u1, optimal_u2, optimal_u3 = capped_dual_index_parameters(u1_arr,

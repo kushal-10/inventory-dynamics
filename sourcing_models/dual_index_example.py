@@ -27,7 +27,7 @@ optimal_ze, optimal_Delta = dual_index_ze_Delta(samples,
                                                 T,
                                                 ze)
 
-T = 100
+T = 200000
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 

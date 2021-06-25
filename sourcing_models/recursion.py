@@ -21,14 +21,14 @@ def load_data(filename):
     4   (max demand)
     """
     with open(filename, 'r') as f:
-        data.c_e = float(f.readline())
-        data.c_r = float(f.readline())
-        data.l_e = float(f.readline())
-        data.l_r = float(f.readline())
-        data.h = float(f.readline())
-        data.b = float(f.readline())
-        d_min = float(f.readline())
-        d_max = float(f.readline())
+        data.c_e = int(f.readline())
+        data.c_r = int(f.readline())
+        data.l_e = int(f.readline())
+        data.l_r = int(f.readline())
+        data.h = int(f.readline())
+        data.b = int(f.readline())
+        d_min = int(f.readline())
+        d_max = int(f.readline())
         # demand can be modeled in a better way (needs to be a class)
         # I will keep it like this for now
         demand.min = d_min
@@ -38,7 +38,6 @@ def load_data(filename):
         demand.prob = dict(zip(np.arange(d_min, d_max + 1), np.repeat(1 / (support+1), support+1)))
     data.demand = demand
     return data
-
 
 def vf_update(state, vf, actions, states, this_data):
     """
@@ -53,7 +52,6 @@ def vf_update(state, vf, actions, states, this_data):
     best_action, best_cost = None, 10e9
 
     max_d, min_d, prob = this_data.demand.max, this_data.demand.min, this_data.demand.prob
-    l_r = this_data.l_r
 
     for qe, qr in actions:
         # Immediate cost of action
@@ -61,22 +59,22 @@ def vf_update(state, vf, actions, states, this_data):
         # Partial state update
         ip_e = state[0] + qe + state[1]
 
-        pipeline = [*state[2:], qr] if l_r > 2 else qr
+        pipeline = [*state[2:], qr] if state[2:] else qr
 
-        for dem in np.arange(min_d, max_d + 1):
+        for dem in range(min_d, max_d + 1):
             ipe_new = ip_e - dem
             # This should work for the general case
-            this_state = (ipe_new, *pipeline) if l_r > 2 else (ipe_new, qr)
+            this_state = (ipe_new, *pipeline) if state[2:] else (ipe_new, qr)
             # If we jump to a state that is not in our list, we are not playing optimal
             # so we can safely get out of here. 
-            if this_state in vf:
+            if this_state not in states:
+                cost = 10e9
+                break
+            else:
                 # Careful: qr(t-1) has not arrived yet, we need to take it out
                 inv_on_hand = ipe_new - state[1]
                 inv_cost = inv_on_hand * this_data.h if inv_on_hand >= 0 else -inv_on_hand * this_data.b
                 cost += prob[dem] * (inv_cost + vf[this_state])
-            else:
-                cost = 10e9
-                break
         if cost < best_cost:
             best_cost = cost
             best_action = (qe, qr)
@@ -89,20 +87,17 @@ def vf_update(state, vf, actions, states, this_data):
 
     return best_cost, best_action
 
-
 def main(filename='ds1.in'):
     instance_data = load_data(filename)
     # In problems where demand in [0, 4], the expedited inventory position is between -8 and 13
     # Note that some of the states should never be reached (the ones with high inventory and high qr)
     # If we land in such a state we will remove it
     dim_pipeline = instance_data.l_r - instance_data.l_e - 1
-    min_ip = instance_data.demand.max * instance_data.l_r
-    max_ip = (instance_data.l_r + 1) * (instance_data.demand.max + 1) + instance_data.demand.max
-    states = list(product(range(-int(min_ip), int(max_ip) + 1), *(range(5 + 1),) * int(dim_pipeline)))
+    states = list(product(range(-8, 15 + 1), *(range(5 + 1),) * dim_pipeline))
     # SW mention we never need to order more than max demand for any mode
     actions = list(product(range(5+1), range(5+1)))
     # Values can be initiated arbitrarily
-    vals = np.repeat(1., len(states))
+    vals = np.repeat(1, len(states))
     vf = dict(zip(states, vals))
 
     max_iterations, tolerance, delta = 200000, 10e-9, 10.
@@ -138,4 +133,5 @@ def main(filename='ds1.in'):
 if __name__ == '__main__':
     filename = 'ds1.in' if not len(argv) > 1 else argv[1]
     main(filename)
+
 

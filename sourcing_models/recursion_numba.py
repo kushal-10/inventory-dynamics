@@ -122,7 +122,7 @@ def main():
     for k, v in demand_prob_.items():
         demand_prob[k] = v
 
-    max_iterations, tolerance, delta = 400000, 10e-9, 10.
+    max_iterations, tolerance, delta = 1000000, 10e-9, 10.
     all_values = np.zeros(max_iterations)
     these_values = np.zeros(len(states))
 
@@ -173,3 +173,4 @@ if __name__ == '__main__':
     d_min, d_max, demand = instance_data.demand.min, instance_data.demand.max, instance_data.demand
     h, b = instance_data.h, instance_data.b
     main()
+
