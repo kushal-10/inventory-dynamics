@@ -21,7 +21,8 @@ class DualSourcingModel:
                  single_index=False,
                  dual_index=False,
                  tailored_base_surge=False,
-                 capped_dual_index=False):
+                 capped_dual_index=False,
+                 demand_distribution=[-1]):
         """ 
         Initialization of dual sourcing model. 
         
@@ -47,6 +48,9 @@ class DualSourcingModel:
         dual_index (bool): dual index yes/no
         tailored_base_surge (bool): tailored base surge yes/no
         capped_dual_index (bool): capped dual index yes/no
+        demand_distribution (array): demand distribution that is given
+        by an array ([-1] indicates that the standard, uniform 
+        distribution should be used)
       
         """
 
@@ -89,8 +93,13 @@ class DualSourcingModel:
         self.demand = [self.current_demand]
         self.total_cost = 0
         
+        self.demand_flag = -1
         self.demand_support = [0,1,2,3,4]
         self.demand_distribution = lambda: np.random.choice(self.demand_support)
+
+        if demand_distribution[0] != -1:
+            self.demand_flag = 1
+            self.demand_distribution = lambda i: demand_distribution[i]
         
         # initialize single index policy parameters
         self.single_index = single_index
@@ -343,7 +352,11 @@ class DualSourcingModel:
             self.current_qr = self.qr[-self.lead_time_r-1]
             
             # (3) reveal demand
-            self.current_demand = self.demand_distribution()
+            if self.demand_flag == -1:
+            	self.current_demand = self.demand_distribution()
+            else:
+            	self.current_demand = self.demand_distribution(t)
+            	
             self.demand.append(self.current_demand)
         
             # (4) update inventory and costs
@@ -630,7 +643,8 @@ def capped_dual_index_parameters(u1_arr,
                                  lr=0,
                                  h=0, 
                                  b=0,
-                                 T=200):
+                                 T=200,
+                                 demand_distribution=[-1]):
     """ 
     This function calculates the dual index expedited target order level ze
     and corresponding target order level difference Delta
@@ -650,6 +664,9 @@ def capped_dual_index_parameters(u1_arr,
     h (int): holding cost per unit
     b (int): shortage cost per unit 
     T (int): number of periods
+    demand_distribution (array): demand distribution that is given
+    by an array ([-1] indicates that the standard, uniform 
+    distribution should be used)
     
     Returns:
     optimal_Q (int), optimal_S (int): optimal tailored base-surge parameters
@@ -664,19 +681,33 @@ def capped_dual_index_parameters(u1_arr,
     for u1 in u1_arr:
         for u2 in u2_arr:
             for u3 in u3_arr:
-           
-                S = DualSourcingModel(ce=ce, 
-                                      cr=cr, 
-                                      le=le, 
-                                      lr=lr, 
-                                      h=h, 
-                                      b=b,
-                                      T=T, 
-                                      I0=0,
-                                      u1=u1,
-                                      u2=u2,
-                                      u3=u3,
-                                      capped_dual_index=True)
+                if demand_distribution[0] == -1:
+                    S = DualSourcingModel(ce=ce, 
+		                                  cr=cr, 
+    		                              le=le, 
+    		                              lr=lr, 
+    		                              h=h, 
+    		                              b=b,
+    		                              T=T, 
+    		                              I0=0,
+    		                              u1=u1,
+    		                              u2=u2,
+    		                              u3=u3,
+    		                              capped_dual_index=True)
+                else:
+                    S = DualSourcingModel(ce=ce, 
+    		                              cr=cr, 
+    		                              le=le, 
+    		                              lr=lr, 
+    		                              h=h, 
+    		                              b=b,
+    		                              T=T, 
+    		                              I0=0,
+    		                              u1=u1,
+    		                              u2=u2,
+    		                              u3=u3,
+    		                              capped_dual_index=True,
+    		                              demand_distribution=demand_distribution)
             
                 S.simulate()
                 cost_tmp = S.total_cost/T
