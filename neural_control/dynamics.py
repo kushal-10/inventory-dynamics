@@ -12,7 +12,8 @@ class DualSourcingModel(torch.nn.Module):
                  T=50,
                  I_0=0,
                  learn_I_0=True,
-                 demand_generator=torch.distributions.Uniform(low=0, high=4 + 1)
+                 demand_generator=torch.distributions.Uniform(low=0, high=4 + 1),
+                 demand_distribution=[-1]
                  # high is exclusive
                  ):
         
@@ -26,10 +27,18 @@ class DualSourcingModel(torch.nn.Module):
         self.b = b
         self.T = T
         self.I_0 = torch.tensor([I_0], requires_grad=learn_I_0, dtype=torch.float)
+        
+        self.demand_flag = -1
         self.demand_generator = demand_generator
+
+        if demand_distribution[0] != -1:
+            self.demand_flag = 1
+            self.demand_generator = lambda i: demand_distribution[i]
+            
         self.controller = controller
 
     def simulate(self):
+    		  
         sample_size = self.I_i.shape[0]
         D = self.all_demands[-1]
         qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
@@ -43,10 +52,14 @@ class DualSourcingModel(torch.nn.Module):
         qea = self.previous_qe[self.current_timestep-self.le-1]
 
         # demand is generated
-        D = self.demand_generator.sample(
-            [sample_size, 1]).int() # here we round a continuous sample
-        self.all_demands.append(D)
-        
+        if self.demand_flag == -1:
+            D = self.demand_generator.sample(
+                [sample_size, 1]).int() # here we round a continuous sample
+            self.all_demands.append(D)
+        else:
+            D = self.demand_generator(self.current_timestep)
+            self.all_demands.append(D)
+
         # inventory and cost updates
         self.I_i = self.I_i + qra + qea
 
@@ -54,6 +67,8 @@ class DualSourcingModel(torch.nn.Module):
               + self.b * torch.relu(D - self.I_i)
               
         self.I_i = self.I_i - D
+        
+        self.current_timestep += 1
 
         return c_i, D, self.I_i, qr, qra, qe, qea
 
@@ -141,7 +156,7 @@ class SingleSourcingModel(torch.nn.Module):
               + self.b * torch.relu(D - self.I_i)
               
         self.I_i = self.I_i - D
-        
+                
         return c_i, D, self.I_i, q, qa
 
     def replay_step(self, 
