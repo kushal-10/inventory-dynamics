@@ -33,12 +33,13 @@ class DualSourcingModel(torch.nn.Module):
 
         if demand_distribution[0] != -1:
             self.demand_flag = 1
-            self.demand_generator = lambda i: demand_distribution[i]
-            
+            self.demand_generator = lambda i,num_samples: \
+                torch.from_numpy(demand_distribution[0](i,num_samples)).int().unsqueeze(-1)
+        
         self.controller = controller
 
     def simulate(self):
-    		  
+
         sample_size = self.I_i.shape[0]
         D = self.all_demands[-1]
         qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
@@ -57,7 +58,7 @@ class DualSourcingModel(torch.nn.Module):
                 [sample_size, 1]).int() # here we round a continuous sample
             self.all_demands.append(D)
         else:
-            D = self.demand_generator(self.current_timestep)
+            D = self.demand_generator(self.current_timestep,sample_size)
             self.all_demands.append(D)
 
         # inventory and cost updates

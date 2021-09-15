@@ -216,35 +216,41 @@ def sample_trajectories_capped_dual_index(n_trajectories,
                                           h = 5,
                                           b = 495,
                                           T = 100,
-                                          I0 = 0):
+                                          I0 = 0,
+                                          demand_distribution = [-1],
+                                          optimal_u1 = -1,
+                                          optimal_u2 = -1,
+                                          optimal_u3 = -1):
                         
     np.random.seed(seed)
     u1_arr = np.arange(10)
     u2_arr = np.arange(8,16)
     u3_arr = np.arange(5)
-
-    optimal_u1, optimal_u2, optimal_u3 = capped_dual_index_parameters(u1_arr,
-                                                                      u2_arr,
-                                                                      u3_arr,
-                                                                      ce, 
-                                                                      cr, 
-                                                                      le, 
-                                                                      lr,
-                                                                      h, 
-                                                                      b, 
-                                                                      10000)
+    
+    if optimal_u1 == -1:
+        optimal_u1, optimal_u2, optimal_u3 = capped_dual_index_parameters(u1_arr,
+                                                                          u2_arr,
+                                                                          u3_arr,
+                                                                          ce, 
+                                                                          cr, 
+                                                                          le, 
+                                                                          lr,
+                                                                          h, 
+                                                                          b, 
+                                                                          10000)        
+        
     # each trajectory consists of T timesteps
     if le == 0:
-        qe_trajectories = torch.zeros([n_trajectories, T+1])
+        qe_trajectories = torch.zeros([n_trajectories, T+1], dtype=torch.int32)
     else:
-        qe_trajectories = torch.zeros([n_trajectories, T+le])
+        qe_trajectories = torch.zeros([n_trajectories, T+le], dtype=torch.int32)
     
     if lr == 0:
-        qr_trajectories = torch.zeros([n_trajectories, T+1])
+        qr_trajectories = torch.zeros([n_trajectories, T+1], dtype=torch.int32)
     else:
-        qr_trajectories = torch.zeros([n_trajectories, T+lr])
+        qr_trajectories = torch.zeros([n_trajectories, T+lr], dtype=torch.int32)
         
-    state_trajectories  = torch.zeros([n_trajectories, T+1, 3])
+    state_trajectories  = torch.zeros([n_trajectories, T+1, 3], dtype=torch.int32)
     
     for i in range(n_trajectories):
         S = DualSourcingModel(ce=ce, 
@@ -258,7 +264,8 @@ def sample_trajectories_capped_dual_index(n_trajectories,
                               u1=optimal_u1,
                               u2=optimal_u2,
                               u3=optimal_u3,
-                              capped_dual_index=True)
+                              capped_dual_index=True,
+                              demand_distribution=demand_distribution)
 
         S.simulate()
         

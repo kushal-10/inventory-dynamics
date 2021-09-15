@@ -95,11 +95,11 @@ class DualSourcingModel:
         
         self.demand_flag = -1
         self.demand_support = [0,1,2,3,4]
-        self.demand_distribution = lambda: np.random.choice(self.demand_support)
+        self.demand_generator = lambda: np.random.choice(self.demand_support)
 
         if demand_distribution[0] != -1:
             self.demand_flag = 1
-            self.demand_distribution = lambda i: demand_distribution[i]
+            self.demand_generator = lambda i: int(demand_distribution[0](i,1))
         
         # initialize single index policy parameters
         self.single_index = single_index
@@ -353,9 +353,9 @@ class DualSourcingModel:
             
             # (3) reveal demand
             if self.demand_flag == -1:
-            	self.current_demand = self.demand_distribution()
+            	self.current_demand = self.demand_generator()
             else:
-            	self.current_demand = self.demand_distribution(t)
+            	self.current_demand = self.demand_generator(t)
             	
             self.demand.append(self.current_demand)
         

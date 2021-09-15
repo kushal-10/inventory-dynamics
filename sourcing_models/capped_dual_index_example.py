@@ -28,7 +28,7 @@ b = 495
 #                                                                    b, 
 #                                                                    T)
 
-T = 500000
+T = 50
 S = DualSourcingModel(ce=ce, 
                       cr=cr, 
                       le=le, 
