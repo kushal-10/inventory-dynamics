@@ -38,11 +38,15 @@ class DualSourcingModel(torch.nn.Module):
         
         self.controller = controller
 
-    def simulate(self):
+    def simulate(self,t=0):
 
         sample_size = self.I_i.shape[0]
         D = self.all_demands[-1]
-        qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
+        
+        if self.demand_flag == -1:
+            qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
+        else:
+            qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, t)
 
         # orders are added to corresponding vectors
         self.previous_qr.append(qr)
