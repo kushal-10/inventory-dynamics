@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 class DualSourcingModel(torch.nn.Module):
     def __init__(self,
@@ -38,15 +39,18 @@ class DualSourcingModel(torch.nn.Module):
         
         self.controller = controller
 
-    def simulate(self,t=0):
+    def simulate(self,mean=0,std=0):
 
+        if self.demand_flag == 1 and self.current_timestep == 0:
+            np.random.seed(10)
+            
         sample_size = self.I_i.shape[0]
         D = self.all_demands[-1]
         
         if self.demand_flag == -1:
             qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
         else:
-            qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, t)
+            qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, mean, std)
 
         # orders are added to corresponding vectors
         self.previous_qr.append(qr)
@@ -148,7 +152,7 @@ class SingleSourcingModel(torch.nn.Module):
 
         # orders arrive
         qa = self.previous_q[self.current_timestep-self.l-1]
-
+	
         # demand is generated
         D = self.demand_generator.sample(
             [sample_size, 1]).int() # here we round a continuous sample
@@ -185,6 +189,7 @@ class SingleSourcingModel(torch.nn.Module):
 
         if not seed is None:
             torch.manual_seed(seed)
+            
         self.current_timestep = 0
         self.previous_q = [torch.zeros([minibatch_size, 1])]
 

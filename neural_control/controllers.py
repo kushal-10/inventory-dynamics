@@ -277,18 +277,21 @@ class DualFullyConnectedRegressionControllerTime(DualSourcingController):
                 current_inventory,
                 past_regular_orders,
                 past_expedited_orders,
-                time = 0
+                mean = 0,
+                std = 0,
                 ):
-        observation_list = [
-            current_inventory
-        ]
-
-        observation_list.append(time*torch.ones_like(current_inventory,requires_grad=True))
-
+        observation_list = []
+        #    current_inventory
+        #]
+        
+        observation_list.append(mean*torch.ones_like(current_inventory,requires_grad=True))
+        observation_list.append(std*torch.ones_like(current_inventory,requires_grad=True))
+        
         if isinstance(past_regular_orders, list):
             reg_order_obs = torch.cat(past_regular_orders[-self.lr:], dim=-1)
         else:
             reg_order_obs = past_regular_orders[:,-self.lr:]
+        reg_order_obs[:,0] += current_inventory.flatten()
         observation_list.append(reg_order_obs)
 
         if isinstance(past_expedited_orders, list):

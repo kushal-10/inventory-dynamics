@@ -282,6 +282,89 @@ def sample_trajectories_capped_dual_index(n_trajectories,
         
     return state_trajectories, qr_trajectories, qe_trajectories
 
+def optimal_u1_func(h,
+                    b,
+                    D_low,
+                    D_high):
+
+    return (h*D_low+b*D_high)/(h+b)
+
+def optimal_u2_func(h,
+                    b,
+                    D_low,
+                    D_high,
+                    L):
+    
+    return (h*D_low*L+b*D_high*L)/(h+b)
+
+def sample_trajectories_capped_dual_index_temporal(n_trajectories,
+                                                   mean_demand_arr,
+                                                   std_demand_arr,
+                                                   seed = 1,
+                                                   ce = 20,
+                                                   cr = 0,
+                                                   le = 0,
+                                                   lr = 2,
+                                                   h = 5,
+                                                   b = 495,
+                                                   T = 100,
+                                                   I0 = 0,
+                                                   demand_distribution = [-1]):
+    # determine optimal CDI parameters                             
+    optimal_u1 = [int(optimal_u1_func(h, b, \
+                 max(0,mean_demand_arr[i]-2.58*std_demand_arr[i]), \
+                 mean_demand_arr[i]+2.58*std_demand_arr[i])) \
+                 for i in range(len(mean_demand_arr))]
+    optimal_u2 = [int(optimal_u2_func(h, b, \
+                 max(0,mean_demand_arr[i]-2.58*std_demand_arr[i]), \
+                 mean_demand_arr[i]+2.58*std_demand_arr[i], lr-le)) \
+                 for i in range(len(mean_demand_arr))]
+    optimal_u3 = optimal_u2
+    
+    print(optimal_u1)
+    # each trajectory consists of T timesteps
+    if le == 0:
+        qe_trajectories = torch.zeros([n_trajectories, T+1], dtype=torch.int32)
+    else:
+        qe_trajectories = torch.zeros([n_trajectories, T+le], dtype=torch.int32)
+    
+    if lr == 0:
+        qr_trajectories = torch.zeros([n_trajectories, T+1], dtype=torch.int32)
+    else:
+        qr_trajectories = torch.zeros([n_trajectories, T+lr], dtype=torch.int32)
+        
+    state_trajectories  = torch.zeros([n_trajectories, T+1, 3], dtype=torch.int32)
+    
+    for i in range(n_trajectories):
+        S = DualSourcingModel(ce=ce, 
+                              cr=cr, 
+                              le=le, 
+                              lr=lr, 
+                              h=h, 
+                              b=b,
+                              T=T, 
+                              I0=I0,
+                              u1=optimal_u1,
+                              u2=optimal_u2,
+                              u3=optimal_u3,
+                              capped_dual_index=True,
+                              demand_distribution=demand_distribution)
+
+        S.simulate()
+        
+        I  = torch.tensor(S.inventory)
+        D  = torch.tensor(S.demand)
+        qe = torch.tensor(S.qe)
+        qr = torch.tensor(S.qr)
+        c  = torch.tensor(S.cost)
+        state_trajectories[i, :, 0] = I
+        state_trajectories[i, :, 1] = D
+        qe_trajectories[i, :] = qe
+        qr_trajectories[i, :] = qr
+        state_trajectories[i, :, 2] = c
+        
+    return state_trajectories, qr_trajectories, qe_trajectories
+
 def sample_trajectories_single_sourcing(n_trajectories,
                                         seed = 1,
                                         l = 2,
