@@ -319,7 +319,7 @@ def sample_trajectories_capped_dual_index_temporal(n_trajectories,
                  max(0,mean_demand_arr[i]-2.58*std_demand_arr[i]), \
                  mean_demand_arr[i]+2.58*std_demand_arr[i], lr-le)) \
                  for i in range(len(mean_demand_arr))]
-    optimal_u3 = optimal_u2
+    optimal_u3 = optimal_u1
     
     print(optimal_u1)
     # each trajectory consists of T timesteps
