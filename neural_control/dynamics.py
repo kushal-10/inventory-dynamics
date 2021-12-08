@@ -57,8 +57,8 @@ class DualSourcingModel(torch.nn.Module):
         self.previous_qe.append(qe)
 
         # orders arrive
-        qra = self.previous_qr[self.current_timestep-self.lr-1]
-        qea = self.previous_qe[self.current_timestep-self.le-1]
+        qra = self.previous_qr[-self.lr-1]
+        qea = self.previous_qe[-self.le-1]
 
         # demand is generated
         if self.demand_flag == -1:
