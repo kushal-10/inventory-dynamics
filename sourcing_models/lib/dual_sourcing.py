@@ -94,7 +94,7 @@ class DualSourcingModel:
         self.total_cost = 0
         
         self.demand_flag = -1
-        self.demand_support = [0,1,2,3,4]
+        self.demand_support = [0,1,2,3,4,5,6,7,8]
         self.demand_generator = lambda: np.random.choice(self.demand_support)
 
         if demand_distribution[0] != -1:
