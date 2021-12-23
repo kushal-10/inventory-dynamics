@@ -98,12 +98,12 @@ def main():
     dim_pipeline = lr - le - 1
     min_ip = int(d_max * lr)
     max_ip = int((lr + 1) * (d_max + 1) + d_max)
-    states_ = list(product(range(-min_ip, max_ip + 1), *(range(d_max + 1),) * int(dim_pipeline)))
+    states_ = list(product(range(-min_ip, max_ip + 1), *(range(int(d_max) + 1),) * int(dim_pipeline)))
     states = List()
     for state in states_:
         states.append(state)
     # SW mention we never need to order more than max demand for any mode
-    actions_ = list(product(range(d_max + 1), range(d_max + 1)))
+    actions_ = list(product(range(int(d_max) + 1), range(int(d_max) + 1)))
     actions = List()
     for action in actions_:
         actions.append(action)
