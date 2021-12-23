@@ -103,7 +103,7 @@ def main():
     for state in states_:
         states.append(state)
     # SW mention we never need to order more than max demand for any mode
-    actions_ = list(product(range(5 + 1), range(5 + 1)))
+    actions_ = list(product(range(d_max + 1), range(d_max + 1)))
     actions = List()
     for action in actions_:
         actions.append(action)
