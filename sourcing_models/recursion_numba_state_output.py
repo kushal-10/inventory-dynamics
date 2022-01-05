@@ -81,7 +81,7 @@ def vf_update(state, vf, demand_prob, actions):
                 cost += demand_prob[dem] * (inv_cost + vf[this_state])
         if cost < best_cost:
             best_cost = cost
-            best_action = (qe, qr)
+            best_action = (qr, qe)
 
     return best_cost, best_action
 
