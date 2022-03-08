@@ -18,8 +18,6 @@ An optimization example that uses real-world data is available in `MSOM_data/`.
 | `b`       | int     | shortage cost (per unit)                                      |
 | `le`      | int     | expedited order lead time                                     |
 | `lr`      | int     | regular order lead time                                       |
-| `ze`      | int     | expedited order target level (needed for dual-index strategy) |
-| `zr`      | int     | regular order target level (needed for single-index strategy) |
 | `T`       | int     | number of simulation periods                                  |
 
 ## Reference
