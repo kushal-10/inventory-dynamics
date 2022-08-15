@@ -311,15 +311,34 @@ def sample_trajectories_capped_dual_index_temporal(n_trajectories,
                                                    I0 = 0,
                                                    demand_distribution = [-1]):
     # determine optimal CDI parameters                             
-    optimal_u1 = [int(optimal_u1_func(h, b, \
-                 max(0,mean_demand_arr[i]-2.58*std_demand_arr[i]), \
-                 mean_demand_arr[i]+2.58*std_demand_arr[i])) \
-                 for i in range(len(mean_demand_arr))]
-    optimal_u2 = [int(optimal_u2_func(h, b, \
-                 max(0,mean_demand_arr[i]-2.58*std_demand_arr[i]), \
-                 mean_demand_arr[i]+2.58*std_demand_arr[i], lr-le)) \
-                 for i in range(len(mean_demand_arr))]
-    optimal_u3 = optimal_u1
+    #optimal_u1 = [int(optimal_u1_func(h, b, \
+    #             max(0,mean_demand_arr[i]-2.58*std_demand_arr[i]), \
+    #             mean_demand_arr[i]+2.58*std_demand_arr[i])) \
+    #             for i in range(len(mean_demand_arr))]
+    #optimal_u2 = [int(optimal_u2_func(h, b, \
+    #             max(0,mean_demand_arr[i]-2.58*std_demand_arr[i]), \
+    #             mean_demand_arr[i]+2.58*std_demand_arr[i], lr-le)) \
+    #             for i in range(len(mean_demand_arr))]
+    #optimal_u3 = optimal_u1
+    
+    l = lr-le
+    optimal_u1 = [(h*max(0,mean_demand_arr[i]-2.58*std_demand_arr[i])+b*( \
+             mean_demand_arr[i]+2.58*std_demand_arr[i]))/(h+b) \
+             for i in range(len(mean_demand_arr))]
+
+    optimal_u2 = [(h*sum([max(0,mean_demand_arr[i+j]-2.58*std_demand_arr[i+j]) for j in range(l)]) + b*(\
+             sum([mean_demand_arr[i+j]+2.58*std_demand_arr[i+j] for j in range(l)])))/(h+b) if i < len(mean_demand_arr)-l else \
+             (h*(sum([max(0,mean_demand_arr[i+j]-2.58*std_demand_arr[i+j]) for j in range(len(mean_demand_arr)-i)])+\
+             (l-len(mean_demand_arr)+i)*max(0,mean_demand_arr[-1]-2.58*std_demand_arr[-1])) + b*(\
+             sum([mean_demand_arr[i+j]+2.58*std_demand_arr[i+j] for j in range(len(mean_demand_arr)-i)])+\
+             (l-len(mean_demand_arr)+i)*max(0,mean_demand_arr[-1]+2.58*std_demand_arr[-1])))/(h+b)
+             for i in range(len(mean_demand_arr))]
+
+    optimal_u3 =  [(h*max(0,mean_demand_arr[i+l]-2.58*std_demand_arr[i+l])+b*( \
+             mean_demand_arr[i+l]+2.58*std_demand_arr[i+l]))/(h+b) if i < len(mean_demand_arr)-l else 
+             (h*max(0,mean_demand_arr[-1]-2.58*std_demand_arr[-1])+b*( \
+             mean_demand_arr[-1]+2.58*std_demand_arr[-1]))/(h+b) \
+             for i in range(len(mean_demand_arr))]
     
     print(optimal_u1)
     # each trajectory consists of T timesteps

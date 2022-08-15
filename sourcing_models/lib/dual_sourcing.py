@@ -346,8 +346,8 @@ class DualSourcingModel:
                 ItLm1 = self.capped_dual_index_sum(self.lead_time_difference-1)
                 
                 if self.demand_flag == 1:
-                    self.qe.append(max(0,self.s_e_optimal[t]-Itt))
-                    self.qr.append(min(max(0,self.s_r_optimal[t]-ItLm1),self.q_r_ast[t]))
+                    self.qe.append(int(max(0,self.s_e_optimal[t]-Itt)))
+                    self.qr.append(int(min(max(0,self.s_r_optimal[t]-ItLm1),self.q_r_ast[t])))
                 else:
                     self.qe.append(max(0,self.s_e_optimal-Itt))
                     self.qr.append(min(max(0,self.s_r_optimal-ItLm1),self.q_r_ast))
