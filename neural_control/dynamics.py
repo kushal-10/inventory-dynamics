@@ -13,7 +13,7 @@ class DualSourcingModel(torch.nn.Module):
                  T=50,
                  I_0=0,
                  learn_I_0=True,
-                 demand_generator=torch.distributions.Uniform(low=0, high=8 + 1),
+                 demand_generator=torch.distributions.Uniform(low=0, high=4 + 1),
                  demand_distribution=[-1]
                  # high is exclusive
                  ):
