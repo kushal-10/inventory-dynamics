@@ -14,7 +14,8 @@ class DualSourcingModel(torch.nn.Module):
                  I_0=0,
                  learn_I_0=True,
                  demand_generator=torch.distributions.Uniform(low=0, high=4 + 1),
-                 demand_distribution=[-1]
+                 demand_distribution=[-1],
+                 empirical_baseline=1
                  # high is exclusive
                  ):
         
@@ -28,6 +29,7 @@ class DualSourcingModel(torch.nn.Module):
         self.b = b
         self.T = T
         self.I_0 = torch.tensor([I_0], requires_grad=learn_I_0, dtype=torch.float)
+        self.empirical_baseline = empirical_baseline
         
         self.demand_flag = -1
         self.demand_generator = demand_generator
@@ -50,7 +52,12 @@ class DualSourcingModel(torch.nn.Module):
         if self.demand_flag == -1:
             qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe)
         else:
-            qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, mean, std)
+            if self.empirical_baseline == 1:
+                qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, mean, std)
+            elif self.empirical_baseline == 2:
+                min_demands = [max(0,mean[i]-2.58*std[i]) for i in range(len(mean))]
+                max_demands = [mean[i]+2.58*std[i] for i in range(len(mean))]
+                qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, min_demands, max_demands)
 
         # orders are added to corresponding vectors
         self.previous_qr.append(qr)
