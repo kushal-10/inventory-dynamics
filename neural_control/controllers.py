@@ -344,7 +344,7 @@ class DualFullyConnectedRegressionControllerTime2(DualSourcingController):
             output_layer = torch.nn.Linear(in_features=n_hidden_units[-1], out_features=2)
             self.layers.append(output_layer)
 
-        input_layer = torch.nn.Linear(in_features=lr + le + 2*lr,
+        input_layer = torch.nn.Linear(in_features=lr + le + 2*(lr-le),
                                       out_features=out_features_l0)
         self.layers.insert(0, input_layer)
         self.layers = torch.nn.ModuleList(self.layers)
