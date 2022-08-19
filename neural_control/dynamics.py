@@ -58,6 +58,9 @@ class DualSourcingModel(torch.nn.Module):
                 min_demands = [max(0,mean[i]-2.58*std[i]) for i in range(len(mean))]
                 max_demands = [mean[i]+2.58*std[i] for i in range(len(mean))]
                 qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, min_demands, max_demands)
+            else:
+                self.demand_arr[:len(self.all_demands)] = self.all_demands
+                qr, qe = self.controller(D, self.I_i, self.previous_qr, self.previous_qe, self.demand_arr, mean, std)
 
         # orders are added to corresponding vectors
         self.previous_qr.append(qr)
@@ -125,6 +128,10 @@ class DualSourcingModel(torch.nn.Module):
         self.learned_I_0 =  self.I_0.repeat([minibatch_size, 1]) - torch.frac(self.I_0).clone().detach()
         self.I_i = self.learned_I_0
         self.all_demands = [torch.zeros([minibatch_size, 1])]
+        
+        self.demand_arr = 0
+        if self.empirical_baseline == 3:
+            self.demand_arr = [-1.0*torch.ones([minibatch_size, 1]) for i in range(self.T)]
         
 class SingleSourcingModel(torch.nn.Module):
     def __init__(self,
