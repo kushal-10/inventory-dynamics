@@ -140,6 +140,7 @@ class DualFullyConnectedRegressionController(DualSourcingController):
         qe = h[:, 1].unsqueeze(-1)
         return qr, qe
 
+
 class DualFullyConnectedRegressionControllerCompressed(DualSourcingController):
     def __init__(self,
                  lr,
