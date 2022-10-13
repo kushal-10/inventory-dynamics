@@ -218,7 +218,8 @@ class DualFullyConnectedRegressionControllerCompressed(DualSourcingController):
             if j < len(self.layers) - 1:
                 h = self.activations[j](h)
             else:
-                h = torch.relu(h)  # we need the outputs to always be positive
+                #h = torch.relu(h)# we need the outputs to always be positive
+                h = h - h.detach()*(h <= 0)
         if self.allow_rounding_correction:
             h = h - torch.frac(h).clone().detach()
 
