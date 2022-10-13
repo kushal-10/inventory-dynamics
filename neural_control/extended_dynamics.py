@@ -29,7 +29,12 @@ class SequentialDualSourcing(torch.nn.Module):
         self.h = h
         self.b = b
         self.T = T
-        self.I_0 = torch.tensor([I_0], requires_grad=learn_I_0, dtype=torch.float)
+
+        I_0 = torch.tensor([I_0], requires_grad=learn_I_0, dtype=torch.float)
+        if learn_I_0:
+            self.I_0 = torch.nn.Parameter(I_0)
+        else:
+            self.I_0 = I_0
         self.fe = fe
         self.fr = fr
         self.demand_generator = demand_generator
