@@ -40,6 +40,9 @@ def load_data():
         support = d_max - d_min
         demand.support = support
         demand.prob = dict(zip(np.arange(d_min, d_max + 1), np.repeat(1 / (support + 1), support + 1)))
+        if 'fc' in filename:
+            data.f_e = float(f.readline())
+            data.f_r = float(f.readline())
     data.demand = demand
     return data
 
@@ -60,6 +63,10 @@ def vf_update(state, vf, demand_prob, actions):
     for qe, qr in actions:
         # Immediate cost of action
         cost = qe * ce
+        if qe:
+            cost += fe
+        if qr:
+            cost += fr        
         # Partial state update
         ip_e = state[0] + qe + state[1]
 
@@ -104,7 +111,7 @@ def main():
     for state in states_:
         states.append(state)
     # SW mention we never need to order more than max demand for any mode
-    actions_ = list(product(range(int(d_max) + 1), range(int(d_max) + 1)))
+    actions_ = list(product(range(int(d_max)*2 + 1), range(int(d_max)*2 + 1)))
     actions = List()
     for action in actions_:
         actions.append(action)
@@ -166,7 +173,10 @@ def main():
                     if qa:
                         qf[state] = qa
                 ilr, ice, ib, ih, iu = int(lr), int(ce), int(b), int(h), int(d_max)
-                f_name = f'dp_state_output_lr={ilr}ce={ice}b={ib}h={ih}u={iu}.p'
+                if fe==0.:
+                    f_name = f'dp_state_output_lr={ilr}ce={ice}b={ib}h={ih}u={iu}.p'
+                else:
+                    f_name = f'dp_state_output_lr={ilr}ce={ice}b={ib}h={ih}u={iu}fe={fe}fr={fr}.p'
                 pickle.dump(qf, open(f_name, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
                 break
 
@@ -181,5 +191,8 @@ if __name__ == '__main__':
     ce, cr, lr, le = instance_data.c_e, instance_data.c_r, instance_data.l_r, instance_data.l_e
     d_min, d_max, demand = instance_data.demand.min, instance_data.demand.max, instance_data.demand
     h, b = instance_data.h, instance_data.b
+    fe, fr = 0., 0.
+    if 'fc' in filename:
+        fe, fr = instance_data.f_e, instance_data.f_r    
     main()
 

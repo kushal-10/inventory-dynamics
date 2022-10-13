@@ -122,7 +122,7 @@ def main():
     # If we land in such a state we will ignore it
     dim_pipeline = lr - le - 1
     min_ip = int(d_max * lr)
-    max_ip = int((lr + 1) * (d_max))
+    max_ip = int((lr + 1) * (d_max + 1) + d_max) # int((lr + 1) * (d_max))
     states_ = list(product(range(-min_ip, max_ip + 1), *(range(int(d_max) + 1),) * int(dim_pipeline)))
     states = List()
     for state in states_:
@@ -185,11 +185,6 @@ def main():
             delta = all_values[iteration - 1] - all_values[iteration]
             
             if delta <= tolerance:
-                break
-         
-            time = time.time() - start_time
-            
-            if time >= 10:
                 break
          
     end_time = time.time() - start_time
