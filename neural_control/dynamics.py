@@ -93,8 +93,8 @@ class DualSourcingModel(torch.nn.Module):
               + self.b * torch.relu(D - self.I_i)
 
         # new cost update with fixed costs and identity straight-through positivity check
-        has_fe_cost = qe - torch.relu(qe).detach() + torch.ones_like(qe) * (qe > 0.1)
-        has_fr_cost = qr - torch.relu(qr).detach() + torch.ones_like(qr) * (qr > 0.1)
+        has_fe_cost = qe - qe.detach() + torch.ones_like(qe) * (qe > 0.1) #0.5*(torch.ones_like(qe)+torch.tanh(4*(qe-0.5*torch.ones_like(qe))))#qe - qe.detach() + torch.ones_like(qe) * (qe >= 1)#0.5*(torch.ones_like(qe)+torch.tanh(5*(qe-0.5*torch.ones_like(qe))))#qe - torch.relu(qe).detach() + torch.ones_like(qe) * (qe > 0.1)
+        has_fr_cost = qr - qr.detach() + torch.ones_like(qr) * (qr > 0.1)#0.5*(torch.ones_like(qr)+torch.tanh(4*(qr-0.5*torch.ones_like(qr))))#qr - qr.detach() + torch.ones_like(qr) * (qr >= 1)#0.5*(torch.ones_like(qr)+torch.tanh(5*(qr-0.5*torch.ones_like(qr))))
 
         c_i = c_i + self.fe * has_fe_cost + self.fr * has_fr_cost
 
