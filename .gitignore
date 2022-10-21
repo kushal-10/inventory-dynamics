@@ -1,3 +1,4 @@
 /neural_control/experiments/unused/
 .ipynb_checkpoints
 .pyc
+*.pyc
