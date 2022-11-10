@@ -380,6 +380,8 @@ class SequentialDualSourcingModel(torch.nn.Module):
         self.all_demands = [torch.zeros([minibatch_size, 1])]
 
 
+#TODO: implement non PINN cost calculator, i.e. there is no interaction between different steps, by detaching.
+
 def test_implementations(lr=3, le=2, N=2, T=5, I_0=10.0):
     N = N
     T = T
