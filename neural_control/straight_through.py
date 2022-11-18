@@ -26,6 +26,14 @@ class BinaryDecoupling(autograd.Function):
     def backward(ctx, grad_output):
         return grad_output
 
+class StraighThroughReLU(autograd.Function):
+    @staticmethod
+    def forward(ctx, input):
+        return torch.relu(input)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output
 
 class StraightThroughEstimator(nn.Module):
     def __init__(self, function: Callable = FractionalDecoupling.apply):
