@@ -46,13 +46,13 @@ def load_experiment_conf(filename: str):
 
 
 current_results = [
-    dict(baselines='NNC', b=495, mean_cost=747117, median_cost=692118, method='current'),
+    dict(baselines='NNC-RNN', b=495, mean_cost=747117, median_cost=692118, method='current'),
     dict(baselines='CDI', b=495, mean_cost=773993, median_cost=770362, method='current'),
-    dict(baselines='NNC', b=495, mean_cost=620968, median_cost=666600, method='future'),
+    dict(baselines='NNC-RNN', b=495, mean_cost=666600, median_cost=620968, method='future'),
     dict(baselines='CDI', b=495, mean_cost=722346, median_cost=716001, method='future'),
-    dict(baselines='NNC', b=95, mean_cost=583873, median_cost=563711, method='current'),
+    dict(baselines='NNC-RNN', b=95, mean_cost=583873, median_cost=563711, method='current'),
     dict(baselines='CDI', b=95, mean_cost=736018, median_cost=735265, method='current'),
-    dict(baselines='NNC', b=95, mean_cost=564003, median_cost=541150, method='future'),
+    dict(baselines='NNC-RNN', b=95, mean_cost=564003, median_cost=541150, method='future'),
     dict(baselines='CDI', b=95, mean_cost=684495, median_cost=682958, method='future')
 ]
 
@@ -139,7 +139,8 @@ class MSOMDemandSequenceExperiment:
                               ], dim=-1)
         return nn_input, initial_qr, initial_qe, inital_inventories, demands, past_demands
 
-    def validate_model(self, controller, val_N=512, test_T=None, dynamics=None):
+    def validate_model(self, controller, val_N=512, test_T=None, dynamics=None,
+                       **state_sequence_params):
         if test_T is None:
             test_T = self.T
         if dynamics is None:
@@ -148,7 +149,7 @@ class MSOMDemandSequenceExperiment:
             controller.eval()
             dynamics.reset(val_N)
             nn_input, initial_qr, initial_qe, initial_inventories, demands, past_demands = self.generate_state_sequence(
-                N=val_N)
+                N=val_N, **state_sequence_params)
 
             costs, invs, qr, qe = model_step(controller, nn_input, initial_qr, initial_qe, initial_inventories,
                                              dynamics, demands, test_T)
@@ -162,7 +163,8 @@ class MSOMDemandSequenceExperiment:
                     qe.cpu().detach().numpy(),
                     invs.cpu().detach().numpy(),
                     demands.cpu().detach().numpy(),
-                    initial_inventories.cpu().detach().numpy()
+                    initial_inventories.cpu().detach().numpy(),
+                    costs.cpu().detach().numpy()
                     )
 
 
