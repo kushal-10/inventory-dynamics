@@ -7,6 +7,16 @@ from neural_control.demand_generators import FileBasedDemandGenerator
 from neural_control.dynamics import SequentialDualSourcingModel
 
 
+
+def roll_boundary(tensor, roll_dim, roll_shift, default_value=0):
+    if roll_shift == 0:
+        return tensor
+    new_tensor = tensor.roll(dims=(roll_dim), shifts=(roll_shift))
+    zero_slice = [slice(None, None)]*len(tensor.shape)
+    zero_slice[roll_dim] = slice(None, roll_shift) if roll_shift>0 else slice(roll_shift, None)
+    new_tensor[zero_slice] = new_tensor[zero_slice]*0 + default_value
+    return new_tensor
+
 def load_experiment_conf(filename: str):
     """
     Sample file structure:
@@ -75,16 +85,14 @@ def get_config(use_low_service: bool) -> dict:
         The experiment configuration dictionary.
     """
     experiment_config = deepcopy(base_cofing)
-    service_type = 'high_service'
     if use_low_service:
-        service_type = 'low_service'
         experiment_config.update(service_configs['low_service'])
     else:
         experiment_config.update(service_configs['high_service'])
     return experiment_config
 
 
-class MSOMDemandSequenceExperiment:
+class MSOMDemandLSTMExperiment:
     def __init__(self,
                  file_demand_gen: FileBasedDemandGenerator,
                  sourcing_parameters: dict,
@@ -151,8 +159,8 @@ class MSOMDemandSequenceExperiment:
             nn_input, initial_qr, initial_qe, initial_inventories, demands, past_demands = self.generate_state_sequence(
                 N=val_N, **state_sequence_params)
 
-            costs, invs, qr, qe = model_step(controller, nn_input, initial_qr, initial_qe, initial_inventories,
-                                             dynamics, demands, test_T)
+            costs, invs, qr, qe = lstm_model_step(controller, nn_input, initial_qr, initial_qe, initial_inventories,
+                                                  dynamics, demands, test_T)
 
             mean_costs = costs.mean().item()
             median_costs = costs.median().item()
@@ -168,7 +176,7 @@ class MSOMDemandSequenceExperiment:
                     )
 
 
-def model_step(controller, nn_input, initial_qr, initial_qe, initial_inventories, dynamics, demands, T):
+def lstm_model_step(controller, nn_input, initial_qr, initial_qe, initial_inventories, dynamics, demands, T):
     new_qr, new_qe = controller(nn_input)
 
     qr = torch.cat([initial_qr, new_qr], dim=-1) if dynamics.lr > 0 else new_qr

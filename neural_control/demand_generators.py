@@ -118,6 +118,8 @@ class FileBasedDemandGenerator(AbstractDemandGenerator):
         self.scaling_factor = scaling_factor
 
         self.imputed_data, self.mean_array, self.std_array = self.__preprocess_file__()
+        self.mean_vector = torch.tensor(self.mean_array).float()
+        self.std_vector = torch.tensor(self.std_array).float()
 
         self.myclip_a = myclip_a
         self.myclip_b = myclip_b

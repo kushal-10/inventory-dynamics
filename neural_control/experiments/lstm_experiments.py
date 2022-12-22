@@ -13,13 +13,13 @@ from plotly import graph_objs as go
 
 from neural_control.demand_generators import FileBasedDemandGenerator
 from neural_control.dynamics import fractional_decoupling, binary_decoupling, straight_through_relu
-from neural_control.experiments.helpers import MSOMDemandSequenceExperiment, model_step, get_config
+from neural_control.experiments.helpers import MSOMDemandLSTMExperiment, lstm_model_step, get_config
 
 
 class LSTMTrainer:
 
     def __init__(self,
-                 experiment_data_loader: MSOMDemandSequenceExperiment,
+                 experiment_data_loader: MSOMDemandLSTMExperiment,
                  live_plot_losses: bool = False):
         self.experiment_data_loader = experiment_data_loader
         self.live_plot_losses = live_plot_losses
@@ -123,8 +123,8 @@ class LSTMTrainer:
         for i in progress:
             controller.train()
             optimizer.zero_grad()
-            costs, invs, qr, qe = model_step(controller, nn_input, initial_qr, initial_qe, initial_inventories,
-                                             dynamics, demands, T)
+            costs, invs, qr, qe = lstm_model_step(controller, nn_input, initial_qr, initial_qe, initial_inventories,
+                                                  dynamics, demands, T)
             mean_costs = costs.mean()
             J = mean_costs
             # J = (costs[costs > costs.quantile(0.3, dim=0, keepdim=True)]).mean()  # + (0.5*costs.max(dim=0).values).mean()
@@ -278,9 +278,8 @@ if __name__ == '__main__':
     file_demand_gen = FileBasedDemandGenerator(**file_demand_gen_parameters)
 
     initial_inventory: float = 0.0  # only for object construction, we use random initialization for inventories in
-    #
 
-    msom_data_loader = MSOMDemandSequenceExperiment(file_demand_gen, sourcing_parameters, initial_inventory)
+    msom_data_loader = MSOMDemandLSTMExperiment(file_demand_gen, sourcing_parameters, initial_inventory)
     trainer = LSTMTrainer(msom_data_loader, False)
 
 
@@ -292,7 +291,7 @@ if __name__ == '__main__':
         qe_mean = 0
         qr_mean = 0
         while qe_mean < 1e3 and qr_mean < 1e4:
-            controller = SimpleLSTMController()
+            controller = SimpleLSTMController(**lstm_controller_parameters)
             controller, qr, qe = trainer.pretrain(controller, **pretrain_parameters)
             qe_mean = qe.mean().detach().item()
             qr_mean = qe.mean().detach().item()

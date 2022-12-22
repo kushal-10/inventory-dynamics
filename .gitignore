@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 .pyc
 *.pyc
+/neural_control/experiments/lstm_results
+neural_control/experiments/transformer_results
