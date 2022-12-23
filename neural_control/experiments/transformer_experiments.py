@@ -445,10 +445,10 @@ def get_parameters(results_folder,
                             val_frequency = 50,
                             pretrain_minibatch_size=32,
                             pretrain_total_epochs = 200,
-                            pretrain_no_validation_period = 100,
+                            pretrain_no_validation_period = 150,
                             pretrain_learning_rate = 7e-4,
                             pretrain_optimizer_reset_frequency = 50,
-                            pretrain_val_frequency = 25,
+                            pretrain_val_frequency = 50,
                             pretrain_samples=10
                             )
     dump_to_json(results_folder, 'train_parameters.json', train_parameters)
@@ -551,4 +551,4 @@ if __name__ == '__main__':
 
     # Future means or stds
     run_experiment(is_low_service=True, use_mean_std=True, mean_std_shift=0)
-    run_experiment(is_low_service=True, use_mean_std=True, mean_std_shift=0)
+    run_experiment(is_low_service=False, use_mean_std=True, mean_std_shift=0)
