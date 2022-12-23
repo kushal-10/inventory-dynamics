@@ -1,5 +1,9 @@
 # Inventory Optimization
 
+<div align="center">
+<img width="800" src="optimization_schematic.png" alt="neural net schematic">
+</div>
+
 The directory `sourcing_models/` contains implementations of different dual sourcing heuristics (single index, dual index, capped-dual index, tailored-base surge). The files `sourcing_models/recursion_numba.py` and `sourcing_models/recursion_numba_state_output.py` provide dynamic program implementations with and without state output, respectively. We use the high-performance Python compiler Numba to speed-up the dynamic programming iterations.
 
 Trained neural networks are provided in `sourcing_models/trained_neural_nets`. These files can be used in transfer-learning tasks.
@@ -8,9 +12,6 @@ Different neural-network controllers and inventory dynamics implementations (in 
 
 An optimization example that uses real-world data is available in `MSOM_data/`. 
 
-<div align="center">
-<img width="600" src="optimization_schematic.png" alt="neural net schematic">
-</div>
 
 ### Parameters
 
