@@ -8,6 +8,10 @@ Different neural-network controllers and inventory dynamics implementations (in 
 
 An optimization example that uses real-world data is available in `MSOM_data/`. 
 
+<div align="center">
+<img width="600" src="optimization_schematic.png" alt="neural net schematic">
+</div>
+
 ### Parameters
 
 | parameter | type    | description                                                   |
