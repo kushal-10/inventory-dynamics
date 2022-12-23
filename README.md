@@ -1,6 +1,6 @@
 # Inventory Optimization
 
-The directory `sourcing_models/` contains implementations of different dual sourcing heuristics (single index, dual index, capped-dual index, tailored-base surge). The files `sourcing_models/recursion_numba.py` and `sourcing_models/recursion_numba_state_output.py` provide dynamic program implementations with and without state output, respectively. We use the high-performance Python compiler Numba to speed-up the dynamic program iterations.
+The directory `sourcing_models/` contains implementations of different dual sourcing heuristics (single index, dual index, capped-dual index, tailored-base surge). The files `sourcing_models/recursion_numba.py` and `sourcing_models/recursion_numba_state_output.py` provide dynamic program implementations with and without state output, respectively. We use the high-performance Python compiler Numba to speed-up the dynamic programming iterations.
 
 Trained neural networks are provided in `sourcing_models/trained_neural_nets`. These files can be used in transfer-learning tasks.
 
@@ -14,6 +14,8 @@ An optimization example that uses real-world data is available in `MSOM_data/`.
 | --------- | ------- | --------------------------------------------------------------|
 | `ce`      | int     | expedited order cost (per unit)                               |
 | `cr`      | int     | regular order cost (per unit)                                 |
+| `fe`      | int     | fixed expedited order cost (per unit)                         |
+| `fr`      | int     | fixed regular order cost (per unit)                           |
 | `h`       | int     | holding cost (per unit)                                       |
 | `b`       | int     | shortage cost (per unit)                                      |
 | `le`      | int     | expedited order lead time                                     |
