@@ -591,6 +591,8 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
                         epoch,
                     )
                 tensorboard_writer.flush()
+            if progress_update is not None:
+                progress_update(epoch+1)
 
         self.load_state_dict(best_state)
 
