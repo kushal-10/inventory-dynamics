@@ -1,3 +1,5 @@
 plotly
 streamlit
 pandas
+graphviz
+torchview
