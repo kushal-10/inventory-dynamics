@@ -10,22 +10,22 @@ To address dual-sourcing problems, we employ two main classes: (i) `DualSourcing
 
 .. code-block:: python
     
-   >>> import torch
-   >>> from idinn.sourcing_model import DualSourcingModel
-   >>> from idinn.controller import DualSourcingNeuralController
-   >>> from idinn.demand import UniformDemand
+   import torch
+   from idinn.sourcing_model import DualSourcingModel
+   from idinn.controller import DualSourcingNeuralController
+   from idinn.demand import UniformDemand
 
-   >>> dual_sourcing_model = DualSourcingModel(
-   ...     regular_lead_time=2,
-   ...     expedited_lead_time=0,
-   ...     regular_order_cost=0,
-   ...     expedited_order_cost=20,
-   ...     holding_cost=5,
-   ...     shortage_cost=495,
-   ...     batch_size=256,
-   ...     init_inventory=6,
-   ...     demand_generator=UniformDemand(low=1, high=4),
-   ... )
+   dual_sourcing_model = DualSourcingModel(
+       regular_lead_time=2,
+       expedited_lead_time=0,
+       regular_order_cost=0,
+       expedited_order_cost=20,
+       holding_cost=5,
+       shortage_cost=495,
+       batch_size=256,
+       init_inventory=6,
+       demand_generator=UniformDemand(low=1, high=4),
+   )
 
 The cost at period :math:`t`, :math:`c_t`, is
 
@@ -37,7 +37,7 @@ where :math:`I_t` is the inventory level at the end of period :math:`t`, :math:`
 
 .. code-block:: python
     
-   >>> dual_sourcing_model.get_total_cost(regular_q=0, expedited_q=0)
+   dual_sourcing_model.get_total_cost(regular_q=0, expedited_q=0)
 
 In this example, this function should return 30 for each sample since the initial inventory is 6, the holding cost is 5, and there is neither a regular nor expedited order. We have 256 samples in this case, as we specified a batch size of 256.
 
@@ -45,10 +45,10 @@ For dual-sourcing problems, we initialize the neural network controller using th
 
 .. code-block:: python
 
-    >>> dual_controller = DualSourcingNeuralController(
-    ...     hidden_layers=[128, 64, 32, 16, 8, 4],
-    ...     activation=torch.nn.CELU(alpha=1)
-    ... )
+    dual_controller = DualSourcingNeuralController(
+        hidden_layers=[128, 64, 32, 16, 8, 4],
+        activation=torch.nn.CELU(alpha=1)
+    )
 
 Training
 --------
@@ -57,28 +57,28 @@ Although the neural network controller has not been trained yet, we can still co
 
 .. code-block:: python
 
-    >>> dual_controller.get_total_cost(sourcing_model=dual_sourcing_model, sourcing_periods=100)
+    dual_controller.get_total_cost(sourcing_model=dual_sourcing_model, sourcing_periods=100)
 
 Unsurprisingly, the performance is poor because we are only using the untrained neural network in which the weights are just (pseudo) random numbers. We can train the neural network controller using the `train()` method, in which the training data is generated from the given sourcing model. To better monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the  `seed` parameter.
 
 .. code-block:: python
 
-    >>> from torch.utils.tensorboard import SummaryWriter
+    from torch.utils.tensorboard import SummaryWriter
 
-    >>> dual_controller.fit(
-    ...     sourcing_model=dual_sourcing_model,
-    ...     sourcing_periods=100,
-    ...     validation_sourcing_periods=1000,
-    ...     epochs=2000,
-    ...     tensorboard_writer=SummaryWriter(comment="dual"),
-    ...     seed=4,
-    ... )
+    dual_controller.fit(
+        sourcing_model=dual_sourcing_model,
+        sourcing_periods=100,
+        validation_sourcing_periods=1000,
+        epochs=2000,
+        tensorboard_writer=SummaryWriter(comment="dual"),
+        seed=4,
+    )
 
 After training, we can use the trained neural network controller to calculate the total cost for 100 periods with our previously specified sourcing model. The total cost should be significantly lower than the cost associated with the untrained model.
 
 .. code-block:: python
     
-    >>> dual_controller.get_total_cost(sourcing_model=dual_sourcing_model, sourcing_periods=100)
+    dual_controller.get_total_cost(sourcing_model=dual_sourcing_model, sourcing_periods=100)
 
 Plotting and Order Calculation
 ------------------------------------------
@@ -88,7 +88,7 @@ We can inspect how the controller performs in the specified sourcing environment
 .. code-block:: python
 
     # Simulate and plot the results
-    >>> dual_controller.plot(sourcing_model=dual_sourcing_model, sourcing_periods=100)
+    dual_controller.plot(sourcing_model=dual_sourcing_model, sourcing_periods=100)
 
 .. image:: ../_static/dual_sourcing_output.png
    :alt: Output of the dual sourcing model and controller
@@ -99,7 +99,7 @@ Then we can use the trained network to calculate near-optimal orders.
 .. code-block:: python
 
     # Calculate the optimal order quantity for applications
-    >>> regular_q, expedited_q = dual_controller.forward(
+    regular_q, expedited_q = dual_controller.forward(
         current_inventory=10,
         past_regular_orders=[1, 5],
         past_expedited_orders=[0, 0],
@@ -113,7 +113,7 @@ It is also a good idea to save the trained neural network controller for future 
 .. code-block:: python
 
     # Save the model
-    >>> dual_controller.save("optimal_dual_sourcing_controller.pt")
+    dual_controller.save("optimal_dual_sourcing_controller.pt")
     # Load the model
-    >>> dual_controller_loaded = DualSourcingNeuralController()
-    >>> dual_controller_loaded.load("optimal_dual_sourcing_controller.pt")
+    dual_controller_loaded = DualSourcingNeuralController()
+    dual_controller_loaded.load("optimal_dual_sourcing_controller.pt")

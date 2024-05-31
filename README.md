@@ -1,7 +1,5 @@
 # idinn: Inventory-Dynamics Control with Neural Networks
 
-![Implementation](https://img.shields.io/pypi/implementation/idinn)
-![Python Version](https://img.shields.io/pypi/pyversions/idinn)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/idinn.svg)](https://pypi.org/project/idinn/)
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1BAMiveGXmErIp10MK3V_SUJlDAXHAyaI)
 
