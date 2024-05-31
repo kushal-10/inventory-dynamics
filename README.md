@@ -1,5 +1,8 @@
 # idinn: Inventory-Dynamics Control with Neural Networks
 
+[![PyPI Latest Release](https://img.shields.io/pypi/v/idinn.svg)](https://pypi.org/project/idinn/)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1BAMiveGXmErIp10MK3V_SUJlDAXHAyaI)
+
 [<img src="https://gitlab.com/ComputationalScience/idinn/-/raw/main/docs/_static/youtube.png" align="center" width="60%" size="auto" alt="youtube">](https://www.youtube.com/watch?v=hUBfTWV6tWQ)
 
 `idinn` implements **i**nventory **d**ynamics–**i**nformed **n**eural **n**etworks for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects with PyTorch backend to enable users to find the optimal neural controllers for the user-specified inventory systems.
@@ -42,7 +45,7 @@ controller = SingleSourcingNeuralController(
     activation=torch.nn.CELU(alpha=1)
 )
 # Train the neural controller
-controller.train(
+controller.fit(
     sourcing_model=sourcing_model,
     sourcing_periods=50,
     validation_sourcing_periods=1000,

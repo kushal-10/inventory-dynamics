@@ -39,13 +39,13 @@ The selected controller needs to be trained to find the optimal neural-network p
 .. code-block:: python
 
    # Train the neural controller
-   controller.train(
+   controller.fit(
       sourcing_model=sourcing_model,
       sourcing_periods=50,
       epochs=5000
    )
 
-Simulation, Plotting and Order Calculation
+Plotting and Order Calculation
 ------------------------------------------
 
 After completed training, we can inspect how the controller performs in the specified sourcing environment by plotting the inventory and order history of certain periods.
@@ -55,6 +55,9 @@ After completed training, we can inspect how the controller performs in the spec
    # Simulate and plot the results
    controller.plot(sourcing_model=sourcing_model, sourcing_periods=100)
 
+.. image:: ../_static/single_sourcing_output.png
+   :alt: Output of the single sourcing model and controller
+   :align: center
 
 The trained controller can be used for optimal order quantity calculations.
 

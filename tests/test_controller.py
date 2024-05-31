@@ -23,7 +23,7 @@ def single_sourcing_controller():
     return single_sourcing_controller
 
 def test_single_controller_init_layers(single_sourcing_controller: SingleSourcingNeuralController):
-    assert len(single_sourcing_controller.stack) == 6
+    assert len(single_sourcing_controller.architecture) == 6
 
 def test_single_controller_forward(single_sourcing_controller: SingleSourcingNeuralController):
     current_inventory = 10
@@ -40,8 +40,8 @@ def test_single_controller_simulate(single_sourcing_model: SingleSourcingModel, 
     assert past_inventories[0] == 10
     assert past_orders[0] == 0
 
-def test_single_controller_train(single_sourcing_model: SingleSourcingModel, single_sourcing_controller: SingleSourcingNeuralController):
-    single_sourcing_controller.train(single_sourcing_model, sourcing_periods=5, epochs=1)
+def test_single_controller_fit(single_sourcing_model: SingleSourcingModel, single_sourcing_controller: SingleSourcingNeuralController):
+    single_sourcing_controller.fit(single_sourcing_model, sourcing_periods=5, epochs=1)
 
 def test_single_controller_plot(single_sourcing_model: SingleSourcingModel, single_sourcing_controller: SingleSourcingNeuralController):
     single_sourcing_controller.plot(single_sourcing_model, sourcing_periods=5)
@@ -72,8 +72,8 @@ def dual_sourcing_controller():
     return dual_sourcing_controller
 
 def test_dual_controller_init_layers(dual_sourcing_controller: DualSourcingNeuralController):
-    assert len(dual_sourcing_controller.stack) == 6
-    assert dual_sourcing_controller.stack[-2].out_features == 2
+    assert len(dual_sourcing_controller.architecture) == 6
+    assert dual_sourcing_controller.architecture[-2].out_features == 2
 
 def test_dual_controller_forward(dual_sourcing_controller: DualSourcingNeuralController):
     current_inventory = 10
@@ -86,7 +86,7 @@ def test_dual_controller_forward(dual_sourcing_controller: DualSourcingNeuralCon
 
 def test_dual_controller_get_total_cost(dual_sourcing_model: DualSourcingModel, dual_sourcing_controller: DualSourcingNeuralController):
     total_cost = dual_sourcing_controller.get_total_cost(dual_sourcing_model, sourcing_periods=5, seed=42)
-    assert total_cost.item() == 12.0
+    assert total_cost.item() == 14.0
 
 def test_dual_controller_simulate(dual_sourcing_model: DualSourcingModel, dual_sourcing_controller: DualSourcingNeuralController):
     past_inventories, past_regular_orders, past_expedited_orders = dual_sourcing_controller.simulate(dual_sourcing_model, sourcing_periods=5, seed=42)
@@ -94,8 +94,8 @@ def test_dual_controller_simulate(dual_sourcing_model: DualSourcingModel, dual_s
     assert past_regular_orders[0] == 0
     assert past_expedited_orders[0] == 0
 
-def test_dual_controller_train(dual_sourcing_model: DualSourcingModel, dual_sourcing_controller: DualSourcingNeuralController):
-    dual_sourcing_controller.train(dual_sourcing_model, sourcing_periods=5, epochs=1)
+def test_dual_controller_fit(dual_sourcing_model: DualSourcingModel, dual_sourcing_controller: DualSourcingNeuralController):
+    dual_sourcing_controller.fit(dual_sourcing_model, sourcing_periods=5, epochs=1)
 
 def test_dual_controller_plot(dual_sourcing_model: DualSourcingModel, dual_sourcing_controller: DualSourcingNeuralController):
     dual_sourcing_controller.plot(dual_sourcing_model, sourcing_periods=5)

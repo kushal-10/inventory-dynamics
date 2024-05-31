@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 
-class NeuralControllerMixIn():
+class NeuralControllerMixIn:
     def save(self, checkpoint_path):
         torch.save(self.state_dict(), checkpoint_path)
 
@@ -28,7 +28,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         List of integers representing the number of units in each hidden layer.
     activation : torch.nn.Module
         Activation function used in the hidden layers.
-    stack : torch.nn.Sequential
+    architecture : torch.nn.Sequential
         Sequential stack of linear layers and activation functions.
 
     Methods
@@ -52,7 +52,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.lead_time = None
-        self.stack = None
+        self.architecture = None
 
     def init_layers(self, lead_time):
         """
@@ -82,7 +82,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             torch.nn.Linear(self.hidden_layers[-1], 1, bias=False),
             torch.nn.ReLU(),
         ]
-        self.stack = torch.nn.Sequential(*architecture)
+        self.architecture = torch.nn.Sequential(*architecture)
 
     def forward(
         self,
@@ -109,10 +109,12 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         if not isinstance(past_orders, torch.Tensor):
             past_orders = torch.tensor([past_orders], dtype=torch.float32)
         if self.lead_time > 0:
-            inputs = torch.cat([current_inventory, past_orders[:, -self.lead_time :]], dim=1)
+            inputs = torch.cat(
+                [current_inventory, past_orders[:, -self.lead_time :]], dim=1
+            )
         else:
             inputs = current_inventory
-        h = self.stack(inputs)
+        h = self.architecture(inputs)
         q = h - torch.frac(h).clone().detach()
         return q
 
@@ -137,7 +139,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.lead_time is None:
+        if self.architecture is None:
             self.init_layers(sourcing_model.get_lead_time())
 
         total_cost = 0
@@ -150,16 +152,18 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             total_cost += current_cost.mean()
         return total_cost
 
-    def train(
+    def fit(
         self,
         sourcing_model,
         sourcing_periods,
         epochs,
         validation_sourcing_periods=None,
-        lr_init_inventory=1e-1,
-        lr_parameters=3e-3,
-        seed=None,
+        validation_freq=10,
+        init_inventory_lr=1e-1,
+        init_inventory_freq=4,
+        parameters_lr=3e-3,
         tensorboard_writer=None,
+        seed=None,
     ):
         """
         Train the neural network controller using the sourcing model and specified parameters.
@@ -167,32 +171,36 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         Parameters
         ----------
         sourcing_model : SourcingModel
-            The sourcing model to be used for training.
+            The sourcing model for training.
         sourcing_periods : int
             The number of sourcing periods for training.
         epochs : int
             The number of training epochs.
         validation_sourcing_periods : int, optional
             The number of sourcing periods for validation.
-        lr_init_inventory : float, default is 1e-1
+        validation_freq : int, default is 10
+            Only relevant if `validation_sourcing_periods` is provided. Specifies how many training epochs to run before a new validation run is performed, e.g. `validation_freq=10` runs validation every 10 epochs.
+        init_inventory_freq : int, default is 4
+            Specifies how many parameter updating epochs to run before initial inventory is updated. e.g. `init_inventory_freq=4` updates initial inventory after updating parameters for 4 epochs.
+        init_inventory_lr : float, default is 1e-1
             Learning rate for initial inventory.
-        lr_parameters : float, default is 3e-3
-            Learning rate for updating neural network parameters. 
-        seed : int, optional
-            Random seed for reproducibility.
+        parameters_lr : float, default is 3e-3
+            Learning rate for updating neural network parameters.
         tensorboard_writer : tensorboard.SummaryWriter, optional
             Tensorboard writer for logging.
+        seed : int, optional
+            Random seed for reproducibility.
         """
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.lead_time is None:
+        if self.architecture is None:
             self.init_layers(sourcing_model.get_lead_time())
 
         optimizer_init_inventory = torch.optim.RMSprop(
-            [sourcing_model.init_inventory], lr=lr_init_inventory
+            [sourcing_model.init_inventory], lr=init_inventory_lr
         )
-        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=lr_parameters)
+        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_cost = np.inf
 
         for epoch in range(epochs):
@@ -204,7 +212,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
             total_cost.backward()
             # Gradient descend
-            if epoch % 3 == 0:
+            if epoch % init_inventory_freq == 0:
                 optimizer_init_inventory.step()
             else:
                 optimizer_parameters.step()
@@ -225,13 +233,16 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
                 tensorboard_writer.add_scalar(
                     "Avg. cost per period/train", total_cost / sourcing_periods, epoch
                 )
-                # Log evaluation loss
-                if validation_sourcing_periods is not None and epoch % 10 == 0:
+                if (
+                    validation_sourcing_periods is not None
+                    and epoch % validation_freq == 0
+                ):
+                    # Log validation loss
                     eval_cost = self.get_total_cost(
                         sourcing_model, validation_sourcing_periods
                     )
                     tensorboard_writer.add_scalar(
-                        "Avg. cost per period/eval",
+                        "Avg. cost per period/val",
                         eval_cost / validation_sourcing_periods,
                         epoch,
                     )
@@ -269,7 +280,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         past_orders = sourcing_model.get_past_orders()[0, :].detach().numpy()
         return past_inventories, past_orders
 
-    def plot(self, sourcing_model, sourcing_periods):
+    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
         """
         Plot the inventory and order quantities over a given number of sourcing periods.
 
@@ -279,19 +290,21 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             The sourcing model to be used for plotting.
         sourcing_periods : int
             The number of sourcing periods for plotting.
+        linewidth : int, default is 1
+            The width of the line in the step plots.
         """
         past_inventories, past_orders = self.simulate(
             sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
         )
         fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
 
-        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:])
+        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:], linewidth=linewidth, color='tab:blue')
         ax[0].yaxis.get_major_locator().set_params(integer=True)
         ax[0].set_title("Inventory")
         ax[0].set_xlabel("Period")
         ax[0].set_ylabel("Quantity")
 
-        ax[1].step(range(sourcing_periods), past_orders[-sourcing_periods:])
+        ax[1].step(range(sourcing_periods), past_orders[-sourcing_periods:], linewidth=linewidth, color='tab:orange')
         ax[1].yaxis.get_major_locator().set_params(integer=True)
         ax[1].set_title("Order")
         ax[1].set_xlabel("Period")
@@ -323,7 +336,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         Regular lead time.
     expedited_lead_time : int
         Expedited lead time.
-    stack : torch.nn.Sequential
+    architecture : torch.nn.Sequential
         Sequential stack of linear layers and activation functions.
 
     Methods
@@ -345,7 +358,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
     def __init__(
         self,
         hidden_layers=[128, 64, 32, 16, 8, 4],
-        activation=torch.nn.CELU(alpha=1),
+        activation=torch.nn.ReLU(),
         compressed=False,
     ):
         super().__init__()
@@ -353,7 +366,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         self.activation = activation
         self.compressed = compressed
         self.lead_time = None
-        self.stack = None
+        self.architecture = None
 
     def init_layers(self, regular_lead_time, expedited_lead_time):
         """
@@ -387,7 +400,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             torch.nn.Linear(self.hidden_layers[-1], 2),
             torch.nn.ReLU(),
         ]
-        self.stack = torch.nn.Sequential(*architecture)
+        self.architecture = torch.nn.Sequential(*architecture)
 
     def forward(self, current_inventory, past_regular_orders, past_expedited_orders):
         """
@@ -412,9 +425,13 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         if not isinstance(current_inventory, torch.Tensor):
             current_inventory = torch.tensor([[current_inventory]], dtype=torch.float32)
         if not isinstance(past_regular_orders, torch.Tensor):
-            past_regular_orders = torch.tensor([past_regular_orders], dtype=torch.float32)
+            past_regular_orders = torch.tensor(
+                [past_regular_orders], dtype=torch.float32
+            )
         if not isinstance(past_expedited_orders, torch.Tensor):
-            past_expedited_orders = torch.tensor([past_expedited_orders], dtype=torch.float32)
+            past_expedited_orders = torch.tensor(
+                [past_expedited_orders], dtype=torch.float32
+            )
 
         if self.regular_lead_time > 0:
             if self.compressed:
@@ -436,7 +453,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
                 [inputs, past_expedited_orders[:, -self.expedited_lead_time :]], dim=1
             )
 
-        h = self.stack(inputs)
+        h = self.architecture(inputs)
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]
         expedited_q = q[:, [1]]
@@ -463,12 +480,12 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.lead_time is None:
+        if self.architecture is None:
             self.init_layers(
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
             )
-        
+
         total_cost = 0
         for i in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
@@ -482,52 +499,58 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             total_cost += current_cost.mean()
         return total_cost
 
-    def train(
+    def fit(
         self,
         sourcing_model,
         sourcing_periods,
         epochs,
         validation_sourcing_periods=None,
-        lr_init_inventory=1e-1,
-        lr_parameters=3e-3,
-        seed=None,
+        validation_freq=50,
+        init_inventory_freq=4,
+        init_inventory_lr=1e-1,
+        parameters_lr=3e-3,
         tensorboard_writer=None,
+        seed=None,
     ):
         """
-        Train the neural network.
+        Train the neural network controller using the sourcing model and specified parameters.
 
         Parameters
         ----------
         sourcing_model : DualSourcingModel
-            The sourcing model.
+            The sourcing model for training.
         sourcing_periods : int
-            Number of sourcing periods.
+            Number of sourcing periods for training.
         epochs : int
             Number of training epochs.
         validation_sourcing_periods : int, optional
             Number of sourcing periods for validation.
-        lr_init_inventory : float, default is 1e-1
+        validation_freq : int, default is 10
+            Only relevant if `validation_sourcing_periods` is provided. Specifies how many training epochs to run before a new validation run is performed, e.g. `validation_freq=10` runs validation every 10 epochs.
+        init_inventory_freq : int, default is 4
+            Specifies how many parameter updating epochs to run before initial inventory is updated. e.g. `init_inventory_freq=4` updates initial inventory after updating parameters for 4 epochs.
+        init_inventory_lr : float, default is 1e-1
             Learning rate for initial inventory.
-        lr_parameters : float, default is 3e-3
+        parameters_lr : float, default is 3e-3
             Learning rate for updating neural network parameters.
+        tensorboard_writer : tensorboard.SummaryWriter, optional
         seed : int, optional
             Random seed for reproducibility.
-        tensorboard_writer : TensorBoard writer, optional
-            TensorBoard writer for logging.
+            Tensorboard writer for logging.
         """
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.lead_time is None:
+        if self.architecture is None:
             self.init_layers(
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
             )
 
         optimizer_init_inventory = torch.optim.RMSprop(
-            [sourcing_model.init_inventory], lr=lr_init_inventory
+            [sourcing_model.init_inventory], lr=init_inventory_lr
         )
-        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=lr_parameters)
+        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_cost = np.inf
 
         for epoch in range(epochs):
@@ -539,12 +562,12 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
             total_cost.backward()
             # Perform gradient descend
-            if epoch % 3 == 0:
+            if epoch % init_inventory_freq == 0:
                 optimizer_init_inventory.step()
             else:
                 optimizer_parameters.step()
             # Save the best model
-            if validation_sourcing_periods is not None and epoch % 10 == 0:
+            if validation_sourcing_periods is not None and epoch % validation_freq == 0:
                 eval_cost = self.get_total_cost(
                     sourcing_model, validation_sourcing_periods
                 )
@@ -560,12 +583,13 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
                 tensorboard_writer.add_scalar(
                     "Avg. cost per period/train", total_cost / sourcing_periods, epoch
                 )
-                # Log evaluation loss
-                tensorboard_writer.add_scalar(
-                    "Avg. cost per period/eval",
-                    eval_cost / validation_sourcing_periods,
-                    epoch,
-                )
+                if validation_sourcing_periods is not None and epoch % 10 == 0:
+                    # Log validation loss
+                    tensorboard_writer.add_scalar(
+                        "Avg. cost per period/val",
+                        eval_cost / validation_sourcing_periods,
+                        epoch,
+                    )
                 tensorboard_writer.flush()
 
         self.load_state_dict(best_state)
@@ -613,7 +637,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         )
         return past_inventories, past_regular_orders, past_expedited_orders
 
-    def plot(self, sourcing_model, sourcing_periods):
+    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
         """
         Plot the inventory and order quantities.
 
@@ -623,12 +647,16 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             The sourcing model.
         sourcing_periods : int
             Number of sourcing periods.
+        linewidth : int, default is 1
+            Width of the line in the step plots.
         """
+        import matplotlib as mpl
+
         past_inventories, past_regular_orders, past_expedited_orders = self.simulate(
             sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
         )
         fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
-        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:])
+        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:], linewidth=linewidth, color='tab:blue')
         ax[0].yaxis.get_major_locator().set_params(integer=True)
         ax[0].set_title("Inventory")
         ax[0].set_xlabel("Period")
@@ -638,11 +666,15 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             range(sourcing_periods),
             past_expedited_orders[-sourcing_periods:],
             label="Expedited Order",
+            linewidth=linewidth,
+            color='tab:green'
         )
         ax[1].step(
             range(sourcing_periods),
             past_regular_orders[-sourcing_periods:],
             label="Regular Order",
+            linewidth=linewidth,
+            color='tab:orange'
         )
         ax[1].yaxis.get_major_locator().set_params(integer=True)
         ax[1].set_title("Order")

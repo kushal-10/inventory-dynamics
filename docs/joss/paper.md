@@ -36,7 +36,7 @@ bibliography: paper.bib
 
 # Summary
 
-Identifying optimal policies for replenishing inventory from multiple suppliers is a key problem in inventory management. Solving such optimization problems means that one must determine the quantities to order from each supplier based on the current net inventory and outstanding orders, minimizing the expected backlogging, holding, and sourcing costs. Despite over 60 years of extensive research on inventory management problems, even fundamental dual-sourcing problems [@barankin1961delivery,@fukuda1964optimal]—where orders from an expensive supplier arrive faster than orders from a regular supplier—remain analytically intractable. Additionally, there is a growing interest in optimization algorithms that are capable of handling real-world inventory problems with non-stationary demand [@song2020capacity].
+Identifying optimal policies for replenishing inventory from multiple suppliers is a key problem in inventory management. Solving such optimization problems means that one must determine the quantities to order from each supplier based on the current inventory and outstanding orders, minimizing the expected backlogging, holding, and sourcing costs. Despite over 60 years of extensive research on inventory management problems, even fundamental dual-sourcing problems [@barankin1961delivery,@fukuda1964optimal]—where orders from an expensive supplier arrive faster than orders from a regular supplier—remain analytically intractable. Additionally, there is a growing interest in optimization algorithms that are capable of handling real-world inventory problems with non-stationary demand [@song2020capacity].
 
 We provide a Python package, `idinn`, implementing inventory dynamics–informed neural networks designed for controlling both single-sourcing and dual-sourcing problems. In single-sourcing problems, a single supplier delivers an ordered quantity to the inventory manager within a known lead time and at a known unit cost. Dual-sourcing problems are similar to single-sourcing problems but tend to be more complex. In a dual-sourcing problem, a company has two potential suppliers for a product, each offering different, but known lead times (the duration for orders to arrive) and unit order costs (the expense of ordering a single item). The company’s decision problem is to determine how much to order from each of the two suppliers at the beginning of each period, given the history of past orders. The objective is to minimize jointly the expected ordering, holding, and stock-out costs over a finite or infinite horizon. In `idinn`, neural network controllers and inventory dynamics are implemented as customizable objects with a PyTorch backend, enabling users to identify near-optimal order policies.
 
@@ -98,7 +98,8 @@ For single-sourcing problems, we initialize the neural network controller using 
 
 ```python
 single_controller = SingleSourcingNeuralController(
-    hidden_layers=[2], activation=torch.nn.CELU(alpha=1)
+    hidden_layers=[2],
+    activation=torch.nn.CELU(alpha=1)
 )
 ```
 
@@ -118,20 +119,23 @@ Unsurprisingly, the performance is poor because we are only using the untrained 
 ```python
 from torch.utils.tensorboard import SummaryWriter
 
-single_controller.train(
+single_controller.fit(
     sourcing_model=single_sourcing_model,
     sourcing_periods=50,
     validation_sourcing_periods=1000,
     epochs=5000,
     seed=1,
-    tensorboard_writer=SummaryWriter(runs/single_sourcing_model)
+    tensorboard_writer=SummaryWriter(comment="single")
 )
 ```
 
 After training, we can use the trained neural network controller to calculate the total cost for 100 periods with our previously specified sourcing model. The total cost should be significantly lower than the cost associated with the untrained model.
 
 ```python
-single_controller.get_total_cost(sourcing_model=single_sourcing_model, sourcing_periods=100)
+single_controller.get_total_cost(
+  sourcing_model=single_sourcing_model,
+  sourcing_periods=100
+)
 ```
 
 ### Plotting and order calculation
@@ -140,14 +144,20 @@ We can inspect how the controller performs in the specified sourcing environment
 
 ```python
 # Simulate and plot the results
-single_controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100)
+single_controller.plot(
+  sourcing_model=single_sourcing_model,
+  sourcing_periods=100
+)
 ```
 
 Then we can calculate optimal orders using the trained model.
 
 ```python
 # Calculate the optimal order quantity for applications
-single_controller.forward(current_inventory=10, past_orders=[1, 5])
+single_controller.forward(
+  current_inventory=10,
+  past_orders=[1, 5]
+)
 ```
 
 ## Dual-sourcing problems
@@ -207,7 +217,10 @@ dual_controller = DualSourcingNeuralController(
 In the same fashion of the previous section, we can evaluate the performance of an untrained dual-sourcing controller by integrating it with our previously specified dual-sourcing model and running simulations for 100 periods.
 
 ```python
-dual_controller.get_total_cost(sourcing_model=dual_sourcing_model, sourcing_periods=100)
+dual_controller.get_total_cost(
+  sourcing_model=dual_sourcing_model,
+  sourcing_periods=100
+)
 ```
 
 To improve the initially poor performance, we can train the neural network controller using the `train()` method.
@@ -215,20 +228,23 @@ To improve the initially poor performance, we can train the neural network contr
 ```python
 from torch.utils.tensorboard import SummaryWriter
 
-dual_controller.train(
+dual_controller.fit(
     sourcing_model=dual_sourcing_model,
-    sourcing_periods=100,
+    sourcing_periods=50,
     validation_sourcing_periods=1000,
-    epochs=2000,
-    tensorboard_writer=SummaryWriter("runs/dual_sourcing_model"),
-    seed=4
+    epochs=1000,
+    tensorboard_writer=SummaryWriter(comment="single"),
+    seed=3
 )
 ```
 
 The total cost of the trained controller over 100 periods can be computed as follows.
 
 ```python    
-dual_controller.get_total_cost(sourcing_model=dual_sourcing_model, sourcing_periods=100)
+dual_controller.get_total_cost(
+  sourcing_model=dual_sourcing_model,
+  sourcing_periods=100
+)
 ```
 
 ### Plotting, and order calculation
@@ -237,7 +253,10 @@ We can further examine the controller's performance in the specified sourcing en
 
 ```python
 # Simulate and plot the results
-dual_controller.plot(sourcing_model=dual_sourcing_model, sourcing_periods=100)
+dual_controller.plot(
+  sourcing_model=dual_sourcing_model,
+  sourcing_periods=100
+)
 ```
 
 Then we can use the trained network to calculate near-optimal orders.
@@ -260,7 +279,8 @@ To save and load a given model, one can use the `save()` and `load()` methods, r
 dual_controller.save("optimal_dual_sourcing_controller.pt")
 # Load the model
 dual_controller_loaded = DualSourcingNeuralController(
-    hidden_layers=[128, 64, 32, 16, 8, 4], activation=torch.nn.CELU(alpha=1)
+    hidden_layers=[128, 64, 32, 16, 8, 4],
+    activation=torch.nn.CELU(alpha=1)
 )
 dual_controller_loaded.load("optimal_dual_sourcing_controller.pt")
 ```

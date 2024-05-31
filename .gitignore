@@ -164,7 +164,10 @@ cython_debug/
 .DS_Store
 
 # Jupyter notebooks
-*.ipynb
+# *.ipynb
 
 # PyTorch checkpoints
 *.pt
+
+# Tensorboard runs
+runs/
