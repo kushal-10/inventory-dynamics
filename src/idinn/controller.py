@@ -280,7 +280,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         past_orders = sourcing_model.get_past_orders()[0, :].detach().numpy()
         return past_inventories, past_orders
 
-    def plot(self, sourcing_model, sourcing_periods):
+    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
         """
         Plot the inventory and order quantities over a given number of sourcing periods.
 
@@ -290,19 +290,21 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             The sourcing model to be used for plotting.
         sourcing_periods : int
             The number of sourcing periods for plotting.
+        linewidth : int, default is 1
+            The width of the line in the step plots.
         """
         past_inventories, past_orders = self.simulate(
             sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
         )
         fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
 
-        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:])
+        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:], linewidth=linewidth, color='tab:blue')
         ax[0].yaxis.get_major_locator().set_params(integer=True)
         ax[0].set_title("Inventory")
         ax[0].set_xlabel("Period")
         ax[0].set_ylabel("Quantity")
 
-        ax[1].step(range(sourcing_periods), past_orders[-sourcing_periods:])
+        ax[1].step(range(sourcing_periods), past_orders[-sourcing_periods:], linewidth=linewidth, color='tab:orange')
         ax[1].yaxis.get_major_locator().set_params(integer=True)
         ax[1].set_title("Order")
         ax[1].set_xlabel("Period")
@@ -356,7 +358,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
     def __init__(
         self,
         hidden_layers=[128, 64, 32, 16, 8, 4],
-        activation=torch.nn.CELU(alpha=1),
+        activation=torch.nn.ReLU(),
         compressed=False,
     ):
         super().__init__()
@@ -503,7 +505,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         sourcing_periods,
         epochs,
         validation_sourcing_periods=None,
-        validation_freq=10,
+        validation_freq=50,
         init_inventory_freq=4,
         init_inventory_lr=1e-1,
         parameters_lr=3e-3,
@@ -635,7 +637,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         )
         return past_inventories, past_regular_orders, past_expedited_orders
 
-    def plot(self, sourcing_model, sourcing_periods):
+    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
         """
         Plot the inventory and order quantities.
 
@@ -645,12 +647,16 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             The sourcing model.
         sourcing_periods : int
             Number of sourcing periods.
+        linewidth : int, default is 1
+            Width of the line in the step plots.
         """
+        import matplotlib as mpl
+
         past_inventories, past_regular_orders, past_expedited_orders = self.simulate(
             sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
         )
         fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
-        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:])
+        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:], linewidth=linewidth, color='tab:blue')
         ax[0].yaxis.get_major_locator().set_params(integer=True)
         ax[0].set_title("Inventory")
         ax[0].set_xlabel("Period")
@@ -660,11 +666,15 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             range(sourcing_periods),
             past_expedited_orders[-sourcing_periods:],
             label="Expedited Order",
+            linewidth=linewidth,
+            color='tab:green'
         )
         ax[1].step(
             range(sourcing_periods),
             past_regular_orders[-sourcing_periods:],
             label="Regular Order",
+            linewidth=linewidth,
+            color='tab:orange'
         )
         ax[1].yaxis.get_major_locator().set_params(integer=True)
         ax[1].set_title("Order")
