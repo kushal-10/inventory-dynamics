@@ -7,7 +7,7 @@ Requirements
 
 The basic usage of `idinn` requires a working `Python`_ and `PyTorch`_ installation. If plotting simulation result of a controller is needed, `matplotlib`_ should also be installed. We recommend using the following versions for maximum compability:
 
-* Python_     ``>= 3.8``
+* Python_     ``>= 3.7``
 * PyTorch_    ``>= 2.0``
 * matplotlib_ ``>= 3.0``
 

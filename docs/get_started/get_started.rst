@@ -39,7 +39,7 @@ The selected controller needs to be trained to find the optimal neural-network p
 .. code-block:: python
 
    # Train the neural controller
-   controller.train(
+   controller.fit(
       sourcing_model=sourcing_model,
       sourcing_periods=50,
       epochs=5000
