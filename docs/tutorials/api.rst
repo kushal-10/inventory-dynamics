@@ -16,3 +16,11 @@ idinn.controller
    :members:
    :undoc-members:
    :show-inheritance:
+
+idinn.controller
+----------------
+
+.. automodule:: idinn.demand
+   :members:
+   :undoc-members:
+   :show-inheritance:
