@@ -31,8 +31,8 @@ class UniformDemand(BaseDemand):
     def reset(self):
         pass
 
-    def sample(self, size) -> torch.Tensor:
-        return self.distribution.sample([size, 1]).int()
+    def sample(self, batch_size) -> torch.Tensor:
+        return self.distribution.sample([batch_size, 1]).int()
 
 
 class CustomDemand(BaseDemand):

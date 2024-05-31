@@ -65,12 +65,12 @@ Unsurprisingly, the performance is poor because we are only using the untrained 
 
     >>> from torch.utils.tensorboard import SummaryWriter
 
-    >>> dual_controller.train(
+    >>> dual_controller.fit(
     ...     sourcing_model=dual_sourcing_model,
     ...     sourcing_periods=100,
     ...     validation_sourcing_periods=1000,
     ...     epochs=2000,
-    ...     tensorboard_writer=SummaryWriter("runs/dual_sourcing_model"),
+    ...     tensorboard_writer=SummaryWriter(comment="dual"),
     ...     seed=4,
     ... )
 

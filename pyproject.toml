@@ -16,7 +16,7 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
-dependencies = ["numpy", "matplotlib", "torch>=2.0"]
+dependencies = ["numpy", "matplotlib", "tensorboard", "torch>=2.0"]
 dynamic = ["version"]
 
 [project.urls]
