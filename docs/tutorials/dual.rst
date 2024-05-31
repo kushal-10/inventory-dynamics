@@ -1,7 +1,7 @@
 Solve Dual-Sourcing Problems Using Neural Networks
 ==================================================
 
-Dual-sourcing problems are similar to single-sourcing problems but are more intricate. In a dual-sourcing problem, a company has two potential suppliers for a product, each offering varying lead times (the duration for orders to arrive) and order costs (the expense of placing an order). The challenge lies in the company's decision-making process: determining which supplier to engage for each product to minimize costs given stochastic demand. We can solve dual-sourcing problems with `idinn` in a way similar to the approaches described in :doc:`/get_started/get_started` and :doc:`/tutorials/single`.
+Dual-sourcing problems are similar to single-sourcing problems but are more intricate. In a dual-sourcing problem, a company has two potential suppliers for a product, each offering varying lead times (the duration for orders to arrive) and order costs (the expense of placing an order). The challenge lies in the company's decision-making process: determining which supplier to engage for each product to minimize costs given stochastic demand. We can solve dual-sourcing problems with `idinn` in a way similar to the approaches described in :doc:`/get_started/get_started` and :doc:`/tutorials/dual`.
 
 Initialization
 --------------
@@ -89,6 +89,10 @@ We can inspect how the controller performs in the specified sourcing environment
 
     # Simulate and plot the results
     >>> dual_controller.plot(sourcing_model=dual_sourcing_model, sourcing_periods=100)
+
+.. image:: ../_static/dual_sourcing_output.png
+   :alt: Output of the dual sourcing model and controller
+   :align: center
 
 Then we can use the trained network to calculate near-optimal orders.
 
