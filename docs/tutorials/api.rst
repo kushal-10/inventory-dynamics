@@ -17,7 +17,7 @@ idinn.controller
    :undoc-members:
    :show-inheritance:
 
-idinn.controller
+idinn.demand
 ----------------
 
 .. automodule:: idinn.demand
