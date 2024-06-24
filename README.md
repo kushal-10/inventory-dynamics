@@ -13,7 +13,7 @@ For a quick demo, you can run the [Streamlit app](https://idinn-demo.streamlit.a
 
 ## Installation
 
-The package can be installed form PyPI. To do that, run
+The package can be installed from PyPI. To do that, run
 
 ```
 pip install idinn
