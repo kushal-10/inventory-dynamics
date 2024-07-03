@@ -1,0 +1,6 @@
+graphviz
+idinn
+pandas
+plotly
+streamlit
+torchview
