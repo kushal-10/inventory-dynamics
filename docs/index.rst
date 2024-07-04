@@ -55,6 +55,7 @@ Example Usage
 
    get_started/installation
    get_started/get_started
+   get_started/deployment
 
 .. toctree::
    :hidden:
