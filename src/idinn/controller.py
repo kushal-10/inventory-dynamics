@@ -1,10 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-#FIXME: Search for fixme and todo comments in the code below
-#TODO: add shape info in documentation with math, e.g. in forward inventory is a scalar integer or a tensor of shape
-#TODO:   :math:`N \times M`, for :math:`samples` and :math:`M` timestpes etc.
-#TODO: Explain more in documentation in code, e.g. what is compressed?
+
 
 class NeuralControllerMixIn:
     def save(self, checkpoint_path):
@@ -42,7 +39,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         Perform forward pass through the neural network.
     get_total_cost(sourcing_model, sourcing_periods, seed=None)
         Calculate the total cost over a given number of sourcing periods.
-    fit(sourcing_model, sourcing_periods, epochs, ...)
+    train(sourcing_model, sourcing_periods, epochs, ...)
         Train the neural network controller using the sourcing model and specified parameters.
     simulate(sourcing_model, sourcing_periods)
         Simulate the inventory and order quantities over a given number of sourcing periods.
@@ -88,9 +85,9 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         self.architecture = torch.nn.Sequential(*architecture)
 
     def forward(
-            self,
-            current_inventory,
-            past_orders,
+        self,
+        current_inventory,
+        past_orders,
     ):
         """
         Perform forward pass through the neural network.
@@ -350,7 +347,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         Forward pass of the neural network.
     get_total_cost(sourcing_model, sourcing_periods, seed=None)
         Calculate the total cost of the sourcing model.
-    fit(sourcing_model, sourcing_periods, epochs, ...)
+    train(sourcing_model, sourcing_periods, epochs, ...)
         Trains the neural network controller using the sourcing model and specified parameters.
     simulate(sourcing_model, sourcing_periods, seed=None)
         Simulate the sourcing model using the neural network.
@@ -438,13 +435,13 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
 
         if self.regular_lead_time > 0:
             if self.compressed:
-                inputs = past_regular_orders[:, -self.regular_lead_time:]
+                inputs = past_regular_orders[:, -self.regular_lead_time :]
                 inputs[:, 0] += current_inventory
             else:
                 inputs = torch.cat(
                     [
                         current_inventory,
-                        past_regular_orders[:, -self.regular_lead_time:],
+                        past_regular_orders[:, -self.regular_lead_time :],
                     ],
                     dim=1,
                 )
@@ -453,7 +450,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
 
         if self.expedited_lead_time > 0:
             inputs = torch.cat(
-                [inputs, past_expedited_orders[:, -self.expedited_lead_time:]], dim=1
+                [inputs, past_expedited_orders[:, -self.expedited_lead_time :]], dim=1
             )
 
         h = self.architecture(inputs)
@@ -594,8 +591,6 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
                         epoch,
                     )
                 tensorboard_writer.flush()
-            if progress_update is not None:
-                progress_update(epoch + 1)
 
         self.load_state_dict(best_state)
 
