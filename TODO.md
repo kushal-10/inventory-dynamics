@@ -1,0 +1,18 @@
+- [ ] Integrate Streamlit app with Docker
+- [ ] Test CUDA compatibility and performance with Docker
+- [ ] Handle unit tests, style check, and coverage reports with CI
+- [ ] Split the controller into single_sourcing and dual_sourcing
+    - [ ] Implement the base-stock in single-sourcing model
+    - [ ] Implement the CDI and DP in dual-sourcing model
+    - [ ] Reimplement the interfaces. Separate the policy and environment interface and use .solve/.fit/.predict to find the optimal policy
+
+def generate_model():
+    nn = NNController(1,2)
+    return nn
+
+prob = Problem(sourcing_model)
+prob.solve()
+prob.predict()
+
+model = generate_model()
+model.fit(prob)
