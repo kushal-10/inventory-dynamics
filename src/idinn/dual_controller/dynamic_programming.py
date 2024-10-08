@@ -155,7 +155,7 @@ class DynamicProgrammingController:
                             qf[state] = qa
                     break
                     
-        # self.qf = qf
+        self.qf = qf
 
     def predict(self, current_inventory, past_regular_orders, past_expedited_orders=None):
         """
