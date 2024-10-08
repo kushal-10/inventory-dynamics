@@ -1,15 +1,9 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from .base import BaseSingleController
 
-class NeuralControllerMixIn:
-    def save(self, checkpoint_path):
-        torch.save(self.state_dict(), checkpoint_path)
 
-    def load(self, checkpoint_path):
-        self.load_state_dict(torch.load(checkpoint_path))
-
-class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
+class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
     """
     SingleSourcingNeuralController is a neural network-based controller for inventory optimization in a single-sourcing scenario.
 
@@ -49,10 +43,10 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         super().__init__()
         self.hidden_layers = hidden_layers
         self.activation = activation
-        self.lead_time = None
-        self.architecture = None
+        self.sourcing_model = None
+        self.nn = None
 
-    def init_layers(self, lead_time):
+    def init_layers(self):
         """
         Initialize the layers of the neural network based on the lead time.
 
@@ -65,7 +59,7 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         -------
         None
         """
-        self.lead_time = lead_time
+        lead_time = self.sourcing_model.get_lead_time()
         architecture = [
             torch.nn.Linear(lead_time + 1, self.hidden_layers[0]),
             self.activation,
@@ -80,9 +74,9 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
             torch.nn.Linear(self.hidden_layers[-1], 1, bias=False),
             torch.nn.ReLU(),
         ]
-        self.architecture = torch.nn.Sequential(*architecture)
+        self.nn = torch.nn.Sequential(*architecture)
 
-    def forward(
+    def predict(
         self,
         current_inventory,
         past_orders,
@@ -102,53 +96,26 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         torch.Tensor
             Order quanty calculated by the neural network.
         """
+        if self.nn is None:
+            self.init_layers()
+        
         if not isinstance(current_inventory, torch.Tensor):
             current_inventory = torch.tensor([[current_inventory]], dtype=torch.float32)
         if not isinstance(past_orders, torch.Tensor):
             past_orders = torch.tensor([past_orders], dtype=torch.float32)
-        if self.lead_time > 0:
+
+        # Get lead time from self.sourcing model
+        lead_time = self.sourcing_model.get_lead_time()
+    
+        if lead_time > 0:
             inputs = torch.cat(
-                [current_inventory, past_orders[:, -self.lead_time :]], dim=1
+                [current_inventory, past_orders[:, -lead_time :]], dim=1
             )
         else:
             inputs = current_inventory
-        h = self.architecture(inputs)
+        h = self.nn(inputs)
         q = h - torch.frac(h).clone().detach()
         return q
-
-    def get_total_cost(self, sourcing_model, sourcing_periods, seed=None):
-        """
-        Calculate the total cost over a given number of sourcing periods.
-
-        Parameters
-        ----------
-        sourcing_model : SourcingModel
-            The sourcing model to be used for cost calculation.
-        sourcing_periods : int
-            The number of sourcing periods.
-        seed : int, optional
-            Random seed for reproducibility.
-
-        Returns
-        -------
-        numpy.ndarray
-            Total cost over the sourcing periods.
-        """
-        if seed is not None:
-            torch.manual_seed(seed)
-
-        if self.architecture is None:
-            self.init_layers(sourcing_model.get_lead_time())
-
-        total_cost = 0
-        for i in range(sourcing_periods):
-            current_inventory = sourcing_model.get_current_inventory()
-            past_orders = sourcing_model.get_past_orders()
-            q = self.forward(current_inventory, past_orders)
-            sourcing_model.order(q)
-            current_cost = sourcing_model.get_cost()
-            total_cost += current_cost.mean()
-        return total_cost
 
     def fit(
         self,
@@ -189,18 +156,21 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         seed : int, optional
             Random seed for reproducibility.
         """
+        # Store sourcing model in self.sourcing_model
+        self.sourcing_model = sourcing_model
+
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.architecture is None:
-            self.init_layers(sourcing_model.get_lead_time())
+        if self.nn is None:
+            self.init_layers()
 
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
         optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_cost = np.inf
-
+        
         for epoch in range(epochs):
             # Clear grad cache
             optimizer_parameters.zero_grad()
@@ -248,62 +218,6 @@ class SingleSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         # Load the best model
         self.load_state_dict(best_state)
 
-    def simulate(self, sourcing_model, sourcing_periods, seed=None):
-        """
-        Simulate the inventory and order quantities over a given number of sourcing periods.
-
-        Parameters
-        ----------
-        sourcing_model : SingleSourcingModel
-            The sourcing model to be used for simulation.
-        sourcing_periods : int
-            The number of sourcing periods for simulation.
-        seed : int, optional
-            Random seed for reproducibility.
-
-        Returns
-        -------
-        tuple
-            A tuple containing the past inventories and past orders as numpy arrays.
-        """
-        if seed is not None:
-            torch.manual_seed(seed)
-        sourcing_model.reset(batch_size=1)
-        for i in range(sourcing_periods):
-            current_inventory = sourcing_model.get_current_inventory()
-            past_orders = sourcing_model.get_past_orders()
-            q = self.forward(current_inventory, past_orders)
-            sourcing_model.order(q)
-        past_inventories = sourcing_model.get_past_inventories()[0, :].detach().numpy()
-        past_orders = sourcing_model.get_past_orders()[0, :].detach().numpy()
-        return past_inventories, past_orders
-
-    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
-        """
-        Plot the inventory and order quantities over a given number of sourcing periods.
-
-        Parameters
-        ----------
-        sourcing_model : SingleSourcingModel
-            The sourcing model to be used for plotting.
-        sourcing_periods : int
-            The number of sourcing periods for plotting.
-        linewidth : int, default is 1
-            The width of the line in the step plots.
-        """
-        past_inventories, past_orders = self.simulate(
-            sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
-        )
-        fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
-
-        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:], linewidth=linewidth, color='tab:blue')
-        ax[0].yaxis.get_major_locator().set_params(integer=True)
-        ax[0].set_title("Inventory")
-        ax[0].set_xlabel("Period")
-        ax[0].set_ylabel("Quantity")
-
-        ax[1].step(range(sourcing_periods), past_orders[-sourcing_periods:], linewidth=linewidth, color='tab:orange')
-        ax[1].yaxis.get_major_locator().set_params(integer=True)
-        ax[1].set_title("Order")
-        ax[1].set_xlabel("Period")
-        ax[1].set_ylabel("Quantity")
+    def reset(self):
+        self.sourcing_model = None
+        self.nn = None

@@ -3,25 +3,18 @@ import numpy as np
 from numba import njit
 from numba import types
 from numba.typed import Dict, List
-from logging import info, debug, warning, error, critical
 
 class DynamicProgrammingController:
     def __init__(self) -> None:
         self.qf = None
         self.sourcing_model = None
 
-    # Make it private
-    # https://www.geeksforgeeks.org/private-methods-in-python/
-    @staticmethod    
+    @staticmethod
     @njit
-    def vf_update(demand, min_demand, max_demand, ce, h, b, state, vf, actions):
+    def __vf_update(demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions):
         """
         vf_update is a function that calculates a single value iteration update.
         """
-        support = max_demand - min_demand
-        # TODO: Use pdf to replace np.reapeat
-        demand_prob = demand.enumerate_support()
-
         best_action = None
         best_cost = 10e9
 
@@ -50,7 +43,8 @@ class DynamicProgrammingController:
                 best_action = (qr, qe)
         return best_cost, best_action
 
-    def get_basestock_ub(self, exp_demand, lead_time, support, h, b):
+    @staticmethod
+    def __get_basestock_ub(exp_demand, lead_time, support, h, b):
         """
         Get an upper bound on the single-source basestock level based on
         Hoeffding's inequality.
@@ -61,7 +55,6 @@ class DynamicProgrammingController:
     
     def fit(self, sourcing_model, max_iterations=1000000, tolerance=10e-8):
         # TODO: Check demand is uniform distributed
-
         # Log when sourcing_model's lead time do not correspond to the one in the controller
         # if self.regular_lead_time is None:
         #     info("Model starts training.")
@@ -75,27 +68,32 @@ class DynamicProgrammingController:
         #     lr = sourcing_model.regular_lead_time - sourcing_model.expedited_lead_time
         #     le = 0
         self.sourcing_model = sourcing_model
-
-        min_demand = int(sourcing_model.demand_generator.distribution.low)
-        max_demand = int(sourcing_model.demand_generator.distribution.high - 1)
+        
+        min_demand = int(sourcing_model.demand_generator.get_min_demand())  
+        max_demand = int(sourcing_model.demand_generator.get_max_demand()
         exp_demand = (max_demand + min_demand) / 2.0
         support = max_demand - min_demand
-        h = sourcing_model.holding_cost
-        b = sourcing_model.shortage_cost
-        ce = sourcing_model.expedited_order_cost
-        le = sourcing_model.expedited_lead_time
-        lr = sourcing_model.regular_lead_time
+        h = sourcing_model.get_holding_cost()
+        b = sourcing_model.get_shortage_cost()
+        ce = sourcing_model.get_expedited_order_cost()
+        le = sourcing_model.get_expedited_lead_time()
+        lr = sourcing_model.get_regular_lead_time()
 
-        base_e = self.get_basestock_ub(
+        base_e = DynamicProgrammingController.__get_basestock_ub(
             exp_demand=exp_demand, lead_time=le, support=support, h=h, b=b
         )
-        base_r = self.get_basestock_ub(
+        base_r = DynamicProgrammingController.__get_basestock_ub(
             exp_demand=exp_demand, lead_time=lr, support=support, h=h, b=b
         )
         min_ip = int(min(base_r, base_e) - max_demand)
         max_ip = int(max(base_r, base_e))
         max_order = max_ip + min_ip
         dim_pipeline = lr - le - 1
+
+        demand_prob = Dict.empty(key_type=types.float64, value_type=types.float64)
+        demand_prob_ = sourcing_model.demand_generator.enumerate_support()
+        for k, v in demand_prob_.items():
+            demand_prob[k] = v
 
         states_ = list(
             product(
@@ -121,16 +119,6 @@ class DynamicProgrammingController:
         for k, v in vf_.items():
             vf[k] = v
 
-        demand_prob = Dict.empty(key_type=types.float64, value_type=types.float64)
-        demand_prob_ = dict(
-            zip(
-                np.arange(min_demand, max_demand + 1),
-                np.repeat(1.0 / (support + 1.0), int(support + 1)),
-            )
-        )
-        for k, v in demand_prob_.items():
-            demand_prob[k] = v
-
         all_values = np.zeros(max_iterations, dtype=float)
         these_values = np.zeros(len(states))
         iteration_arr = []
@@ -141,8 +129,8 @@ class DynamicProgrammingController:
         for iteration in range(max_iterations):
             # We first store each newly updated state
             for idx, state in enumerate(states):
-                these_values[idx] = DynamicProgrammingController.vf_update(
-                    min_demand, max_demand, ce, h, b, state, vf, actions
+                these_values[idx] = DynamicProgrammingController.__vf_update(
+                    demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions
                 )[0]
             # After the minimum for each state has been calculated, we update the states
             # If done in the same loop, converge sucks even more
@@ -162,22 +150,23 @@ class DynamicProgrammingController:
                 print(f"iteration: {iteration} delta: {delta}")
                 if delta <= tolerance:
                     for state in states:
-                        qa = DynamicProgrammingController.vf_update(min_demand, max_demand, ce, h, b, state, vf, actions)[1]
-
-                        if qa:
+                        qa = DynamicProgrammingController.__vf_update(min_demand, max_demand, ce, h, b, state, vf, actions)[1]
+                        if qa is not None:
                             qf[state] = qa
                     break
                     
-        self.qf = qf
+        # self.qf = qf
 
-    def evaluate(self, current_inventory, past_regular_orders, past_expedited_orders, sourcing_model = None):
-        pass
-
-    def predict(self, current_inventory, past_regular_orders, past_expedited_orders=None, sourcing_model = None):
+    def predict(self, current_inventory, past_regular_orders, past_expedited_orders=None):
+        """
+        past_expedited_orders is optional since expedited lead time is assumed to be 0.
+        """
         regular_lead_time = self.sourcing_model.regular_lead_time
-
         first = current_inventory + past_regular_orders[-regular_lead_time]
         second = past_regular_orders[-regular_lead_time+1:]
         key = tuple([first]+second)
-        
         return self.qf[key]
+    
+    def reset(self):
+        self.qf = None
+        self.sourcing_model = None

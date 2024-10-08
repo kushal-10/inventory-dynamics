@@ -62,7 +62,13 @@ class BaseSourcingModel:
             raise ValueError(
                 "Either `lead_time` or (`regular_lead_time` and `expedited_lead_time`) must be provided."
             )
-
+        
+    def get_holding_cost(self):
+        return self.holding_cost
+    
+    def get_shortage_cost(self):
+        return self.shortage_cost
+    
     def get_init_inventory(self):
         init_inventory = (
             self.init_inventory - torch.frac(self.init_inventory).clone().detach()
@@ -225,6 +231,12 @@ class DualSourcingModel(BaseSourcingModel):
 
     def get_expedited_lead_time(self):
         return self.expedited_lead_time
+    
+    def get_regular_order_cost(self):
+        return self.regular_order_cost
+    
+    def get_expedited_order_cost(self):
+        return self.expedited_order_cost
 
     def get_cost(self, regular_q, expedited_q):
         cost = (

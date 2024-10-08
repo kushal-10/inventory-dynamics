@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 import torch
 
 
-class BaseSingleController(metaclass=ABCMeta):
+class BaseDualController(metaclass=ABCMeta):
     @abstractmethod
     def fit(self, sourcing_model, num_samples=100000):
         """
@@ -26,7 +26,7 @@ class BaseSingleController(metaclass=ABCMeta):
 
     def get_total_cost(self, sourcing_model, sourcing_periods, seed=None):
         """
-        Calculate the total cost for single-sourcing optimization.
+        Calculate the total cost for dual-sourcing optimization.
 
         Parameters
         ----------
@@ -48,17 +48,22 @@ class BaseSingleController(metaclass=ABCMeta):
         total_cost = 0
         for i in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
-            past_orders = sourcing_model.get_past_orders()
-            q_t = self.predict(current_inventory, past_orders)
-            sourcing_model.order(q_t)
-            current_cost = sourcing_model.get_cost()
+            past_regular_orders = sourcing_model.get_past_regular_orders()
+            past_expedited_orders = sourcing_model.get_past_expedited_orders()
+            regular_q, expedited_q = self.predict(
+                current_inventory,
+                past_regular_orders,
+                past_expedited_orders
+            )
+            sourcing_model.order(regular_q, expedited_q)
+            current_cost = sourcing_model.get_cost(regular_q, expedited_q)
             total_cost += current_cost.mean()
         return total_cost
     
     
     def get_average_cost(self, sourcing_model, sourcing_periods, seed=None):
         """
-        Calculate the average cost for single-sourcing optimization.
+        Calculate the average cost for Dual-sourcing optimization.
 
         Parameters
         ----------

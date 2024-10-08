@@ -97,6 +97,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
                 ]
         architecture += [
             torch.nn.Linear(self.hidden_layers[-1], 2),
+            # TODO: Mention this ReLU layer in documentation
             torch.nn.ReLU(),
         ]
         self.architecture = torch.nn.Sequential(*architecture)

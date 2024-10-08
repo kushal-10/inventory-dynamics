@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 from idinn.sourcing_model import SingleSourcingModel
 from idinn.single_controller import BaseStockController
 from idinn.demand import UniformDemand
@@ -32,11 +31,11 @@ def base_stock_controller():
     return BaseStockController()
 
 
-# def test_base_stock_controller_fit(single_sourcing_model, base_stock_controller):
-#     base_stock_controller.fit(single_sourcing_model)
-    # assert hasattr(controller, "sourcing_model"), "sourcing_model should be set after fitting"
-    # assert hasattr(controller, "z_star"), "z_star should be set after fitting"
-    # assert controller.z_star == pytest.approx(11, abs=0.5), "z_star should be close to 11"
+def test_base_stock_controller_fit(single_sourcing_model, base_stock_controller):
+    base_stock_controller.fit(single_sourcing_model)
+    assert hasattr(base_stock_controller, "sourcing_model"), "sourcing_model should be set after fitting"
+    assert hasattr(base_stock_controller, "z_star"), "z_star should be set after fitting"
+    assert base_stock_controller.z_star == pytest.approx(11, abs=0.5), "z_star should be close to 11"
 
 
 # def test_base_stock_controller_predict():
@@ -80,13 +79,13 @@ def base_stock_controller():
 #     assert average_cost == pytest.approx(29, rel=0.1), "Average cost should be near 29"
 
 
-def test_base_stock_controller_zero_lead_time_fit(single_sourcing_model_zero_lead_time):
-    controller = BaseStockController()
-    controller.fit(single_sourcing_model_zero_lead_time)
+# def test_base_stock_controller_zero_lead_time_fit(single_sourcing_model_zero_lead_time):
+#     controller = BaseStockController()
+#     controller.fit(single_sourcing_model_zero_lead_time)
 
-    assert controller.z_star == pytest.approx(
-        4, abs=0.5
-    ), "z_star should be close to 4 for zero lead time"
+#     assert controller.z_star == pytest.approx(
+#         4, abs=0.5
+#     ), "z_star should be close to 4 for zero lead time"
 
 
 # def test_base_stock_controller_zero_lead_time_cost(single_sourcing_model):

@@ -1,9 +1,13 @@
-- [ ] Integrate Streamlit app with Docker
-- [ ] Test CUDA compatibility and performance with Docker
+- [x] Split the controller into single_sourcing and dual_sourcing
+    - [x] Implement the base-stock in single-sourcing model
+    - [x] Implement the CDI and DP in dual-sourcing model
+    - [x] Reimplement the interfaces. Separate the policy and environment interface and use .solve/.fit/.predict to find the optimal policy
+    - [x] Set up a super class
 - [ ] Handle unit tests, style check, and coverage reports with CI
-- [ ] Split the controller into single_sourcing and dual_sourcing
-    - [ ] Implement the base-stock in single-sourcing model
-    - [ ] Implement the CDI and DP in dual-sourcing model
-    - [ ] Reimplement the interfaces. Separate the policy and environment interface and use .solve/.fit/.predict to find the optimal policy
-    - [ ] Set up a super class
 - [ ] Log, type checking, and documentation
+    - [ ] Add unit test for both uniform demand and custom demand
+    - [ ] Add structure for DP, CDI, base stock documentation
+    - [ ] Add instruction to pickle the controllers
+    - [ ] Add benchmark results
+- [ ] Test CUDA compatibility and performance with Docker
+- [ ] Integrate Streamlit app with Docker

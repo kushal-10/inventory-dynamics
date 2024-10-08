@@ -5,13 +5,6 @@ from abc import ABCMeta, abstractmethod
 
 class BaseDemand(metaclass=ABCMeta):
     @abstractmethod
-    def reset(self):
-        """
-        Reset the state of the demand generator.
-        """
-        pass
-
-    @abstractmethod
     def sample(self, batch_size) -> torch.Tensor:
         """
         Generate demand for one period.
@@ -27,71 +20,55 @@ class BaseDemand(metaclass=ABCMeta):
 class UniformDemand(BaseDemand):
     def __init__(self, low, high):
         self.distribution = torch.distributions.Uniform(low=low, high=high + 1)
-        # self.demand_prob = 1 / (high - low + 1)
-        self.low = low
-        self.high = high
-
-    def reset(self):
-        pass
+        self.demand_prob = 1 / (high - low + 1)
+        self.min_demand = low
+        self.max_demand = high
 
     def sample(self, batch_size, batch_width=1) -> torch.Tensor:
         return self.distribution.sample([batch_size, batch_width]).int()
     
-    # def enumerate_support(self):
-    #     return dict(
-    #         zip(
-    #             torch.arange(self.low, self.high + 1),
-    #             torch.repeat(1.0 / (self.high - self.low + 1.0), int(self.high - self.low + 1)),
-    #         )
-    #     )
-    #     return {x: 1/(self.high - self.low) for x in range(self.high - self.low)}
+    def enumerate_support(self):
+        return {x: 1/(self.high + 1 - self.low) for x in range(self.high + 1 - self.low)}
+    
+    def get_min_demand(self):
+        return self.low
+    
+    def get_max_demand(self):
+        return self.high
 
 
-# class CustomDemand(BaseDemand):
-#     def __init__(self, demand_history=None, demdnd_prob=None):
-#         """
-#         Parameters
-#         ----------
-#         demand_history: Iterable, torch.Tensor, np.array, or pd.Series
-#             A list or array of demand history. Each element in the array will be used as the demand for each time period.
-#         """
-#         self.demand_history = demand_history
-#         self.counter = 0
-#         # TODO: Fix this
-#         self.demand_prob = {x: 1/len(demand_history) for x in range(len(demand_history))}
+class CustomDemand(BaseDemand):
+    def __init__(self, demand_prob=None):
+        self.demand_prob = demand_prob
 
-#     def reset(self):
-#         self.counter = 0
+    def sample(self, batch_size, batch_width=1) -> torch.Tensor:
+        """
+        Generate demand for one period.
 
-#     def sample(self, batch_size) -> torch.Tensor:
-#         """
-#         Generate demand for one period.
-
-#         Parameters
-#         ----------
-#         batch_size: int
-#             Size of generated demands which should correspond to the batch size or the number of SKUs. If the size does not match the dimension of the elements from `demand_history`, demand will be upsampled or downsampled to match the size.
-#         """
-#         current_demand = torch.tensor(self.demand_history[self.counter])
-#         # Ensure that current demand is non-negative
-#         current_demand = torch.clamp(current_demand, min=0)
-#         if current_demand.size() != torch.Size([batch_size, 1]):
-#             if current_demand.dim() > 1:
-#                 raise ValueError(
-#                     f"The element of demand_history at index {self.counter} is not 1D and has a different dimension than the desired size [{batch_size}, 1]."
-#                 )
-#             elif current_demand.dim() == 0:
-#                 current_demand = current_demand.expand(batch_size, 1)
-#             elif current_demand.dim() == 1 and len(current_demand) == batch_size:
-#                 current_demand = current_demand.unsqueeze(1)
-#             else:
-#                 idx = random.choices(range(len(current_demand)), k=batch_size)
-#                 current_demand = current_demand[idx].unsqueeze(1)
-#         self.counter += 1
-#         # Reset the counter if it reaches the end of the demand history
-#         if self.counter == len(self.demand_history):
-#             self.reset()
-#         return current_demand
+        Parameters
+        ----------
+        batch_size: int
+            Size of generated demands which should correspond to the batch size or the number of SKUs. If the size does not match the dimension of the elements from `demand_history`, demand will be upsampled or downsampled to match the size.
+        """
+        # Draw dictionary keys with corresponding probabilities
+        sampled_indices = torch.multinomial(
+            torch.tensor(list(self.demand_prob.values())),
+            num_samples=batch_size*batch_width,
+            replacement=True
+        )
+        return torch.tensor(list(self.demand_prob.keys()))[sampled_indices].reshape(batch_size, batch_width)
+    
+    def enumerate_support(self):
+        # TODO: check sum of probabilities is 1
+        # TODO: check if all keys are int
+        return self.demand_prob
+    
+    def get_min_demand(self):
+        return min(self.demand_prob.keys())
+    
+    def get_max_demand(self):
+        return max(self.demand_prob.keys())
+        
     
 #     def enumerate_support(self, x):
 #         return self.demand_prob[x]
