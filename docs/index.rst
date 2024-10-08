@@ -64,6 +64,7 @@ Example Usage
 
    tutorials/single
    tutorials/dual
+   tutorials/dynamic_programming
 
 .. toctree::
    :hidden:
