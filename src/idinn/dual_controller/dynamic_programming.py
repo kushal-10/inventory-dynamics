@@ -70,7 +70,7 @@ class DynamicProgrammingController:
         self.sourcing_model = sourcing_model
         
         min_demand = int(sourcing_model.demand_generator.get_min_demand())  
-        max_demand = int(sourcing_model.demand_generator.get_max_demand()
+        max_demand = int(sourcing_model.demand_generator.get_max_demand())
         exp_demand = (max_demand + min_demand) / 2.0
         support = max_demand - min_demand
         h = sourcing_model.get_holding_cost()
