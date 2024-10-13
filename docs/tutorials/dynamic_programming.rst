@@ -48,18 +48,19 @@ The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max\{x,0\}
 
 
 **Transition**
-Once we have selected the actions $`(q^r,q^e)`$, random demand $`D_t`$ is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})` experiences the following transitions:
-```math
-I^e_{t+1} \leftarrow I^e_{t}+q^e_t+q^r_{t-l+1}-D_t
+Once we have selected the actions :math:`(q^r,q^e)`, random demand :math:`D_t` is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})` experiences the following transitions:
 
-q^r_{t-l+1} \leftarrow q^r_{t-l+1}
+.. math::
+   I^e_{t+1} \leftarrow I^e_{t}+q^e_t+q^r_{t-l+1}-D_t
 
-\dots
+   q^r_{t-l+1} \leftarrow q^r_{t-l+1}
 
-q^r_{t-2} \leftarrow q^r_{t-1}
+   \dots
 
-q^r_{t-1}\leftarrow q^r_t
-```
+   q^r_{t-2} \leftarrow q^r_{t-1}
+
+   q^r_{t-1}\leftarrow q^r_t
+
 
 The Bellman Equation
 -------
@@ -67,17 +68,17 @@ The Bellman Equation
 
 The Bellman Equation is as follows:
 
-```math
-\begin{equation}
-J_{t+1}(\mathbf{s})=\min_{\mathbf{a}_t\in \mathcal{A}_t}\left\{c_t(\mathbf{s}_t,\mathbf{a}_t)+\gamma \sum_{\mathbf{s}'\in\mathcal{S}_{t}} \Pr(\mathbf{s}_{t+1}=\mathbf{s}|\mathbf{s}'_t,\mathbf{a}_t)J_{t}(\mathbf{s}')\right\},\,  \mathbf{s}\in\mathcal{S}.
-\end{equation}
-```
+.. math::
+   J_{t+1}(\mathbf{s})=\min_{\mathbf{a}_t\in \mathcal{A}_t}\left\{c_t(\mathbf{s}_t,\mathbf{a}_t)+\gamma \sum_{\mathbf{s}'\in\mathcal{S}_{t}} \Pr(\mathbf{s}_{t+1}=\mathbf{s}|\mathbf{s}'_t,\mathbf{a}_t)J_{t}(\mathbf{s}')\right\},\,  \mathbf{s}\in\mathcal{S}.
+
 
 Using renewal theory, it can be shown that for stationary demand distributions 
 
-```math
-J^*=\lim\limits_{t\rightarrow \infty}\frac{J_t(\mathbf{s})}{t}
-```
+.. math::
+   J^*=\lim\limits_{t\rightarrow \infty}\frac{J_t(\mathbf{s})}{t}
+
+
+
 
 Example Use
 -------
