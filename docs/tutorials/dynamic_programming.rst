@@ -46,17 +46,12 @@ The state space is denoted as the set of feasible states, :math:`\mathcal{S}=\{\
 Once we have selected the actions :math:`(q^r_t,q^e_t)`, random demand :math:`D_t` is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})` experiences the following transitions:
 
 .. math::
-   :align: left
-   I^e_{t+1} \leftarrow I^e_{t}+q^e_t+q^r_{t-l+1}-D_t
 
-   q^r_{t-l+1} \leftarrow q^r_{t-l+1}
-
-   \dots
-
-   q^r_{t-2} \leftarrow q^r_{t-1}
-
-   q^r_{t-1}\leftarrow q^r_t
-
+   I^e_{t+1} &\leftarrow I^e_{t}+q^e_t+q^r_{t-l+1}-D_t\\
+   q^r_{t-l+1} &\leftarrow q^r_{t-l+1}\\
+   &\dots\\
+   q^r_{t-2} &\leftarrow q^r_{t-1}\\
+   q^r_{t-1}&\leftarrow q^r_t
 
 The Bellman Equation
 -------
@@ -82,6 +77,7 @@ The iterations are as follows:
     \sum\limits_{\mathbf{s}' \in \mathcal{S}} P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})(f(\mathbf{s}')+J_{k+1}(\mathbf{s})) \right\}`, for all :math:`\mathbf{s} \in \mathcal{S}`
  - Calculate the expected cost approximation :math:`\lambda_{k+1}(\mathbf{s}) = J_{k+1}(\mathbf{s}) / (k+1)`, for all :math:`\mathbf{s} \in \mathcal{S}`
  - Iterate the above update until :math:`\max\limits_{\mathbf{s}\in\mathcal{S}}\left\{\lambda_{k+1}(\mathbf{s})-\lambda_{k}(\mathbf{s})\right\} < \epsilon`
+
 
 Example Use
 -------
