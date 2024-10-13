@@ -11,7 +11,7 @@ Dual-sourcing problems can be formulated and solved via Dynamic Programming, usi
 
 :math:`D_t`: demand in period :math:`t`.
 
-:math:`b, h`: backloggin and holding costs.
+:math:`b, h`: backlogging and holding costs.
 
 :math:`q^r_t, q^e_t`: quantity ordered from the regular or expedited supplier in period t, respectively.
 
@@ -27,7 +27,35 @@ Finally, in order to introduce the Bellman Equation, we further define the follo
 
 :math:`I_t^e=I_t+q_{t-l}`: Expedited inventory position.
 
-:math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`.
+
+**States**
+:math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
+
+
+The state space is defined as :math:`\mathcal{S}:=\{\mathbf{s}\}`.
+
+
+**Actions**
+
+:math:`\mathbf{Q}=(q^r,q^e)`. We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
+
+**Cost**
+The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max{x,0}`
+
+
+**Transition**
+Once we have selected the actions $`(q^r,q^e)`$, random demand $`D_t`$ is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})` experiences the following transitions:
+```math
+I^e_{t+1} \leftarrow I^e_{t}+q^e_t+q^r_{t-l+1}-D_t
+
+q^r_{t-l+1} \leftarrow q^r_{t-l+1}
+
+\dots
+
+q^r_{t-2} \leftarrow q^r_{t-1}
+
+q^r_{t-1}\leftarrow q^r_t
+```
 
 The Bellman Equation
 -------
