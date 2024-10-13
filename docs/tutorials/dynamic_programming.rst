@@ -3,9 +3,34 @@ Dynamic Programming
 
 We can solve dual-sourcing problems with `idinn` in similar API as other controllers using `DynamicProgrammingController`.
 
-The Bellman Equation
+Notation and assumptions
 -------
 Dual-sourcing problems can be formulated and solved via Dynamic Programming, using the Bellman Equation. However, because of the curse of dimensionality, the ability of this approach to solve large-scale problems is limited. In what follows, we introduce some necessary notation to formulate the problem.
+
+:math:`I_t`: net inventory before replenishment in period :math:`t`.
+
+:math:`D_t`: demand in period :math:`t`.
+
+:math:`b, h`: backloggin and holding costs.
+
+:math:`q^r_t, q^e_t`: quantity ordered from the regular or expedited supplier in period t, respectively.
+
+:math:`c_r, c_e`: ordering cost from the regular or expedited supplier, respectively.
+
+:math:`l_r, l_e`: lead time of the regular or expedited supplier, respectively.
+
+
+The current implementation assumes :math:`l_e=c_r=0`. Note that :math:`c_r=0` can be assumed without loss of generality, while :math:`l_e=0` implies `some` loss of generality, but allows our implementation to be more versatile because otherwise we would need an overhead of calculating demand convolutions. As such, we hereafter set :math:`l_r=l` for notational convenience.
+
+
+Finally, in order to introduce the Bellman Equation, we further define the following quantities:
+
+:math:`I_t^e=I_t+q_{t-l}`: Expedited inventory position.
+
+:math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`.
+
+The Bellman Equation
+-------
 
 
 Example Use
