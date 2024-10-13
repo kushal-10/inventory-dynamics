@@ -3,8 +3,14 @@ Dynamic Programming
 
 We can solve dual-sourcing problems with `idinn` in similar API as other controllers using `DynamicProgrammingController`.
 
-Title 1
+The Bellman Equation
 -------
+Dual-sourcing problems can be formulated and solved via Dynamic Programming, using the Bellman Equation. However, because of the curse of dimensionality, the ability of this approach to solve large-scale problems is limited. In what follows, we introduce some necessary notation to formulate the problem.
+
+
+Example Use
+-------
+
 
 In this tutorial, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, :math:`c^r`, is 0; the expedited order cost, :math:`c^e`, is 20; and the initial inventory is 6. Additionally, the holding cost, :math:`h`, and the shortage cost, :math:`b`, are 5 and 495, respectively. Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`. In this example, we use a batch size of 256. 
 
