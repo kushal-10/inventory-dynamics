@@ -72,7 +72,7 @@ Using renewal theory, it can be shown that for stationary demand distributions
 The implemented Dynamic Programming controller solves the Bellman Equation using Value Iteration.
 The iterations are as follows:
  - For each state :math:`\mathbf{s} \in \mathcal{S}`, select an arbitrary initial cost :math:`J_0(\mathbf{s})`.
- - For a given state :math:`\mathbf{s}` and action :math:`\mathbf{Q}`, find the transition probabilities to state :math:`\mathbf{s}'` according to the demand distribution :math:`\phi`. Let us denote those probabilities by :math:`P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})`. Calculate the cost :math:`f(\mathbf{s}')` associated with each transition :math:`\mathbf{s}\xrightarrow{\mathbf{Q}} \mathbf{s}'`. Iterate those calculations for all combinations ``:math:`(\mathbf{s}, \mathbf{Q}) \in \mathcal{S}\times  \mathcal{D}_{\mathbf{Q}}```.
+ - For a given state :math:`\mathbf{s}` and action :math:`\mathbf{Q}`, find the transition probabilities to state :math:`\mathbf{s}'` according to the demand distribution :math:`\phi`. Let us denote those probabilities by :math:`P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})`. Calculate the cost :math:`f(\mathbf{s}')` associated with each transition :math:`\mathbf{s}\xrightarrow{\mathbf{Q}} \mathbf{s}'`. Iterate those calculations for all combinations :math:`(\mathbf{s}, \mathbf{Q}) \in \mathcal{S}\times  \mathcal{D}\_{\mathbf{Q}}`.
  - Apply the update :math:`J_{k+1}(\mathbf{s}) = \min\limits_{\mathbf{Q} \in \mathcal{D}_{\mathbf{Q}}} \left\{ c_{\rm e}q^{\rm e} + 
     \sum\limits_{\mathbf{s}' \in \mathcal{S}} P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})(f(\mathbf{s}')+J_{k+1}(\mathbf{s})) \right\}`, for all :math:`\mathbf{s} \in \mathcal{S}`
  - Calculate the expected cost approximation :math:`\lambda_{k+1}(\mathbf{s}) = J_{k+1}(\mathbf{s}) / (k+1)`, for all :math:`\mathbf{s} \in \mathcal{S}`
@@ -90,6 +90,29 @@ In this example, we examine a dual-sourcing model characterized by the following
    - Expedited order cost :math:`c^e=20`
    - Holding cost :math:`h=5`, shortage cost :math:`b=495`
    - Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`
+
+
+
+.. code-block:: python
+   from idinn.sourcing_model import DualSourcingModel
+   from idinn.dual_controller import dynamic_programming
+   from dynamic_programming import DynamicProgrammingController
+
+   dual_sourcing_model = DualSourcingModel(
+      regular_lead_time=2,
+      expedited_lead_time=0,
+      regular_order_cost=0,
+      expedited_order_cost=20,
+      holding_cost=5,
+      shortage_cost=495,
+      batch_size=256,
+      init_inventory=6,
+      demand_generator=UniformDemand(low=1, high=4),
+   )
+
+   dp_controller = DynamicProgrammingController()
+
+   dp_controller.fit(dual_sourcing_model)
 
 .. code-block:: python
     
