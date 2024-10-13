@@ -75,7 +75,7 @@ The iterations are as follows:
  - For a given state :math:`\mathbf{s}` and action :math:`\mathbf{Q}`, find the transition probabilities to state :math:`\mathbf{s}'` according to the demand distribution :math:`\phi`. Let us denote those probabilities by :math:`P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})`. Calculate the cost :math:`f(\mathbf{s}')` associated with each transition :math:`\mathbf{s}\xrightarrow{\mathbf{Q}} \mathbf{s}'`. Iterate those calculations for all combinations :math:`(\mathbf{s}, \mathbf{Q}) \in \mathcal{S} \times \mathcal{D}_{\mathbf{Q}}`. 
  - Apply the update:
 .. math::
-   J_{k+1}(\mathbf{s}) = \min\limits_{\mathbf{Q} \in \mathcal{D}_{\mathbf{Q}}} \left\{ c_{\rm e}q^{\rm e} + \sum\limits_{\mathbf{s}' \in \mathcal{S}} P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})(f(\mathbf{s}')+J_{k}(\mathbf{s})) \right\}, \text{for all } \quad \mathbf{s} \in \mathcal{S}
+   J_{k+1}(\mathbf{s}) = \min\limits_{\mathbf{Q} \in \mathcal{D}_{\mathbf{Q}}} \left\{ c_{\rm e}q^{\rm e} + \sum\limits_{\mathbf{s}' \in \mathcal{S}} P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})(f(\mathbf{s}')+J_{k}(\mathbf{s}')) \right\}, \text{for all } \quad \mathbf{s} \in \mathcal{S}
 - Calculate the expected cost approximation :math:`\lambda_{k+1}(\mathbf{s}) = J_{k+1}(\mathbf{s}) / (k+1)`, for all :math:`\mathbf{s} \in \mathcal{S}`
 - Iterate the above update until :math:`\max\limits_{\mathbf{s}\in\mathcal{S}}\left\{\lambda_{k+1}(\mathbf{s})-\lambda_{k}(\mathbf{s})\right\} < \epsilon`
 
