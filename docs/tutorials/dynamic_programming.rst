@@ -83,7 +83,13 @@ Example Use
 -------
 
 
-In this tutorial, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, :math:`c^r`, is 0; the expedited order cost, :math:`c^e`, is 20; and the initial inventory is 6. Additionally, the holding cost, :math:`h`, and the shortage cost, :math:`b`, are 5 and 495, respectively. Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`. In this example, we use a batch size of 256. 
+In this example, we examine a dual-sourcing model characterized by the following parameters: 
+- Regular order lead time  :math:`l=2` 
+- Expedited order lead time :math:`l^e=0` 
+- Regular order cost :math:`c^r=0` 
+- Expedited order cost :math:`c^e=20`
+- Holding cost :math:`h=5`, shortage cost :math:`b=495`
+- Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`
 
 .. code-block:: python
     
