@@ -28,27 +28,22 @@ Finally, in order to introduce the Bellman Equation, we further define the follo
 :math:`I_t^e=I_t+q_{t-l}`: Expedited inventory position.
 
 
-**States**
-
-:math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
+**States:** :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
 
 
 The state space is denoted as the set of feasible states, :math:`\mathcal{S}=\{\mathbf{s}\}`.
 
 
-**Actions**
-
-:math:`\mathbf{Q}=(q^r,q^e)`. We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
+**Actions:** :math:`\mathbf{Q}=(q^r,q^e)`. We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
 
 
 *Note*: In theory, both the state and the action spaces are infinitely countable. For example, the policy of not placing any orders will cause the state to approach :math:`(-\infty, 0, \dots, 0)`. Likewise, since there is no limit on the order sizes, the action space is a subset of :math:`\mathbb{N}^2`. However, we restrict our attention to static, near-optimal policies, which in the steady state generate an ergodic markov chain in the state space. This means we can restrict our attention to a finite part of the state and action spaces.
 
-**Cost**
-The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max\{x,0\}`
+**Cost:** The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max\{x,0\}`
 
 
 **Transition**
-Once we have selected the actions :math:`(q^r,q^e)`, random demand :math:`D_t` is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})` experiences the following transitions:
+Once we have selected the actions :math:`(q^r_t,q^e_t)`, random demand :math:`D_t` is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})` experiences the following transitions:
 
 .. math::
    :align: left
@@ -81,8 +76,8 @@ Using renewal theory, it can be shown that for stationary demand distributions
 
 The implemented Dynamic Programming controller solves the Bellman Equation using Value Iteration.
 The iterations are as follows:
- - For each state :math:`\mathbf{s} \in \mathcal{S}', select an arbitrary initial cost :math:`J_0(\mathbf{s})'.
- - For a given state :math:`\mathbf{s}` and action :math:`\mathbf{Q}`, find the transition probabilities to state :math:`\mathbf{s}'` according to the demand distribution :math:`\phi`. Let us denote those probabilities by :math:`P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})`. Calculate the cost :math:`f(\mathbf{s}')` associated with each transition :math:`\mathbf{s}\xrightarrow{\mathbf{Q}} \mathbf{s}'`. Iterate those calculations for all combinations :math:`{(\mathbf{s}, \mathbf{Q}) \in \mathcal{S}\times  \mathcal{D}_{\mathbf{Q}}}`.
+ - For each state :math:`\mathbf{s} \in \mathcal{S}`, select an arbitrary initial cost :math:`J_0(\mathbf{s})`.
+ - For a given state :math:`\mathbf{s}` and action :math:`\mathbf{Q}`, find the transition probabilities to state :math:`\mathbf{s}'` according to the demand distribution :math:`\phi`. Let us denote those probabilities by :math:`P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})`. Calculate the cost :math:`f(\mathbf{s}')` associated with each transition :math:`\mathbf{s}\xrightarrow{\mathbf{Q}} \mathbf{s}'`. Iterate those calculations for all combinations :math:`(\mathbf{s}, \mathbf{Q}) \in \mathcal{S}\times  \mathcal{D}_{\mathbf{Q}}`.
  - Apply the update :math:`J_{k+1}(\mathbf{s}) = \min\limits_{\mathbf{Q} \in \mathcal{D}_{\mathbf{Q}}} \left\{ c_{\rm e}q^{\rm e} + 
     \sum\limits_{\mathbf{s}' \in \mathcal{S}} P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})(f(\mathbf{s}')+J_{k+1}(\mathbf{s})) \right\}`, for all :math:`\mathbf{s} \in \mathcal{S}`
  - Calculate the expected cost approximation :math:`\lambda_{k+1}(\mathbf{s}) = J_{k+1}(\mathbf{s}) / (k+1)`, for all :math:`\mathbf{s} \in \mathcal{S}`
