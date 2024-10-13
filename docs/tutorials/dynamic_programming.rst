@@ -29,18 +29,22 @@ Finally, in order to introduce the Bellman Equation, we further define the follo
 
 
 **States**
+
 :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
 
 
-The state space is defined as :math:`\mathcal{S}:=\{\mathbf{s}\}`.
+The state space is denoted as the set of feasible states, :math:`\mathcal{S}=\{\mathbf{s}\}`.
 
 
 **Actions**
 
 :math:`\mathbf{Q}=(q^r,q^e)`. We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
 
+
+*Note*: In theory, both the state and the action spaces are infinitely countable. For example, the policy of not placing any orders will cause the state to approach :math:`(-\infty, 0, \dots, 0)`. Likewise, since there is no limit on the order sizes, the action space is a subset of :math:`\mathbb{N}^2`. However, we restrict our attention to static, near-optimal policies, which in the steady state generate an ergodic markov chain in the state space. This means we can restrict our attention to a finite part of the state and action spaces.
+
 **Cost**
-The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max{x,0}`
+The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max\{x,0\}`
 
 
 **Transition**
@@ -60,6 +64,20 @@ q^r_{t-1}\leftarrow q^r_t
 The Bellman Equation
 -------
 
+
+The Bellman Equation is as follows:
+
+```math
+\begin{equation}
+J_{t+1}(\mathbf{s})=\min_{\mathbf{a}_t\in \mathcal{A}_t}\left\{c_t(\mathbf{s}_t,\mathbf{a}_t)+\gamma \sum_{\mathbf{s}'\in\mathcal{S}_{t}} \Pr(\mathbf{s}_{t+1}=\mathbf{s}|\mathbf{s}'_t,\mathbf{a}_t)J_{t}(\mathbf{s}')\right\},\,  \mathbf{s}\in\mathcal{S}.
+\end{equation}
+```
+
+Using renewal theory, it can be shown that for stationary demand distributions 
+
+```math
+J^*=\lim\limits_{t\rightarrow \infty}\frac{J_t(\mathbf{s})}{t}
+```
 
 Example Use
 -------
