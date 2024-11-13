@@ -61,6 +61,7 @@ Example Usage
    :hidden:
    :maxdepth: 1
    :caption: Single-Sourcing Controllers
+   
    tutorials/intro_single_sourcing
    tutorials/base_stock
    tutorials/single_neural
@@ -69,6 +70,7 @@ Example Usage
    :hidden:
    :maxdepth: 1
    :caption: Dual-Sourcing Controllers
+
    tutorials/intro_dual_sourcing
    tutorials/capped_dual_index
    tutorials/dynamic_programming
