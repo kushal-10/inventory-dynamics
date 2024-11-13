@@ -1,10 +1,12 @@
+from .base import BaseDualController
 from itertools import product
 import numpy as np
-from numba import njit
-from numba import types
+import torch
+from numba import njit, types
 from numba.typed import Dict, List
 
-class DynamicProgrammingController:
+
+class DynamicProgrammingController(BaseDualController):
     def __init__(self) -> None:
         self.qf = None
         self.sourcing_model = None
@@ -52,7 +54,7 @@ class DynamicProgrammingController:
         n = lead_time + 1
         base_stock_ub = n * exp_demand + support * np.sqrt(n * np.log(1 + b / h) / 2)
         return np.ceil(base_stock_ub)
-    
+
     def fit(self, sourcing_model, max_iterations=1000000, tolerance=10e-8):
         # TODO: Check demand is uniform distributed
         # Log when sourcing_model's lead time do not correspond to the one in the controller
@@ -68,8 +70,8 @@ class DynamicProgrammingController:
         #     lr = sourcing_model.regular_lead_time - sourcing_model.expedited_lead_time
         #     le = 0
         self.sourcing_model = sourcing_model
-        
-        min_demand = int(sourcing_model.demand_generator.get_min_demand())  
+
+        min_demand = int(sourcing_model.demand_generator.get_min_demand())
         max_demand = int(sourcing_model.demand_generator.get_max_demand())
         exp_demand = (max_demand + min_demand) / 2.0
         support = max_demand - min_demand
@@ -139,7 +141,7 @@ class DynamicProgrammingController:
 
             iter_vals = np.array([val for val in vf.values() if val < 10e8])
             this_average = np.mean(iter_vals)
-            
+
             val = this_average / (iteration + 1)
             all_values[iteration] = val
 
@@ -150,23 +152,35 @@ class DynamicProgrammingController:
                 print(f"iteration: {iteration} delta: {delta}")
                 if delta <= tolerance:
                     for state in states:
-                        qa = DynamicProgrammingController.__vf_update(min_demand, max_demand, ce, h, b, state, vf, actions)[1]
+                        qa = DynamicProgrammingController.__vf_update(
+                            demand_prob,
+                            min_demand,
+                            max_demand,
+                            ce,
+                            h,
+                            b,
+                            state,
+                            vf,
+                            actions,
+                        )[1]
                         if qa is not None:
                             qf[state] = qa
                     break
-                    
+
         self.qf = qf
 
-    def predict(self, current_inventory, past_regular_orders, past_expedited_orders=None):
+    def predict(
+        self, current_inventory, past_regular_orders, past_expedited_orders=None
+    ):
         """
-        past_expedited_orders is optional since expedited lead time is assumed to be 0.
+        past_expedited_orders is optional since expedited lead time is assumed to be 0 and the batch size is assumed to be 1.
         """
         regular_lead_time = self.sourcing_model.regular_lead_time
-        first = current_inventory + past_regular_orders[-regular_lead_time]
-        second = past_regular_orders[-regular_lead_time+1:]
-        key = tuple([first]+second)
+        first = current_inventory.squeeze() + past_regular_orders.squeeze()[-regular_lead_time]
+        second = past_regular_orders.squeeze()[-regular_lead_time + 1 :]
+        key = tuple([int(first)] + second.int().tolist())
         return self.qf[key]
-    
+
     def reset(self):
         self.qf = None
         self.sourcing_model = None

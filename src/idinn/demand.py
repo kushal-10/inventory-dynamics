@@ -1,4 +1,3 @@
-import random
 import torch
 from abc import ABCMeta, abstractmethod
 
@@ -16,6 +15,15 @@ class BaseDemand(metaclass=ABCMeta):
         """
         pass
 
+    def enumerate_support(self):
+        pass
+    
+    def get_min_demand(self):
+        pass
+    
+    def get_max_demand(self):
+        pass
+
 
 class UniformDemand(BaseDemand):
     def __init__(self, low, high):
@@ -28,13 +36,13 @@ class UniformDemand(BaseDemand):
         return self.distribution.sample([batch_size, batch_width]).int()
     
     def enumerate_support(self):
-        return {x: 1/(self.high + 1 - self.low) for x in range(self.high + 1 - self.low)}
+        return {x: 1/(self.max_demand + 1 - self.min_demand) for x in range(self.max_demand + 1 - self.min_demand)}
     
     def get_min_demand(self):
-        return self.low
+        return self.min_demand
     
     def get_max_demand(self):
-        return self.high
+        return self.max_demand
 
 
 class CustomDemand(BaseDemand):
@@ -68,37 +76,3 @@ class CustomDemand(BaseDemand):
     
     def get_max_demand(self):
         return max(self.demand_prob.keys())
-        
-    
-#     def enumerate_support(self, x):
-#         return self.demand_prob[x]
-    
-#     def custom_demand_distribution(demand_values: torch.Tensor, demand_probabilities: torch.Tensor, num_samples: int = 1):
-#         """
-#         Generates a custom demand distribution using the given demand values and their associated probabilities.
-        
-#         Parameters:
-#         demand_values (torch.Tensor): A tensor of demand values.
-#         demand_probabilities (torch.Tensor): A tensor of probabilities associated with the demand values. Must sum to 1.
-#         num_samples (int): Number of samples to generate from the distribution.
-        
-#         Returns:
-#         torch.Tensor: Tensor containing sampled demand values according to the given probability distribution.
-#         """
-#         # Ensure probabilities sum to 1
-#         if not torch.isclose(demand_probabilities.sum(), torch.tensor(1.0)):
-#             raise ValueError("Probabilities must sum to 1.")
-        
-#         # Sample from the demand values based on the probabilities
-#         sampled_indices = torch.multinomial(demand_probabilities, num_samples, replacement=True)
-        
-#         # Return the corresponding demand values
-#         return demand_values[sampled_indices]
-
-#     # Example usage:
-#     demand_values = torch.tensor([10, 20, 30, 40, 50])
-#     demand_probabilities = torch.tensor([0.1, 0.3, 0.2, 0.25, 0.15])
-
-#     # Generate 5 samples
-#     samples = custom_demand_distribution(demand_values, demand_probabilities, num_samples=5)
-#     print(samples)
