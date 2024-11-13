@@ -60,21 +60,21 @@ Example Usage
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Single-Sourcing Controllers
-   
-   tutorials/intro_single_sourcing
-   tutorials/base_stock
-   tutorials/single_neural
+   :caption: Single-Sourcing Problems
+
+   single/intro_single_sourcing
+   single/base_stock
+   single/single_neural
 
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Dual-Sourcing Controllers
+   :caption: Dual-Sourcing Problems
 
-   tutorials/intro_dual_sourcing
-   tutorials/capped_dual_index
-   tutorials/dynamic_programming
-   tutorials/dual_neural
+   dual/intro_dual_sourcing
+   dual/capped_dual_index
+   dual/dynamic_programming
+   dual/dual_neural
 
 .. toctree::
    :hidden:
