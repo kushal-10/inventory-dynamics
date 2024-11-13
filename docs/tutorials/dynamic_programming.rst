@@ -1,24 +1,10 @@
 Dynamic Programming
 ===================
 
-We can solve dual-sourcing problems with `idinn` in similar API as other controllers using `DynamicProgrammingController`.
+Dual-sourcing problems can be formulated and solved via Dynamic Programming, using the Bellman Equation. However, because of the curse of dimensionality, the ability of this approach to solve large-scale problems is limited.
 
-Notation and assumptions
--------
-Dual-sourcing problems can be formulated and solved via Dynamic Programming, using the Bellman Equation. However, because of the curse of dimensionality, the ability of this approach to solve large-scale problems is limited. In what follows, we introduce some necessary notation to formulate the problem.
-
-:math:`I_t`: net inventory before replenishment in period :math:`t`.
-
-:math:`D_t`: demand in period :math:`t`.
-
-:math:`b, h`: backlogging and holding costs.
-
-:math:`q^r_t, q^e_t`: quantity ordered from the regular or expedited supplier in period t, respectively.
-
-:math:`c_r, c_e`: ordering cost from the regular or expedited supplier, respectively.
-
-:math:`l_r, l_e`: lead time of the regular or expedited supplier, respectively.
-
+Mathematical Structure
+----------------------
 
 The current implementation assumes :math:`l_e=c_r=0`. Note that :math:`c_r=0` can be assumed without loss of generality, while :math:`l_e=0` implies `some` loss of generality, but allows our implementation to be more versatile because otherwise we would need an overhead of calculating demand convolutions. As such, we hereafter set :math:`l_r=l` for notational convenience.
 
@@ -53,10 +39,6 @@ Once we have selected the actions :math:`(q^r_t,q^e_t)`, random demand :math:`D_
    q^r_{t-2} &\leftarrow q^r_{t-1}\\
    q^r_{t-1}&\leftarrow q^r_t
 
-The Bellman Equation
--------
-
-
 The Bellman Equation is as follows:
 
 .. math::
@@ -80,9 +62,10 @@ The iterations are as follows:
 - Iterate the above update until :math:`\max\limits_{\mathbf{s}\in\mathcal{S}}\left\{\lambda_{k+1}(\mathbf{s})-\lambda_{k}(\mathbf{s})\right\} < \epsilon`
 
 
-Example Use
--------
+Example Usage
+-------------
 
+We can solve dual-sourcing problems with `idinn` in similar API as other controllers using `DynamicProgrammingController`.
 
 In this example, we examine a dual-sourcing model characterized by the following parameters: 
    - Regular order lead time  :math:`l=2` 

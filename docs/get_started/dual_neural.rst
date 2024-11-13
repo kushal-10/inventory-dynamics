@@ -1,11 +1,7 @@
-Neural Network
-==============
+Solve Dual-Sourcing Problems Using Neural Networks
+==================================================
 
-Instead of pursuing a dynamic-programming approach, we parameterize actions using neural networks. A schematic of the described optimization process is shown in Figure~\ref{fig:optimization_schematic}. States $\{\mathbf{s}_t^{(j)}\}$ ($1\leq j \leq M$) that evolve according to the discrete-time dynamics \eqref{eq:discrete_time_evolution} are used as inputs in a neural network that learns actions that minimize the loss function $\hat{J}^{(\hat{\pi}_t)}$.
-
-Follow this link for detailed discussion.
-
-Example Usagle
+Initialization
 --------------
 
 To address dual-sourcing problems, we employ two main classes: (i) `DualSourcingModel` and (ii) `DualSourcingNeuralController`, responsible for setting up the sourcing model and its corresponding controller. In this tutorial, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, :math:`c^r`, is 0; the expedited order cost, :math:`c^e`, is 20; and the initial inventory is 6. Additionally, the holding cost, :math:`h`, and the shortage cost, :math:`b`, are 5 and 495, respectively. Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`. In this example, we use a batch size of 256. 

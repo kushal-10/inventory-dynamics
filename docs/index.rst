@@ -60,13 +60,19 @@ Example Usage
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Tutorials
-
-   tutorials/single
+   :caption: Single-Sourcing Controllers
+   tutorials/intro_single_sourcing
    tutorials/base_stock
-   tutorials/dual_neural
+   tutorials/single_neural
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Dual-Sourcing Controllers
+   tutorials/intro_dual_sourcing
    tutorials/capped_dual_index
    tutorials/dynamic_programming
+   tutorials/dual_neural
 
 .. toctree::
    :hidden:
