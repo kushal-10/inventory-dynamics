@@ -9,10 +9,18 @@ idinn.sourcing\_model
    :undoc-members:
    :show-inheritance:
 
-idinn.controller
+idinn.single_controller
 ----------------
 
-.. automodule:: idinn.controller
+.. automodule:: idinn.single_controller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+idinn.dual_controller
+----------------
+
+.. automodule:: idinn.dual_controller
    :members:
    :undoc-members:
    :show-inheritance:
