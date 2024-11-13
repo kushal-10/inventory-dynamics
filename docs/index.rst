@@ -63,7 +63,9 @@ Example Usage
    :caption: Tutorials
 
    tutorials/single
-   tutorials/dual
+   tutorials/base_stock
+   tutorials/dual_neural
+   tutorials/capped_dual_index
    tutorials/dynamic_programming
 
 .. toctree::
