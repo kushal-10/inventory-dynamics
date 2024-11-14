@@ -1,18 +1,20 @@
 Introduction to Single-Sourcing Problems
 ========================================
 
-The overall objective in single-sourcing and related inventory management problems is for companies to identify the optimal order quantities to minimize inventory-related costs, given stochastic demand. During periods when inventory remains after demand is met, each unit of excess inventory incurs a holding cost :math:`h`. If the demand exceeds the available inventory in a period, the surplus demand is considered satisfied in subsequent periods, incurring a shortage cost :math:`b`. This problem can be addressed using `idinn`. As illustrated in the :doc:`/get_started/get_started` section, we first initialize the sourcing model and its associated neural network controller. Subsequently, we train the neural network controller using data generated from the sourcing model. Finally, we use the trained neural network controller to compute optimal order quantities, which depend on the state of the system.
+The overall objective in single-sourcing and related inventory management problems is for companies to identify the optimal order quantities to minimize inventory-related costs, given stochastic demand. During periods when inventory remains after demand is met, each unit of excess inventory incurs a holding cost :math:`h`. If the demand exceeds the available inventory in a period, the surplus demand is considered satisfied in subsequent periods, incurring a shortage cost :math:`b`. 
 
-In what follows, we introduce some necessary notation to formulate the problem.
+The optimal solution to this problem is the so-called :doc:`base-stock policy </single/base_stock>`. This problem can also be addressed using the :doc:`neural network controllers </single/single_neural>` available in `idinn`.
 
-:math:`I_t`: net inventory before replenishment in period :math:`t`.
+We introduce the following notation to formulate the problem.
 
-:math:`D_t`: demand in period :math:`t`.
+:math:`I_t`: Net inventory before replenishment in period :math:`t`.
 
-:math:`b, h`: backlogging and holding costs.
+:math:`D_t`: Demand in period :math:`t`.
 
-:math:`q_t`: quantity ordered from the supplier in period ty.
+:math:`b, h`: Backlogging and holding costs.
 
-:math:`c`: ordering cost from the supplier.
+:math:`q_t`: Quantity ordered from the supplier in period :math:`t`.
 
-:math:`l`: lead time of the supplier.
+:math:`c`: Ordering cost from the supplier.
+
+:math:`l`: Supplier lead time.
