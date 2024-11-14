@@ -23,7 +23,7 @@ The basic usage of `idinn` starts with a sourcing model and a controller. First,
       demand_high=4
    )
 
-Afterwards, initialize a controller that is compatible with the chosen sourcing model. In the above single-sourcing example, the relevant controller is :class:`SingleSourcingNeuralController`.
+Afterwards, initialize a controller that is compatible with the chosen sourcing model. In the above single-sourcing example, the relevant neural controller is :class:`SingleSourcingNeuralController`.
 
 .. code-block:: python
 
@@ -34,7 +34,7 @@ Afterwards, initialize a controller that is compatible with the chosen sourcing 
 Training
 --------
 
-The selected controller needs to be trained to find the optimal neural-network parameters.
+The selected controller needs to be trained to find suitale parameters.
 
 .. code-block:: python
 
@@ -48,7 +48,7 @@ The selected controller needs to be trained to find the optimal neural-network p
 Plotting and Order Calculation
 ------------------------------------------
 
-After completed training, we can inspect how the controller performs in the specified sourcing environment by plotting the inventory and order history of certain periods.
+After completed training, we can inspect how the controller performs in the specified sourcing environment by plotting the inventory and order evolution.
 
 .. code-block:: python
 
