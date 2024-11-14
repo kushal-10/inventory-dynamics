@@ -1,7 +1,9 @@
 Introduction to Dual-Sourcing Problems
 ======================================
 
-Dual-sourcing problems are similar to single-sourcing problems but are more intricate. In a dual-sourcing problem, a company has two potential suppliers for a product, each offering varying lead times (the duration for orders to arrive) and order costs (the expense of placing an order). The challenge lies in the company's decision-making process: determining which supplier to engage for each product to minimize costs given stochastic demand. We can solve dual-sourcing problems with `idinn` in a way similar to the approaches described in :doc:`/get_started/get_started` and :doc:`/tutorials/dual`.
+Dual-sourcing problems are similar to single-sourcing problems but are more intricate. In a dual-sourcing problem, a company has two potential suppliers for a product, each offering varying lead times (the duration for orders to arrive) and order costs (the expense of placing an order). The challenge lies in the company's decision-making process: determining which supplier to engage for each product to minimize costs given stochastic demand.
+
+The optimal solution to this problem is unknown. However, various heuristics have been developed, and the :doc:`capped dual-index policy </dual/capped_dual_index>` has demonstrated strong performance across a wide range of parameters. Another approach is to approximate the optimal solution using :doc:`dynamic programming </dual/dynamic_programming>`. Lastly, this problem can also be addressed using the :doc:`neural network controllers </dual/dual_neural>` available in `idinn`.
 
 We introduce the following notation to formulate the problem.
 
