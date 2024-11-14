@@ -42,7 +42,7 @@ Once we have selected the actions :math:`(q^r_t,q^e_t)`, random demand :math:`D_
 The Bellman Equation is as follows:
 
 .. math::
-   J_{t+1}(\mathbf{s})=\min_{\mathbf{a}_t\in \mathcal{A}_t}\left\{c_t(\mathbf{s}_t,\mathbf{a}_t)+\gamma \sum_{\mathbf{s}'\in\mathcal{S}_{t}} \Pr(\mathbf{s}_{t+1}=\mathbf{s}|\mathbf{s}'_t,\mathbf{a}_t)J_{t}(\mathbf{s}')\right\},\,  \mathbf{s}\in\mathcal{S}.
+   J_{t+1}(\mathbf{s})=\min_{\mathbf{a}_t\in \mathcal{A}_t}\left\{c_t(\mathbf{s}_t,\mathbf{a}_t)+\gamma \sum_{\mathbf{s}'\in\mathcal{S}_{t}} \Pr(\mathbf{s}_{t+1}=\mathbf{s'}|\mathbf{s}_t,\mathbf{a}_t)J_{t}(\mathbf{s}')\right\},\,  \mathbf{s}\in\mathcal{S}.
 
 
 Using renewal theory, it can be shown that for stationary demand distributions 
