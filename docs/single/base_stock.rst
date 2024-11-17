@@ -20,9 +20,6 @@ where :math:`I_t` and :math:`q_t` denote the net inventory at time :math:`t` and
 
 We can then denote the optimal order quantity as :math:`q_t=\max\{0, z-\tilde{I}_t\}`, where the target level :math:`z` is the parameter to be determined.
 
-In what follows, we approach this problem using neural networks that are agnostic to the structure of the optimal solution. The neural controlers are able to recover it, and are more versatile because they can be used in more general settings often found in practical instances, such as finite horizon problems with non-stationary demand.
-
-
 Example Usage
 -------------
 
