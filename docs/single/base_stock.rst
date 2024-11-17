@@ -45,3 +45,4 @@ Example Usage
 References
 ----------
 - Scarf, H., & Karlin, S. (1958). Inventory models of the Arrow-Harris-Marschak type with time lag. In K. J. Arrow, S. Karlin, & H. E. Scarf (Eds.), *Studies in the Mathematical Theory of Inventory and Production* (Stanford University Press, Stanford, CA).
+- Arrow, K. J., Harris, T., & Marschak, J. (1951). Optimal inventory policy. *Econometrica*, 19(3), 250–272.
