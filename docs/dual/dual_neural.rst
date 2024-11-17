@@ -14,7 +14,7 @@ To address dual-sourcing problems, we employ two main classes: (i) `DualSourcing
     
    import torch
    from idinn.sourcing_model import DualSourcingModel
-   from idinn.controller import DualSourcingNeuralController
+   from idinn.dual_controller import DualSourcingNeuralController
    from idinn.demand import UniformDemand
 
    dual_sourcing_model = DualSourcingModel(
@@ -33,7 +33,7 @@ The joint holding and stockout cost across all periods can be calculated using t
 
 .. code-block:: python
     
-   dual_sourcing_model.get_total_cost(regular_q=0, expedited_q=0)
+   dual_sourcing_model.get_cost(regular_q=0, expedited_q=0)
 
 In this example, this function should return 30 for each sample since the initial inventory is 6, the holding cost is 5, and there is neither a regular nor expedited order. We have 256 samples in this case, as we specified a batch size of 256.
 
