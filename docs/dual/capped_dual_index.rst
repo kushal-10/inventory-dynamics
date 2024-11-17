@@ -18,7 +18,7 @@ and
 
    q_t^{\rm e} = [{S_t^{\rm e *}} - I_t^t]^+ \,.
 
-Here, we assume without loss of generality that :math:`l_{\rm e} = 0`. The quantity :math:`I_t^{t+k}` in Eqs.~\eqref{eq:qtr_cdi} and \eqref{eq:qte_cdi} denotes the sum of the net inventory level at the beginning of period :math:`t` and all in-transit orders that will arrive by period :math:`t+k`. That is,
+Here, we assume without loss of generality that :math:`l_{\rm e} = 0`. The quantity :math:`I_t^{t+k}` in the above equations denotes the sum of the net inventory level at the beginning of period :math:`t` and all in-transit orders that will arrive by period :math:`t+k`. That is,
 
 .. math::
 
