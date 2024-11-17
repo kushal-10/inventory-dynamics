@@ -26,7 +26,7 @@ We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
 
 *Note*: In theory, both the state and the action spaces are infinitely countable. For example, the policy of not placing any orders will cause the state to approach :math:`(-\infty, 0, \dots, 0)`. Likewise, since there is no limit on the order sizes, the action space is a subset of :math:`\mathbb{N}^2`. However, we restrict our attention to static, near-optimal policies, which in the steady state generate an ergodic Markov chain in the state space. This means we can restrict our attention to a finite part of the state and action spaces.
 
-**Cost:** The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max\{x,0\}`
+**Cost:** The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max\{x,0\}`.
 
 
 **Transition**
