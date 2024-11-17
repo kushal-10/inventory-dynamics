@@ -1,12 +1,12 @@
 Base Stock
 ==========
 
-The base stock policy for single-sourcing problems is an inventory control approach where a fixed target inventory level, or "base stock level," is maintained. Whenever inventory drops below this level due to demand, a replenishment order is placed to bring it back up to the target. This policy balances holding costs (by limiting excess stock) and stockout costs (by ensuring enough inventory to meet demand) and is ideal for products with consistent demand. The target level is typically set based on forecasted demand, lead times, and acceptable service levels.
+The base stock policy for single-sourcing problems of infinite horizon is an inventory control approach where a fixed target inventory position, or "base stock level," is maintained. Whenever inventory drops below this level due to demand, a replenishment order is placed to bring it back up to the target. This policy balances holding costs (by limiting excess stock) and stockout costs (by ensuring enough inventory to meet demand) and is optimal for products with consistent demand in the sense that minimizes the expected (per period) inventory cost over an infinite time horizon.
 
 Mathematical Structure
 ----------------------
 
-To mathematically describe the optimal order policy of single-sourcing problems :citep:`arrow1951optimal, scarf1958inventory`, we use :math:`l` and :math:`z` to respectively denote the replenishment lead time and the target inventory-position level (i.e., the target net inventory level plus all goods on order). The inventory position of single-sourcing dynamics at time :math:`t`, :math:`\tilde{I}_t`, is given by
+To mathematically describe the optimal order policy of single-sourcing problems :citep:`arrow1951optimal, scarf1958inventory`, we use :math:`l` and :math:`z` to respectively denote the replenishment lead time and the target inventory-position level (i.e., the target net inventory level plus all items on order, i.e., the ones ordered but not received yet). The inventory position of single-sourcing dynamics at time :math:`t`, :math:`\tilde{I}_t`, is given by
 
 .. math::
 
@@ -16,7 +16,11 @@ To mathematically describe the optimal order policy of single-sourcing problems 
       I_t + \sum_{i=1}^l q_{t-i} & \text{if} \,\, l>0 \,,
    \end{cases}
 
-where :math:`I_t` and :math:`q_t` denote the net inventory at time :math:`t` and the replenishment order placed at time :math:`t`, respectively. We
+where :math:`I_t` and :math:`q_t` denote the net inventory at time :math:`t` and the replenishment order placed at time :math:`t`, respectively. 
+
+We can then denote the optimal order quantity as :math:'q_t=\max\{0, z-I_t\}', where the target level :math:`z` is the parameter to be determined.
+
+In what follows, we approach this problem using neural networks that are agnostic to the structure of the optimal solution. The neural controlers are able to recover it, and are more versatile because they can be used in more general settings often found in practical instances, such as finite horizon problems with non-stationary demand.
 
 
 Example Usage
