@@ -1,7 +1,7 @@
 Dynamic Programming
 ===================
 
-Dual-sourcing problems can be formulated and solved via Dynamic Programming, using the Bellman Equation. However, because of the curse of dimensionality, the ability of this approach to solve large-scale problems is limited.
+Dual-sourcing problems can be formulated and solved via dynamic programming, using the Bellman equation. However, because of the curse of dimensionality, the ability of this approach to solve large-scale problems is limited.
 
 Mathematical Structure
 ----------------------
