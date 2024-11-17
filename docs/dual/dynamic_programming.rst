@@ -16,11 +16,12 @@ Finally, in order to introduce the Bellman equation, we further define the follo
 
 **States:** :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
 
-
 The state space is denoted as the set of feasible states, :math:`\mathcal{S}=\{\mathbf{s}\}`.
 
 
-**Actions:** :math:`\mathbf{Q}=(q^r,q^e)`. We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
+**Actions:** :math:`\mathbf{Q}=(q^r,q^e)`. 
+
+We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
 
 
 *Note*: In theory, both the state and the action spaces are infinitely countable. For example, the policy of not placing any orders will cause the state to approach :math:`(-\infty, 0, \dots, 0)`. Likewise, since there is no limit on the order sizes, the action space is a subset of :math:`\mathbb{N}^2`. However, we restrict our attention to static, near-optimal policies, which in the steady state generate an ergodic markov chain in the state space. This means we can restrict our attention to a finite part of the state and action spaces.
