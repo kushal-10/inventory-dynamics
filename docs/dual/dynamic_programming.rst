@@ -6,20 +6,20 @@ Dual-sourcing problems can be formulated and solved via dynamic programming, usi
 Mathematical Structure
 ----------------------
 
-The current implementation assumes :math:`l_e=c_r=0`. Note that :math:`c_r=0` can be assumed without loss of generality, while :math:`l_e=0` implies `some` loss of generality, but allows our implementation to be more versatile because otherwise we would need an overhead of calculating demand convolutions. As such, we hereafter set :math:`l_r=l` for notational convenience.
+The current implementation assumes :math:`l_{\rm e}=c_{\rm r}=0`. Note that :math:`c_{\rm r}=0` can be assumed without loss of generality, while :math:`l_{\rm e}=0` implies `some` loss of generality, but allows our implementation to be more versatile because otherwise we would need an overhead of calculating demand convolutions. As such, we hereafter set :math:`l_{\rm r}=l` for notational convenience.
 
 
 Finally, in order to introduce the Bellman equation, we further define the following quantities:
 
-**Expedited inventory position:** :math:`I_t^e=I_t+q_{t-l}`
+**Expedited inventory position:** :math:`I_t^{\rm e}=I_t+q_{t-l}`
 
 
-**States:** :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
+**States:** :math:`\mathbf{s}_t=(I_t^{\rm e}, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
 
 The state space is denoted as the set of feasible states, :math:`\mathcal{S}=\{\mathbf{s}\}`.
 
 
-**Actions:** :math:`\mathbf{Q}=(q^r,q^e)`. 
+**Actions:** :math:`\mathbf{Q}=(q^{\rm r},q^{\rm e})`. 
 
 We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
 
@@ -30,15 +30,15 @@ We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
 
 
 **Transitions:**
-Once we have selected the actions :math:`(q^r_t,q^e_t)`, random demand :math:`D_t` is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})` undergoes the following transitions:
+Once we have selected the actions :math:`(q^{\rm r}_t,q^{\rm e}_t)`, random demand :math:`D_t` is realized in period :math:`t`. Then the state :math:`\mathbf{s}_t=(I_t^{\rm e}, q^{\rm r}_{t-l+1}, \dots, q^{\rm r}_{t-1})` undergoes the following transitions:
 
 .. math::
 
-   I^e_{t+1} &\leftarrow I^e_{t}+q^e_t+q^r_{t-l+1}-D_t\\
-   q^r_{t-l+1} &\leftarrow q^r_{t-l+1}\\
+   I^{\rm e}_{t+1} &\leftarrow I^{\rm e}_{t}+q^{\rm e}_t+q^{\rm r}_{t-l+1}-D_t\\
+   q^{\rm r}_{t-l+1} &\leftarrow q^{\rm r}_{t-l+1}\\
    &\dots\\
-   q^r_{t-2} &\leftarrow q^r_{t-1}\\
-   q^r_{t-1}&\leftarrow q^r_t
+   q^{\rm r}_{t-2} &\leftarrow q^{\rm r}_{t-1}\\
+   q^{\rm r}_{t-1}&\leftarrow q^{\rm r}_t
 
 The Bellman equation is as follows:
 
@@ -66,13 +66,13 @@ The iterations are as follows:
 Example Usage
 -------------
 
-We can solve dual-sourcing problems with `idinn` in similar API as other controllers using `DynamicProgrammingController`.
+We can solve dual-sourcing problems with `idinn` using `DynamicProgrammingController`, which provides a consistent API similar to that of other controllers.
 
 In this example, we examine a dual-sourcing model characterized by the following parameters: 
    - Regular order lead time  :math:`l=2` 
-   - Expedited order lead time :math:`l^e=0` 
-   - Regular order cost :math:`c^r=0` 
-   - Expedited order cost :math:`c^e=20`
+   - Expedited order lead time :math:`l_{\rm e}=0` 
+   - Regular order cost :math:`c_{\rm r}=0` 
+   - Expedited order cost :math:`c_{\rm e}=20`
    - Holding cost :math:`h=5`, shortage cost :math:`b=495`
    - Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`
 
