@@ -10,7 +10,7 @@ We use the `SingleSourcingModel` class to initialize a single-sourcing model. Th
     
    import torch
    from idinn.sourcing_model import SingleSourcingModel
-   from idinn.controller import SingleSourcingNeuralController
+   from idinn.single_controller.single_neural import SingleSourcingNeuralController
    from idinn.demand import UniformDemand
 
    single_sourcing_model = SingleSourcingModel(
