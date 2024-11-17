@@ -5,7 +5,7 @@ Dual-sourcing problems are similar to single-sourcing problems but are more intr
 
 The optimal solution to this problem is unknown. However, various heuristics have been developed, and the :doc:`capped dual-index policy </dual/capped_dual_index>` has demonstrated strong performance across a wide range of parameters. Another approach is to approximate the optimal solution using :doc:`dynamic programming </dual/dynamic_programming>`. Lastly, this problem can also be addressed using the :doc:`neural network controllers </dual/dual_neural>` available in `idinn`.
 
-We introduce the following notation to formulate the problem.
+We use the following notation to formulate the problem.
 
 :math:`I_t`: Net inventory before replenishment in period :math:`t`.
 
