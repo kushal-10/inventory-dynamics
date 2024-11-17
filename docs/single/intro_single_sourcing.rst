@@ -5,7 +5,7 @@ The overall objective in single-sourcing and related inventory management proble
 
 The optimal solution to this problem is the so-called :doc:`base-stock policy </single/base_stock>`. This problem can also be addressed using the :doc:`neural network controllers </single/single_neural>` available in `idinn`.
 
-We introduce the following notation to formulate the problem.
+We use the following notation to formulate the problem.
 
 :math:`I_t`: Net inventory before replenishment in period :math:`t`.
 
