@@ -1,7 +1,7 @@
 Neural Network
 ==============
 
-Instead of pursuing a dynamic-programming approach, we parameterize actions using neural networks. A schematic of the described optimization process is shown in Figure~\ref{fig:optimization_schematic}. States $\{\mathbf{s}_t^{(j)}\}$ ($1\leq j \leq M$) that evolve according to the discrete-time dynamics \eqref{eq:discrete_time_evolution} are used as inputs in a neural network that learns actions that minimize the loss function $\hat{J}^{(\hat{\pi}_t)}$.
+Rather than adopting a dynamic programming approach, we can parameterize actions using neural networks. The optimization process is illustrated schematically in the figure below. The states $\{\mathbf{s}_t^{(j)}\}$ ($j\in\{1,\dots,M\}$), which evolve according to the underlying discrete-time dynamics, are used as inputs to a neural network. This network is trained to produce actions that minimize the loss function $\hat{J}^{(\hat{\pi}_t)}$.
 
 Follow this link for detailed discussion.
 
