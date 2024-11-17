@@ -80,8 +80,8 @@ In this example, we examine a dual-sourcing model characterized by the following
 .. code-block:: python
 
    from idinn.sourcing_model import DualSourcingModel
-   from idinn.dual_controller import dynamic_programming
-   from dynamic_programming import DynamicProgrammingController
+   from idinn.dual_controller.dynamic_programming import DynamicProgrammingController
+   from idinn.demand import UniformDemand
 
    dual_sourcing_model = DualSourcingModel(
       regular_lead_time=2,
