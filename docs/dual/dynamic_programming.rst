@@ -11,7 +11,7 @@ The current implementation assumes :math:`l_e=c_r=0`. Note that :math:`c_r=0` ca
 
 Finally, in order to introduce the Bellman equation, we further define the following quantities:
 
-:math:`I_t^e=I_t+q_{t-l}`: Expedited inventory position.
+**Expedited inventory position:** :math:`I_t^e=I_t+q_{t-l}`
 
 
 **States:** :math:`\mathbf{s}_t=(I_t^e, q^r_{t-l+1}, \dots, q^r_{t-1})`. 
