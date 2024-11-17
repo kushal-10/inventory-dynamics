@@ -6,7 +6,7 @@ The base stock policy for single-sourcing problems of infinite horizon is an inv
 Mathematical Structure
 ----------------------
 
-To mathematically describe the optimal order policy of single-sourcing problems (Scarf & Karlin, 1958), we use :math:`l` and :math:`z` to respectively denote the replenishment lead time and the target inventory-position level (i.e., the target net inventory level plus all items on order, i.e., the ones ordered but not received yet). The inventory position of single-sourcing dynamics at time :math:`t`, :math:`\tilde{I}_t`, is given by
+To mathematically describe the optimal order policy of single-sourcing problems (Arrow, Harris, & Marschak, 1951; Scarf & Karlin, 1958), we use :math:`l` and :math:`z` to respectively denote the replenishment lead time and the target inventory-position level (i.e., the target net inventory level plus all items on order, i.e., the ones ordered but not received yet). The inventory position of single-sourcing dynamics at time :math:`t`, :math:`\tilde{I}_t`, is given by
 
 .. math::
 
