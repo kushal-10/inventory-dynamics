@@ -19,6 +19,18 @@ We use the following notation to formulate the problem.
 
 :math:`l_{\rm r}, l_{\rm e}`: Lead times of the regular and expedited suppliers, respectively.
 
+The sequence of events in a single period :math:`t` is as follows:
+
+- Order quanity :math:`q_{t-l}`, ordered in period :math:`t-l`, arrives
+
+- Order quantity :math:`q_t` is placed
+
+- Demand :math:`D_t` is realized
+
+- Inventory cost for the period is registered as :math:`cq_t+h(I_t+q_{t-l}-D_t)^++b(D_t-I_t-q_{t+l})^+`, where :math:`(x)^+=\max\{0, x\}`
+
+- New state is updated as :math:`(I_t+q_{t-l}-D_t, q_{t-l+1}, q_{t-l+2},\dots,q_{t})`
+
 The net inventory evolves according to
 
 .. math::

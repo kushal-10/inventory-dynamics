@@ -15,8 +15,6 @@ We use the following notation to formulate the problem.
 
 :math:`q_t`:  Quantity ordered from the supplier in period :math:`t`.
 
-:math:`c`:  Ordering cost from the supplier.
-
 :math:`l`:  Supplier lead time.
 
 The sequence of events in a single period :math:`t` is as follows:
