@@ -39,6 +39,6 @@ and the cost at period :math:`t`, :math:`c_t`, is
 
 .. math::
 
-   c_t = h \max(0, I_t) + b \max(0, - I_t)\,,
+   c_t = h \max(0, I_{t+1}) + b \max(0, - I_{t+1})\,.
 
-where :math:`I_t` is the inventory level at the end of period :math:`t`. The higher the holding cost, the more costly it is to keep the inventory postive and high. The higher the shortage cost, the more costly it is to run out of stock when the inventory level is negative. 
+The higher the holding cost, the more costly it is to keep the inventory postive and high. The higher the shortage cost, the more costly it is to run out of stock when the inventory level is negative. 

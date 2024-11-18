@@ -41,6 +41,6 @@ and the cost at period :math:`t`, :math:`c_t`, is
 
 .. math::
 
-   c_t = c_{\rm r} q^{\rm r}_t + c_{\rm e} q^{\rm e}_t + h \max(0, I_t) + b \max(0, - I_t)\,.
+   c_t = c_{\rm r} q^{\rm r}_t + c_{\rm e} q^{\rm e}_t + h \max(0, I_{t+1}) + b \max(0, - I_{t+1})\,.
 
 The higher the holding cost, the more costly it is to keep the inventory positive and high. The higher the shortage cost, the more costly it is to run out of stock when the inventory level is negative. The higher the regular and expedited order costs, the more costly it is to place the respective orders.
