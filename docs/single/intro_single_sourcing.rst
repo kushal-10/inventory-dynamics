@@ -28,3 +28,11 @@ The sequence of events in a single period :math:`t` is as follows:
 - Inventory cost for the period is registered as :math:`h[I_t+q_{t-l}-D_t]^++b[D_t-I_t-q_{t+l}]^+`, where :math:`[x]^+=\max\{0, x\}`
 
 - New state is updated as :math:`(I_t+q_{t-l}-D_t, q_{t-l+1}, q_{t-l+2},\dots,q_{t})`
+
+The cost at period :math:`t`, :math:`c_t`, is
+
+.. math::
+
+   c_t = h \max(0, I_t) + b \max(0, - I_t)\,,
+
+where :math:`I_t` is the inventory level at the end of period :math:`t`. The higher the holding cost, the more costly it is to keep the inventory postive and high. The higher the shortage cost, the more costly it is to run out of stock when the inventory level is negative. 
