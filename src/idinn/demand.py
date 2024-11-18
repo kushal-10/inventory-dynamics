@@ -36,7 +36,8 @@ class UniformDemand(BaseDemand):
         return self.distribution.sample([batch_size, batch_width]).int()
     
     def enumerate_support(self):
-        return {x: 1/(self.max_demand + 1 - self.min_demand) for x in range(self.max_demand + 1 - self.min_demand)}
+        return {x: 1/(self.max_demand + 1 - self.min_demand) for x in range(
+            self.min_demand, self.max_demand + 1)}
     
     def get_min_demand(self):
         return self.min_demand
