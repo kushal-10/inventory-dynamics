@@ -29,7 +29,13 @@ The sequence of events in a single period :math:`t` is as follows:
 
 - New state is updated as :math:`(I_t+q_{t-l}-D_t, q_{t-l+1}, q_{t-l+2},\dots,q_{t})`
 
-The cost at period :math:`t`, :math:`c_t`, is
+The net inventory evolves according to
+
+.. math::
+
+   I_{t+1} = I_{t} + q_{t-l} - D_t \,,
+
+and the cost at period :math:`t`, :math:`c_t`, is
 
 .. math::
 
