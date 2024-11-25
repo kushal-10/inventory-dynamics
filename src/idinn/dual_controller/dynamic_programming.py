@@ -152,7 +152,7 @@ class DynamicProgrammingController(BaseDualController):
                 iteration_arr.append(iteration)
                 value_arr.append(all_values[iteration])
                 delta = all_values[iteration - 1] - all_values[iteration]
-                print(f"iteration: {iteration} delta: {delta}")
+                # print(f"iteration: {iteration} delta: {delta}")
                 if delta <= tolerance:
                     for state in states:
                         qa = DynamicProgrammingController.__vf_update(

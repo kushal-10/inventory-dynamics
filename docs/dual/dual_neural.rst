@@ -1,5 +1,5 @@
-Neural Network
-==============
+Neural Network Controller
+=========================
 
 Rather than adopting a dynamic programming approach, we can parameterize actions using neural networks. The optimization process is illustrated schematically in the figure below. The states :math:`\{\mathbf{s}_t^{(j)}\}` (:math:`j \in \{1, \dots, M\}`), which evolve according to the underlying discrete-time dynamics, are used as inputs to a neural network. This network is trained to produce actions that minimize the expected cost per period.
 
@@ -12,14 +12,13 @@ For further details, see Böttcher, Asikis, and Fragkos (2023).
 Example Usage
 --------------
 
-To address dual-sourcing problems, we employ two main classes: (i) `DualSourcingModel` and (ii) `DualSourcingNeuralController`, responsible for setting up the sourcing model and its corresponding controller. In this tutorial, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, :math:`c_{\rm r}`, is 0; the expedited order cost, :math:`c_{\rm e}`, is 20; and the initial inventory is 6. Additionally, the holding cost, :math:`h`, and the shortage cost, :math:`b`, are 5 and 495, respectively. Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`. In this example, we use a batch size of 256. 
-
 .. code-block:: python
     
    import torch
    from idinn.sourcing_model import DualSourcingModel
    from idinn.dual_controller import DualSourcingNeuralController
    from idinn.demand import UniformDemand
+   from torch.utils.tensorboard import SummaryWriter
 
    dual_sourcing_model = DualSourcingModel(
        regular_lead_time=2,
@@ -32,6 +31,23 @@ To address dual-sourcing problems, we employ two main classes: (i) `DualSourcing
        init_inventory=6,
        demand_generator=UniformDemand(low=1, high=4),
    )
+   controller_neural = DualSourcingNeuralController(
+        hidden_layers=[128, 64, 32, 16, 8, 4],
+        activation=torch.nn.CELU(alpha=1)
+    )
+    controller_neural.fit(
+        sourcing_model=dual_sourcing_model,
+        sourcing_periods=100,
+        validation_sourcing_periods=1000,
+        epochs=2000,
+        tensorboard_writer=SummaryWriter(comment="dual"),
+        seed=4,
+    )
+    # Avg. cost 17.9469
+    controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+
+
+To address dual-sourcing problems, we employ two main classes: (i) `DualSourcingModel` and (ii) `DualSourcingNeuralController`, responsible for setting up the sourcing model and its corresponding controller. In this tutorial, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, :math:`c_{\rm r}`, is 0; the expedited order cost, :math:`c_{\rm e}`, is 20; and the initial inventory is 6. Additionally, the holding cost, :math:`h`, and the shortage cost, :math:`b`, are 5 and 495, respectively. Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`. In this example, we use a batch size of 256. 
 
 The joint holding and stockout cost across all periods can be calculated using the `get_total_cost()` method of the sourcing model.
 

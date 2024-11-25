@@ -1,5 +1,5 @@
-Introduction to Single-Sourcing Problems
-========================================
+Introduction
+============
 
 The overall objective in single-sourcing and related inventory management problems is to identify the optimal order quantities to minimize expected inventory-related costs, given stochastic demand over a finite or inifinite time horizon. During periods when inventory remains after demand is met, each unit of excess inventory incurs a holding cost :math:`h`. If the demand exceeds the available inventory in a period, the surplus demand is considered satisfied in subsequent periods, incurring a shortage cost :math:`b` per unit. 
 

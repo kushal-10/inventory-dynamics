@@ -1,5 +1,5 @@
-Dynamic Programming
-===================
+Dynamic Programming Controller
+==============================
 
 Dual-sourcing problems can be formulated and solved via dynamic programming, using the Bellman equation. However, because of the curse of dimensionality, the ability of this approach to solve large-scale problems is limited.
 
@@ -76,47 +76,27 @@ In this example, we examine a dual-sourcing model characterized by the following
    - Holding cost :math:`h=5`, shortage cost :math:`b=495`
    - Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`
 
-
 .. code-block:: python
 
    from idinn.sourcing_model import DualSourcingModel
-   from idinn.dual_controller.dynamic_programming import DynamicProgrammingController
+   from idinn.dual_controller import DynamicProgrammingController
    from idinn.demand import UniformDemand
 
    dual_sourcing_model = DualSourcingModel(
-      regular_lead_time=2,
+      regular_lead_time=3,
       expedited_lead_time=0,
       regular_order_cost=0,
       expedited_order_cost=20,
       holding_cost=5,
       shortage_cost=495,
-      batch_size=256,
-      init_inventory=6,
-      demand_generator=UniformDemand(low=1, high=4),
+      init_inventory=0,
+      demand_generator=UniformDemand(low=0, high=4)
    )
-
-   dp_controller = DynamicProgrammingController()
-
-   dp_controller.fit(dual_sourcing_model)
-
-
-Draft below - continue here!
-
-.. code-block:: python
-    
-   import torch
-   from idinn.sourcing_model import DualSourcingModel
-   from idinn.controller import DualSourcingNeuralController
-   from idinn.demand import UniformDemand
-
-   dual_sourcing_model = DualSourcingModel(
-       regular_lead_time=2,
-       expedited_lead_time=0,
-       regular_order_cost=0,
-       expedited_order_cost=20,
-       holding_cost=5,
-       shortage_cost=495,
-       batch_size=256,
-       init_inventory=6,
-       demand_generator=UniformDemand(low=1, high=4),
+   controller_dp = DynamicProgrammingController()
+   controller_dp.fit(
+      dual_sourcing_model,
+      max_iterations=10000,
+      tolerance=1e-6
    )
+   # Avg. cost 24.29
+   controller_dp.get_average_cost(dual_sourcing_model, sourcing_periods=1000)

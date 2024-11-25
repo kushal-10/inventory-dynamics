@@ -1,7 +1,7 @@
-Base Stock
-==========
+Base Stock Controller
+=====================
 
-The base-stock policy for single-sourcing problems of infinite horizon is an inventory control approach where a fixed target inventory position, or "base-stock level", is maintained. Whenever inventory drops below this level due to demand, a replenishment order is placed to bring it back up to the target. This policy balances holding costs (by limiting excess stock) and stockout costs (by ensuring enough inventory to meet demand) and is optimal for products with consistent demand in the sense that minimizes the expected (per period) inventory cost over an infinite time horizon.
+The base-stock controller for single-sourcing problems of infinite horizon is an inventory control approach where a fixed target inventory position, or "base-stock level", is maintained. Whenever inventory drops below this level due to demand, a replenishment order is placed to bring it back up to the target. This policy balances holding costs (by limiting excess stock) and stockout costs (by ensuring enough inventory to meet demand) and is optimal for products with consistent demand in the sense that minimizes the expected (per period) inventory cost over an infinite time horizon.
 
 Mathematical Structure
 ----------------------
@@ -27,17 +27,39 @@ Example Usage
     
    import torch
    from idinn.sourcing_model import SingleSourcingModel
-   from idinn.single_controller.single_neural import SingleSourcingNeuralController
+   from idinn.single_controller import BaseStockController
    from idinn.demand import UniformDemand
 
    single_sourcing_model = SingleSourcingModel(
-       lead_time=0,
-       holding_cost=5,
-       shortage_cost=495,
-       batch_size=32,
-       init_inventory=10,
-       demand_generator=UniformDemand(low=1, high=4),
-    )
+      lead_time=2,
+      holding_cost=5,
+      shortage_cost=495,
+      batch_size=32,
+      init_inventory=10,
+      demand_generator=UniformDemand(low=0, high=4),
+   )
+   controller_base = BaseStockController()
+   controller_base.fit(single_sourcing_model)
+   # z_star should be 11
+   controller_base.fit(single_sourcing_model)
+   print(f"z_star: {controller_base.z_star}")
+   # Avg. cost near 29
+   controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
+
+   single_sourcing_model = SingleSourcingModel(
+    lead_time=0,
+    holding_cost=5,
+    shortage_cost=495,
+    batch_size=32,
+    init_inventory=10,
+    demand_generator=UniformDemand(low=0, high=4),
+   )
+   controller_base = BaseStockController()
+   # z_star should be 4
+   controller_base.fit(single_sourcing_model)
+   print(f"z_star: {controller_base.z_star}")
+   # Avg. cost near 10
+   controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
 
 References
 ----------

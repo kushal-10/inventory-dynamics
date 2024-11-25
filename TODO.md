@@ -11,3 +11,4 @@
     - [ ] Add benchmark results
 - [ ] Test CUDA compatibility and performance with Docker
 - [ ] Integrate Streamlit app with Docker
+- [ ] Differentiate controller's cost and sourcing model's cost function

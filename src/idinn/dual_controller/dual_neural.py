@@ -1,16 +1,9 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from .base import BaseDualController
 
 
-class NeuralControllerMixIn:
-    def save(self, checkpoint_path):
-        torch.save(self.state_dict(), checkpoint_path)
-
-    def load(self, checkpoint_path):
-        self.load_state_dict(torch.load(checkpoint_path))
-
-class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
+class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
     """
     DualSourcingNeuralController is a neural network controller for dual sourcing inventory optimization.
 
@@ -102,7 +95,7 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         ]
         self.architecture = torch.nn.Sequential(*architecture)
 
-    def forward(self, current_inventory, past_regular_orders, past_expedited_orders):
+    def predict(self, current_inventory, past_regular_orders, past_expedited_orders):
         """
         Forward pass of the neural network.
 
@@ -158,46 +151,6 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
         regular_q = q[:, [0]]
         expedited_q = q[:, [1]]
         return regular_q, expedited_q
-
-    def get_total_cost(self, sourcing_model, sourcing_periods, seed=None):
-        """
-        Calculate the total cost of the sourcing model.
-
-        Parameters
-        ----------
-        sourcing_model : DualSourcingModel
-            The sourcing model.
-        sourcing_periods : int
-            Number of sourcing periods.
-        seed : int, optional
-            Random seed for reproducibility.
-
-        Returns
-        -------
-        total_cost : torch.Tensor
-            Total cost.
-        """
-        if seed is not None:
-            torch.manual_seed(seed)
-
-        if self.architecture is None:
-            self.init_layers(
-                regular_lead_time=sourcing_model.get_regular_lead_time(),
-                expedited_lead_time=sourcing_model.get_expedited_lead_time(),
-            )
-
-        total_cost = 0
-        for i in range(sourcing_periods):
-            current_inventory = sourcing_model.get_current_inventory()
-            past_regular_orders = sourcing_model.get_past_regular_orders()
-            past_expedited_orders = sourcing_model.get_past_expedited_orders()
-            regular_q, expedited_q = self.forward(
-                current_inventory, past_regular_orders, past_expedited_orders
-            )
-            sourcing_model.order(regular_q, expedited_q)
-            current_cost = sourcing_model.get_cost(regular_q, expedited_q)
-            total_cost += current_cost.mean()
-        return total_cost
 
     def fit(
         self,
@@ -293,91 +246,13 @@ class DualSourcingNeuralController(torch.nn.Module, NeuralControllerMixIn):
                 tensorboard_writer.flush()
 
         self.load_state_dict(best_state)
+    
+    def reset(self):
+        #TODO: Add reset function
+        pass
+    
+    def save(self, checkpoint_path):
+        torch.save(self.state_dict(), checkpoint_path)
 
-    def simulate(self, sourcing_model, sourcing_periods, seed=None):
-        """
-        Simulate the sourcing model using the neural network.
-
-        Parameters
-        ----------
-        sourcing_model : DualSourcingModel
-            The sourcing model.
-        sourcing_periods : int
-            Number of sourcing periods.
-        seed : int, optional
-            Random seed for reproducibility.
-
-        Returns
-        -------
-        past_inventories : list
-            List of past inventories.
-        past_regular_orders : list
-            List of past regular orders.
-        past_expedited_orders : list
-            List of past expedited orders.
-
-        """
-        if seed is not None:
-            torch.manual_seed(seed)
-        sourcing_model.reset(batch_size=1)
-        for i in range(sourcing_periods):
-            current_inventory = sourcing_model.get_current_inventory()
-            past_regular_orders = sourcing_model.get_past_regular_orders()
-            past_expedited_orders = sourcing_model.get_past_expedited_orders()
-            regular_q, expedited_q = self.forward(
-                current_inventory, past_regular_orders, past_expedited_orders
-            )
-            sourcing_model.order(regular_q, expedited_q)
-        past_inventories = sourcing_model.get_past_inventories()[0, :].detach().numpy()
-        past_regular_orders = (
-            sourcing_model.get_past_regular_orders()[0, :].detach().numpy()
-        )
-        past_expedited_orders = (
-            sourcing_model.get_past_expedited_orders()[0, :].detach().numpy()
-        )
-        return past_inventories, past_regular_orders, past_expedited_orders
-
-    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
-        """
-        Plot the inventory and order quantities.
-
-        Parameters
-        ----------
-        sourcing_model : DualSourcingModel
-            The sourcing model.
-        sourcing_periods : int
-            Number of sourcing periods.
-        linewidth : int, default is 1
-            Width of the line in the step plots.
-        """
-        import matplotlib as mpl
-
-        past_inventories, past_regular_orders, past_expedited_orders = self.simulate(
-            sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
-        )
-        fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
-        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:], linewidth=linewidth, color='tab:blue')
-        ax[0].yaxis.get_major_locator().set_params(integer=True)
-        ax[0].set_title("Inventory")
-        ax[0].set_xlabel("Period")
-        ax[0].set_ylabel("Quantity")
-
-        ax[1].step(
-            range(sourcing_periods),
-            past_expedited_orders[-sourcing_periods:],
-            label="Expedited Order",
-            linewidth=linewidth,
-            color='tab:green'
-        )
-        ax[1].step(
-            range(sourcing_periods),
-            past_regular_orders[-sourcing_periods:],
-            label="Regular Order",
-            linewidth=linewidth,
-            color='tab:orange'
-        )
-        ax[1].yaxis.get_major_locator().set_params(integer=True)
-        ax[1].set_title("Order")
-        ax[1].set_xlabel("Period")
-        ax[1].set_ylabel("Quantity")
-        ax[1].legend()
+    def load(self, checkpoint_path):
+        self.load_state_dict(torch.load(checkpoint_path))
