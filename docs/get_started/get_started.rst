@@ -10,24 +10,24 @@ The basic usage of `idinn` starts with a sourcing model and a controller. First,
     
    import torch
    from idinn.sourcing_model import SingleSourcingModel
+   from idinn.demand import UniformDemand
 
    # Initialize the sourcing model
    sourcing_model = SingleSourcingModel(
-      lead_time=0,
+      lead_time=2,
       holding_cost=5,
       shortage_cost=495,
       batch_size=32,
       init_inventory=10,
-      demand_distribution="uniform",
-      demand_low=1,
-      demand_high=4
+      demand_generator=UniformDemand(low=0, high=4),
    )
+
 
 Afterwards, initialize a controller that is compatible with the chosen sourcing model. In the above single-sourcing example, the relevant neural controller is :class:`SingleSourcingNeuralController`.
 
 .. code-block:: python
 
-    from idinn.controller import SingleSourcingNeuralController
+    from idinn.single_controller import SingleSourcingNeuralController
     # Initialize the neural controller
     controller = SingleSourcingNeuralController()
 

@@ -1,5 +1,5 @@
-Capped Dual Index
-=================
+Capped Dual Index Controller
+============================
 
 The capped dual index (CDI) policy is a method for managing dual sourcing in inventory, where both regular and expedited orders are used to meet demand while minimizing costs. In each period, regular orders are capped to a maximum limit and cover demand within a longer lead time, while expedited orders address immediate needs with shorter lead times. The policy relies on two target inventory levels, one for each order type, and places orders based on the difference between the target and current inventory positions. The CDI policy efficiently balances cost and responsiveness by leveraging both sourcing options.
 
@@ -37,7 +37,7 @@ Example Usage
    from idinn.demand import UniformDemand
 
    dual_sourcing_model = DualSourcingModel(
-      regular_lead_time=3,
+      regular_lead_time=2,
       expedited_lead_time=0,
       regular_order_cost=0,
       expedited_order_cost=20,
@@ -51,7 +51,7 @@ Example Usage
       dual_sourcing_model,
       sourcing_periods=100
    )
-   # Avg. cost 55
+   # Avg. cost 24
    controller_cdi.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
 
 References

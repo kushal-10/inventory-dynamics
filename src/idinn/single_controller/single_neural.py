@@ -79,7 +79,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
     def predict(
         self,
         current_inventory,
-        past_orders,
+        past_orders=None,
     ):
         """
         Perform forward pass through the neural network.
@@ -88,7 +88,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         ----------
         current_inventory : int, or torch.Tensor
             Current inventory levels.
-        past_orders : int, or torch.Tensor
+        past_orders : list, or torch.Tensor, optional
             Past order quantities.
 
         Returns
@@ -96,6 +96,9 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         torch.Tensor
             Order quanty calculated by the neural network.
         """
+        if self.sourcing_model is None:
+            raise ValueError("Sourcing model is not availble.")
+
         if self.nn is None:
             self.init_layers()
         

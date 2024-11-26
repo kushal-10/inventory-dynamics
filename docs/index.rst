@@ -81,7 +81,6 @@ Example Usage
    :maxdepth: 1
    :caption: Utilities
 
-   utilities/sourcing_model
    utilities/custom_demand
    utilities/save_load
    utilities/plot

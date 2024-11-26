@@ -66,15 +66,7 @@ The iterations are as follows:
 Example Usage
 -------------
 
-We can solve dual-sourcing problems with `idinn` using `DynamicProgrammingController`, which provides a consistent API similar to that of other controllers.
-
-In this example, we examine a dual-sourcing model characterized by the following parameters: 
-   - Regular order lead time  :math:`l=2` 
-   - Expedited order lead time :math:`l_{\rm e}=0` 
-   - Regular order cost :math:`c_{\rm r}=0` 
-   - Expedited order cost :math:`c_{\rm e}=20`
-   - Holding cost :math:`h=5`, shortage cost :math:`b=495`
-   - Demand is generated from a discrete uniform distribution with support :math:`[1, 4]`
+We can solve dual-sourcing problems with `idinn` using `DynamicProgrammingController`, which provides a consistent API similar to that of other controllers. Note that expedited order lead time is assumed to be 0 all the time. User can increase `max_iterations` and lower `tolerance` to achieve better results, which takes more training time.
 
 .. code-block:: python
 
@@ -83,7 +75,7 @@ In this example, we examine a dual-sourcing model characterized by the following
    from idinn.demand import UniformDemand
 
    dual_sourcing_model = DualSourcingModel(
-      regular_lead_time=3,
+      regular_lead_time=2,
       expedited_lead_time=0,
       regular_order_cost=0,
       expedited_order_cost=20,

@@ -4,10 +4,12 @@
     - [x] Reimplement the interfaces. Separate the policy and environment interface and use .solve/.fit/.predict to find the optimal policy
     - [x] Set up a super class
 - [x] Differentiate controller's cost and sourcing model's cost function
+- [x] Align parameters used in multiple documentation
 - [ ] Unify predict interfaces to accept list, array and tensor
 - [ ] Add logging, type checking, and documentation
     - [x] Documentation for new controllers
-    - [ ] Add unit tests, style check, and coverage reports with CI
+    - [ ] Documentation for utilities
+    - [ ] Add unit tests, doc tests, style check, and coverage reports with CI
     - [ ] Save and load the controllers
 - [ ] Test CUDA compatibility and performance with Docker
 - [ ] Integrate Streamlit app with Docker

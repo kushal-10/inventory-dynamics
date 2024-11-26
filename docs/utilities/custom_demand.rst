@@ -1,6 +1,5 @@
-Custom Demand
-=============
-
+Sourcing Models and Custom Demand
+=================================
 
 .. code-block:: python
     
