@@ -46,7 +46,7 @@ Example Usage
    # Simulate and plot the results
    controller.plot(sourcing_model=sourcing_model, sourcing_periods=100)
    # Calculate the optimal order quantity for applications
-   controller.forward(current_inventory=10, past_orders=[1, 5])
+   controller.predict(current_inventory=10, past_orders=[1, 5])
 
 .. toctree::
    :hidden:
@@ -62,19 +62,29 @@ Example Usage
    :maxdepth: 1
    :caption: Single-Sourcing Problems
 
-   single/intro_single_sourcing
-   single/base_stock
-   single/single_neural
+   single_sourcing/intro_single_sourcing
+   single_sourcing/base_stock
+   single_sourcing/single_neural
 
 .. toctree::
    :hidden:
    :maxdepth: 1
    :caption: Dual-Sourcing Problems
 
-   dual/intro_dual_sourcing
-   dual/capped_dual_index
-   dual/dynamic_programming
-   dual/dual_neural
+   dual_sourcing/intro_dual_sourcing
+   dual_sourcing/capped_dual_index
+   dual_sourcing/dynamic_programming
+   dual_sourcing/dual_neural
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Utilities
+
+   utilities/sourcing_model
+   utilities/custom_demand
+   utilities/save_load
+   utilities/plot
 
 .. toctree::
    :hidden:

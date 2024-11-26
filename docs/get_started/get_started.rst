@@ -64,4 +64,4 @@ The trained controller can be used for optimal order quantity calculations.
 .. code-block:: python
 
    # Calculate the optimal order quantity for applications
-   controller.forward(current_inventory=10, past_orders=[1, 5])
+   controller.predict(current_inventory=10, past_orders=[1, 5])

@@ -1,5 +1,5 @@
-Neural Network Controller
-=========================
+Single Sourcing Neura Network Controller
+========================================
 
 Example Usage
 -------------

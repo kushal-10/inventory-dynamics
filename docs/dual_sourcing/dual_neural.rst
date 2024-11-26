@@ -1,5 +1,5 @@
-Neural Network Controller
-=========================
+Dual Sourcing Neural Network Controller
+=======================================
 
 Rather than adopting a dynamic programming approach, we can parameterize actions using neural networks. The optimization process is illustrated schematically in the figure below. The states :math:`\{\mathbf{s}_t^{(j)}\}` (:math:`j \in \{1, \dots, M\}`), which evolve according to the underlying discrete-time dynamics, are used as inputs to a neural network. This network is trained to produce actions that minimize the expected cost per period.
 

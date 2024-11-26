@@ -1,5 +1,5 @@
-Introduction to Dual-Sourcing Problems
-======================================
+Introduction
+============
 
 Dual-sourcing problems are similar to single-sourcing problems but are more intricate. In a dual-sourcing problem, a company has two potential suppliers for a product, each offering varying lead times (the duration for orders to arrive) and order costs (the expense of placing an order). The challenge lies in the company's decision-making process: determining which supplier to engage for each product to minimize costs given stochastic demand.
 
