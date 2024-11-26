@@ -48,6 +48,18 @@ class UniformDemand(BaseDemand):
 
 class CustomDemand(BaseDemand):
     def __init__(self, demand_prob=None):
+        from math import isclose
+        
+        for key in demand_prob:
+            # All demand values should be int
+            if not isinstance(key, int):
+                raise TypeError(f"Demand values '{key}' is not an integer.")
+        # Sum of probabilities should be close to 1
+        total = sum(demand_prob.values())
+        if not isclose(total, 1, abs_tol=1e-3):
+            raise ValueError(f"The sum of probablities is {total}, which is not close to 1.")
+
+        # TODO: Ensure Python >= 3.7 so order is preserved (matches insertion order)
         self.demand_prob = demand_prob
 
     def sample(self, batch_size, batch_width=1) -> torch.Tensor:
@@ -68,8 +80,6 @@ class CustomDemand(BaseDemand):
         return torch.tensor(list(self.demand_prob.keys()))[sampled_indices].reshape(batch_size, batch_width)
     
     def enumerate_support(self):
-        # TODO: check sum of probabilities is 1
-        # TODO: check if all keys are int
         return self.demand_prob
     
     def get_min_demand(self):

@@ -103,9 +103,9 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         ----------
         current_inventory : int, or torch.Tensor
             Current inventory.
-        past_regular_orders : int, or torch.Tensor
+        past_regular_orders : list, or torch.Tensor
             Past regular orders.
-        past_expedited_orders : int, or torch.Tensor
+        past_expedited_orders : list, or torch.Tensor
             Past expedited orders.
 
         Returns
@@ -204,7 +204,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
         optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
-        min_cost = np.inf
+        min_loss = np.inf
 
         for epoch in range(epochs):
             # Clear grad cache
@@ -212,8 +212,8 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             optimizer_parameters.zero_grad()
             # Reset the sourcing model with the learned init inventory
             sourcing_model.reset()
-            total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
-            total_cost.backward()
+            train_loss = super().get_total_cost(sourcing_model, sourcing_periods)
+            train_loss.backward()
             # Perform gradient descend
             if epoch % init_inventory_freq == 0:
                 optimizer_init_inventory.step()
@@ -221,26 +221,26 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 optimizer_parameters.step()
             # Save the best model
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                eval_cost = self.get_total_cost(
+                eval_loss = super().get_total_cost(
                     sourcing_model, validation_sourcing_periods
                 )
-                if eval_cost < min_cost:
-                    min_cost = eval_cost
+                if eval_loss < min_loss:
+                    min_loss = eval_loss
                     best_state = self.state_dict()
             else:
-                if total_cost < min_cost:
-                    min_cost = total_cost
+                if train_loss < min_loss:
+                    min_loss = train_loss
                     best_state = self.state_dict()
             # Log train loss
             if tensorboard_writer is not None:
                 tensorboard_writer.add_scalar(
-                    "Avg. cost per period/train", total_cost / sourcing_periods, epoch
+                    "Avg. cost per period/train", train_loss / sourcing_periods, epoch
                 )
                 if validation_sourcing_periods is not None and epoch % 10 == 0:
                     # Log validation loss
                     tensorboard_writer.add_scalar(
                         "Avg. cost per period/val",
-                        eval_cost / validation_sourcing_periods,
+                        eval_loss / validation_sourcing_periods,
                         epoch,
                     )
                 tensorboard_writer.flush()
@@ -248,8 +248,11 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         self.load_state_dict(best_state)
     
     def reset(self):
-        #TODO: Add reset function
-        pass
+        """
+        Reset the controller to the initial state.
+        """
+        self.architecture = None
+        self.sourcing_model = None
     
     def save(self, checkpoint_path):
         torch.save(self.state_dict(), checkpoint_path)

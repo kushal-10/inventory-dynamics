@@ -132,12 +132,6 @@ class SingleSourcingModel(BaseSourcingModel):
     def get_past_orders(self):
         return self.past_orders
 
-    def get_cost(self):
-        cost = self.holding_cost * torch.relu(
-            self.get_current_inventory()
-        ) + self.shortage_cost * torch.relu(-self.get_current_inventory())
-        return cost
-
     def order(self, q, seed=None):
         """
         Orders items to the inventory and update the inventory with generated demands.
@@ -225,6 +219,12 @@ class DualSourcingModel(BaseSourcingModel):
 
     def get_past_expedited_orders(self):
         return self.past_expedited_orders
+    
+    def get_last_regular_order(self):
+        return self.past_regular_orders[:, [-1]]
+
+    def get_last_expedited_order(self):
+        return self.past_expedited_orders[:, [-1]]
 
     def get_regular_lead_time(self):
         return self.regular_lead_time
@@ -237,15 +237,6 @@ class DualSourcingModel(BaseSourcingModel):
     
     def get_expedited_order_cost(self):
         return self.expedited_order_cost
-
-    def get_cost(self, regular_q, expedited_q):
-        cost = (
-            self.regular_order_cost * regular_q
-            + self.expedited_order_cost * expedited_q
-            + self.holding_cost * torch.relu(self.get_current_inventory())
-            + self.shortage_cost * torch.relu(-self.get_current_inventory())
-        )
-        return cost
 
     def order(self, regular_q, expedited_q, seed=None):
         """
