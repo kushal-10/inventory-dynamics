@@ -51,7 +51,7 @@ Example Usage
       dual_sourcing_model,
       sourcing_periods=100
    )
-   # Avg. cost 25.94
+   # Avg. cost 55
    controller_cdi.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
 
 References

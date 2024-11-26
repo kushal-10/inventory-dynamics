@@ -154,7 +154,7 @@ class BaseDualController(metaclass=ABCMeta):
         )
         return past_inventories, past_regular_orders, past_expedited_orders
 
-    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
+    def plot(self, sourcing_model, sourcing_periods, linewidth=1, seed=None):
         """
         Plot the inventory and order quantities.
 
@@ -166,11 +166,13 @@ class BaseDualController(metaclass=ABCMeta):
             Number of sourcing periods.
         linewidth : int, default is 1
             Width of the line in the step plots.
+        seed : int, optional
+            Random seed for reproducibility.
         """
         from matplotlib import pyplot as plt
 
         past_inventories, past_regular_orders, past_expedited_orders = self.simulate(
-            sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
+            sourcing_model=sourcing_model, sourcing_periods=sourcing_periods, seed=seed
         )
         fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
         ax[0].step(
@@ -203,3 +205,17 @@ class BaseDualController(metaclass=ABCMeta):
         ax[1].set_xlabel("Period")
         ax[1].set_ylabel("Quantity")
         ax[1].legend()
+
+    def save(self, path):
+        """
+        Save the controller to the specified path.
+        """
+        #TODO: Implement this function
+        pass
+
+    def load(self, path):
+        """
+        Load the controller from the specified path.
+        """
+        #TODO: Implement this function
+        pass

@@ -132,7 +132,7 @@ class BaseSingleController(metaclass=ABCMeta):
         past_orders = sourcing_model.get_past_orders()[0, :].detach().numpy()
         return past_inventories, past_orders
 
-    def plot(self, sourcing_model, sourcing_periods, linewidth=1):
+    def plot(self, sourcing_model, sourcing_periods, linewidth=1, seed=None):
         """
         Plot the inventory and order quantities over a given number of sourcing periods.
 
@@ -144,11 +144,13 @@ class BaseSingleController(metaclass=ABCMeta):
             The number of sourcing periods for plotting.
         linewidth : int, default is 1
             The width of the line in the step plots.
+        seed : int, optional
+            Random seed for reproducibility.
         """
         from matplotlib import pyplot as plt
 
         past_inventories, past_orders = self.simulate(
-            sourcing_model=sourcing_model, sourcing_periods=sourcing_periods
+            sourcing_model=sourcing_model, sourcing_periods=sourcing_periods, seed=seed
         )
         fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
 
@@ -163,3 +165,17 @@ class BaseSingleController(metaclass=ABCMeta):
         ax[1].set_title("Order")
         ax[1].set_xlabel("Period")
         ax[1].set_ylabel("Quantity")
+    
+    def save(self, path):
+        """
+        Save the controller to the specified path.
+        """
+        #TODO: Implement this function
+        pass
+
+    def load(self, path):
+        """
+        Load the controller from the specified path.
+        """
+        #TODO: Implement this function
+        pass

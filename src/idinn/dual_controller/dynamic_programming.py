@@ -1,11 +1,8 @@
 from .base import BaseDualController
 from itertools import product
 import numpy as np
-import torch
 from numba import njit, types
 from numba.typed import Dict, List
-
-from .. import demand
 
 
 class DynamicProgrammingController(BaseDualController):
@@ -94,8 +91,7 @@ class DynamicProgrammingController(BaseDualController):
         max_order = max_ip + min_ip
         dim_pipeline = lr - le - 1
 
-        demand_prob = Dict.empty(key_type=types.int64,
-                                 value_type=types.float64)
+        demand_prob = Dict.empty(key_type=types.int64, value_type=types.float64)
         demand_prob_ = sourcing_model.demand_generator.enumerate_support()
         for k, v in demand_prob_.items():
             demand_prob[k] = v
@@ -179,7 +175,10 @@ class DynamicProgrammingController(BaseDualController):
         past_expedited_orders is optional since expedited lead time is assumed to be 0 and the batch size is assumed to be 1.
         """
         regular_lead_time = self.sourcing_model.regular_lead_time
-        first = current_inventory.squeeze() + past_regular_orders.squeeze()[-regular_lead_time]
+        first = (
+            current_inventory.squeeze()
+            + past_regular_orders.squeeze()[-regular_lead_time]
+        )
         second = past_regular_orders.squeeze()[-regular_lead_time + 1 :]
         key = tuple([int(first)] + second.int().tolist())
         return self.qf[key]

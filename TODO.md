@@ -3,12 +3,11 @@
     - [x] Implement the CDI and DP in dual-sourcing model
     - [x] Reimplement the interfaces. Separate the policy and environment interface and use .solve/.fit/.predict to find the optimal policy
     - [x] Set up a super class
-- [ ] Handle unit tests, style check, and coverage reports with CI
-- [ ] Log, type checking, and documentation
-    - [ ] Add unit test for both uniform demand and custom demand
-    - [ ] Add structure for DP, CDI, base stock documentation
-    - [ ] Add instruction to pickle the controllers
-    - [ ] Add benchmark results
+- [x] Differentiate controller's cost and sourcing model's cost function
+- [ ] Unify predict interfaces to accept list, array and tensor
+- [ ] Add logging, type checking, and documentation
+    - [x] Documentation for new controllers
+    - [ ] Add unit tests, style check, and coverage reports with CI
+    - [ ] Save and load the controllers
 - [ ] Test CUDA compatibility and performance with Docker
 - [ ] Integrate Streamlit app with Docker
-- [ ] Differentiate controller's cost and sourcing model's cost function
