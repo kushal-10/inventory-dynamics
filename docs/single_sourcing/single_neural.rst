@@ -21,7 +21,7 @@ Example Usage
         shortage_cost=495,
         batch_size=32,
         init_inventory=10,
-        demand_generator=UniformDemand(low=1, high=4),
+        demand_generator=UniformDemand(low=0, high=4),
     )
     controller_neural = SingleSourcingNeuralController()
     controller_neural.fit(
