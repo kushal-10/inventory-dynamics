@@ -1,4 +1,4 @@
-Base Stock Controller
+Base-Stock Controller
 =====================
 
 The base-stock controller for single-sourcing problems of infinite horizon is an inventory control approach where a fixed target inventory position, or "base-stock level", is maintained. Whenever inventory drops below this level due to demand, a replenishment order is placed to bring it back up to the target. This policy balances holding costs (by limiting excess stock) and stockout costs (by ensuring enough inventory to meet demand) and is optimal for products with consistent demand in the sense that minimizes the expected (per period) inventory cost over an infinite time horizon.
@@ -22,6 +22,8 @@ We can then denote the optimal order quantity as :math:`q_t=\max\{0, z^*-\tilde{
 
 Example Usage
 -------------
+
+We now present two examples to demonstrate how the base-stock controller can be called and evaluated in `idinn`.
 
 .. code-block:: python
     
