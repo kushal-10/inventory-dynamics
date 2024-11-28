@@ -37,7 +37,7 @@ We now present one example to demonstrate how the :class:`SingleSourcingNeuralCo
     # Avg. cost near 10
     controller_neural.get_average_cost(single_sourcing_model, sourcing_periods=1000)
 
-Adjusting parameters such as `batch_size` and `epochs` can improve the learning of sourcing policies.
+Adjusting parameters such as `batch_size`, `init_inventory`, and `epochs` can improve the learning of sourcing policies.
 
 For a given controller, orders can be predicted as follows.
 

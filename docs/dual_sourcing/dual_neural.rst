@@ -50,6 +50,14 @@ We now present one example to demonstrate how the :class:`DualSourcingNeuralCont
 
 Adjusting parameters such as `batch_size`, `init_inventory`, and `epochs` can improve the learning of sourcing policies. It may also be helpful to try out different neural-network structures.
 
+For a given controller, orders can be predicted as follows.
+
+.. code-block:: python
+
+    controller_neural.predict(current_inventory=10, past_orders=[])
+
+If the lead-time value is greater than 0, one has to specify the corresponding `past_orders`.
+
 References
 ----------
 - Böttcher, L., Asikis, T., & Fragkos, I. (2023). Control of dual-sourcing inventory systems using recurrent neural networks. *INFORMS Journal on Computing*, 35(6), 1308–1328.
