@@ -43,9 +43,9 @@ We now present one example to demonstrate how the :class:`DualSourcingNeuralCont
         validation_sourcing_periods=1000,
         epochs=2000,
         tensorboard_writer=SummaryWriter(comment="dual"),
-        seed=4,
+        seed=123,
     )
-    # Avg. cost 17.9469
+    # Avg. cost near 24
     controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
 
 Adjusting parameters such as `batch_size`, `init_inventory`, and `epochs` can improve the learning of sourcing policies. It may also be helpful to try out different neural-network structures.
@@ -54,9 +54,9 @@ For a given controller, orders can be predicted as follows.
 
 .. code-block:: python
 
-    controller_neural.predict(current_inventory=10, past_orders=[])
+    controller_neural.predict(current_inventory=10, past_regular_orders=[1, 1], past_expedited_orders=[])
 
-If the lead-time value is greater than 0, one has to specify the corresponding `past_orders`.
+If the regular and expedited lead-time values are greater than 0, one has to specify the corresponding `past_regular_orders` and `past_expedited_orders`.
 
 References
 ----------
