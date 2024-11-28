@@ -43,7 +43,6 @@ For a given controller, orders can be predicted as follows.
 
 .. code-block:: python
 
-    # Calculate the optimal order quantity for applications
     controller_neural.predict(current_inventory=10, past_orders=[])
 
 If the lead-time value is greater than 0, one has to specify the corresponding `past_orders`.
