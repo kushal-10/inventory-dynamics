@@ -59,9 +59,9 @@ After completed training, we can inspect how the controller performs in the spec
    :alt: Output of the single sourcing model and controller
    :align: center
 
-The trained controller can be used for optimal order quantity calculations.
+The trained controller can be used to predict order quantities.
 
 .. code-block:: python
 
-   # Calculate the optimal order quantity for applications
+   # Predict order quantity for a given system state
    controller.predict(current_inventory=10, past_orders=[1, 5])
