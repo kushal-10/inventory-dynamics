@@ -35,12 +35,16 @@ Example Usage
     # Avg. cost near 10
     controller_neural.get_average_cost(single_sourcing_model, sourcing_periods=1000)
 
-For prediction, note that the `past_orders` is optional, depending on the lead time. The controller ... 
+Adjusting parameters such as `batch_size` and `epochs` can improve the learning of sourcing policies.
+
+For a given controller, orders can be predicted as follows.
 
 .. code-block:: python
 
     # Calculate the optimal order quantity for applications
-    controller.predict(current_inventory=10, past_orders=[1, 5])
+    controller_neural.predict(current_inventory=10, past_orders=[])
+
+If the lead-time value is greater than 0, one has to specify the corresponding `past_orders`.
 
 References
 ----------
