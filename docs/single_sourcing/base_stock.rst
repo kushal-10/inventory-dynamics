@@ -6,7 +6,7 @@ The base-stock controller for single-sourcing problems of infinite horizon is an
 Mathematical Structure
 ----------------------
 
-To mathematically describe the optimal order policy of single-sourcing problems (Arrow, Harris, & Marschak, 1951; Scarf & Karlin, 1958), we use :math:`l` and :math:`z` to respectively denote the replenishment lead time and the target inventory-position level (i.e., the target net inventory level plus all items ordered but not received yet). The inventory position of single-sourcing dynamics at time :math:`t`, :math:`\tilde{I}_t`, is given by
+To mathematically describe the optimal order policy of single-sourcing problems (Arrow, Harris, & Marschak, 1951; Scarf & Karlin, 1958), we use :math:`l` and :math:`z^*` to respectively denote the replenishment lead time and the target inventory-position level (i.e., the target net inventory level plus all items ordered but not received yet). The inventory position of single-sourcing dynamics at time :math:`t`, :math:`\tilde{I}_t`, is given by
 
 .. math::
 
@@ -18,7 +18,7 @@ To mathematically describe the optimal order policy of single-sourcing problems 
 
 where :math:`I_t` and :math:`q_t` denote the net inventory at time :math:`t` and the replenishment order placed at time :math:`t`, respectively. 
 
-We can then denote the optimal order quantity as :math:`q_t=\max\{0, z-\tilde{I}_t\}`, where the target level :math:`z` is the parameter to be determined.
+We can then denote the optimal order quantity as :math:`q_t=\max\{0, z^*-\tilde{I}_t\}`, where the target level :math:`z^*` is the parameter to be determined.
 
 Example Usage
 -------------
