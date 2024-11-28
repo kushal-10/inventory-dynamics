@@ -32,7 +32,7 @@ Example Usage
         tensorboard_writer=SummaryWriter(comment="_single_1"),
         seed=1,
     )
-    # Avg. cost 7.5725
+    # Avg. cost near 10
     controller_neural.get_average_cost(single_sourcing_model, sourcing_periods=1000)
 
 For prediction, note that the `past_orders` is optional, depending on the lead time. The controller ... 
