@@ -12,6 +12,8 @@ For further details, see Böttcher, Asikis, and Fragkos (2023).
 Example Usage
 --------------
 
+We now present one example to demonstrate how the :class:`DualSourcingNeuralController` can be called, trained, and evaluated in `idinn`.
+
 .. code-block:: python
     
    import torch
@@ -45,6 +47,8 @@ Example Usage
     )
     # Avg. cost 17.9469
     controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+
+Adjusting parameters such as `batch_size`, `init_inventory`, and `epochs` can improve the learning of sourcing policies. It may also be helpful to try out different neural-network structures.
 
 References
 ----------
