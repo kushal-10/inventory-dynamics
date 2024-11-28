@@ -34,6 +34,22 @@ We now present two examples to demonstrate how the base-stock controller can be 
 
    # First example
    single_sourcing_model = SingleSourcingModel(
+    lead_time=0,
+    holding_cost=5,
+    shortage_cost=495,
+    batch_size=32,
+    init_inventory=10,
+    demand_generator=UniformDemand(low=0, high=4),
+   )
+   controller_base = BaseStockController()
+   # z_star should be 4
+   controller_base.fit(single_sourcing_model)
+   print(f"z_star: {controller_base.z_star}")
+   # Avg. cost near 10
+   controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
+
+   # Second example
+   single_sourcing_model = SingleSourcingModel(
       lead_time=2,
       holding_cost=5,
       shortage_cost=495,
@@ -49,21 +65,6 @@ We now present two examples to demonstrate how the base-stock controller can be 
    # Avg. cost near 29
    controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
 
-   # Second example
-   single_sourcing_model = SingleSourcingModel(
-    lead_time=0,
-    holding_cost=5,
-    shortage_cost=495,
-    batch_size=32,
-    init_inventory=10,
-    demand_generator=UniformDemand(low=0, high=4),
-   )
-   controller_base = BaseStockController()
-   # z_star should be 4
-   controller_base.fit(single_sourcing_model)
-   print(f"z_star: {controller_base.z_star}")
-   # Avg. cost near 10
-   controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
 
 References
 ----------
