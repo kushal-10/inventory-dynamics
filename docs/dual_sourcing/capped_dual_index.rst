@@ -30,6 +30,8 @@ where :math:`k \in \{0, \dots, l_{\rm r} - 1\}`. In accordance with Sun & Van Mi
 Example Usage
 -------------
 
+We now present one example to demonstrate how the :class:`CappedDualIndexController` can be called, trained, and evaluated in `idinn`.
+
 .. code-block:: python
     
    from idinn.sourcing_model import DualSourcingModel
@@ -51,8 +53,12 @@ Example Usage
       dual_sourcing_model,
       sourcing_periods=100
    )
-   # Avg. cost 24
+   # Avg. cost near 25
    controller_cdi.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+
+Adjusting the `sourcing_periods` parameter in `controller_cdi` can improve the controller's performance.
+
+Additionally, the `fit` function provides parameters such as `s_e_range`, `s_r_range`, and `q_r_range` to define the ranges of CDI parameters for the grid search. By default, all these ranges are set to `np.arange(2, 11)`.
 
 References
 ----------
