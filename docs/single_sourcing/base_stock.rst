@@ -23,7 +23,7 @@ We can then denote the optimal order quantity as :math:`q_t=\max\{0, z^*-\tilde{
 Example Usage
 -------------
 
-We now present two examples to demonstrate how the base-stock controller can be called and evaluated in `idinn`.
+We now present two examples to demonstrate how the `BaseStockController` can be called and evaluated in `idinn`.
 
 .. code-block:: python
     

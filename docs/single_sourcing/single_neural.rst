@@ -8,6 +8,8 @@ For further details, see Böttcher, Asikis, and Fragkos (2023).
 Example Usage
 -------------
 
+We now present one example to demonstrate how the `SingleSourcingNeuralController` can be called, trained, and evaluated in `idinn`.
+
 .. code-block:: python
     
     from idinn.sourcing_model import SingleSourcingModel
