@@ -30,6 +30,7 @@ Example Usage
    from idinn.single_controller import BaseStockController
    from idinn.demand import UniformDemand
 
+   # First example
    single_sourcing_model = SingleSourcingModel(
       lead_time=2,
       holding_cost=5,
@@ -46,7 +47,7 @@ Example Usage
    # Avg. cost near 29
    controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
 
-   # Different example
+   # Second example
    single_sourcing_model = SingleSourcingModel(
     lead_time=0,
     holding_cost=5,
