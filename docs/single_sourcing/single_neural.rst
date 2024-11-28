@@ -1,7 +1,7 @@
 Single-Sourcing Neural Network Controller
 =========================================
 
-Rather than adopting a dynamic programming approach, we can parameterize actions using neural networks. 
+Rather than using a base-stock controller, we can parameterize actions using a neural network. This network is trained to generate actions that minimize the expected cost per period for a single-sourcing system that evolves according to its discrete-time dynamics.
 
 For further details, see Böttcher, Asikis, and Fragkos (2023).
 
@@ -41,3 +41,7 @@ For prediction, note that the `past_orders` is optional, depending on the lead t
 
     # Calculate the optimal order quantity for applications
     controller.predict(current_inventory=10, past_orders=[1, 5])
+
+References
+----------
+- Böttcher, L., Asikis, T., & Fragkos, I. (2023). Control of dual-sourcing inventory systems using recurrent neural networks. *INFORMS Journal on Computing*, 35(6), 1308–1328.
