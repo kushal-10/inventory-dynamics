@@ -90,5 +90,5 @@ We can solve dual-sourcing problems with `idinn` using `DynamicProgrammingContro
       max_iterations=10000,
       tolerance=1e-6
    )
-   # Avg. cost 24.29
+  
    controller_dp.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
