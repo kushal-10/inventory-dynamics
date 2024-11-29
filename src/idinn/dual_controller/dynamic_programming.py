@@ -167,6 +167,7 @@ class DynamicProgrammingController(BaseDualController):
                     break
 
         self.qf = qf
+        self.vf = vf
 
     def predict(
         self, current_inventory, past_regular_orders, past_expedited_orders=None
