@@ -66,7 +66,7 @@ The iterations are as follows:
 Example Usage
 -------------
 
-We can solve dual-sourcing problems with `idinn` using `DynamicProgrammingController`, which provides a consistent API similar to that of other controllers. Note that expedited order lead time is assumed to be 0 all the time. The user can increase `max_iterations` and lower `tolerance` to achieve better results, which takes more training time.
+We can solve dual-sourcing problems with `idinn` using :class:`DynamicProgrammingController`, which provides a consistent API similar to that of other controllers. Note that expedited orders are assumed to have a lead time of 0. The user can increase the `max_iterations` parameter and descrease the `tolerance` to achieve better results, though this will require additional time.
 
 .. code-block:: python
 
