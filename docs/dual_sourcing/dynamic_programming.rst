@@ -35,7 +35,7 @@ Once we have selected the actions :math:`(q^{\rm r}_t,q^{\rm e}_t)`, random dema
 .. math::
 
    I^{\rm e}_{t+1} &\leftarrow I^{\rm e}_{t}+q^{\rm e}_t+q^{\rm r}_{t-l+1}-D_t\\
-   q^{\rm r}_{t-l+1} &\leftarrow q^{\rm r}_{t-l+1}\\
+   q^{\rm r}_{t-l+1} &\leftarrow q^{\rm r}_{t-l+2}\\
    &\dots\\
    q^{\rm r}_{t-2} &\leftarrow q^{\rm r}_{t-1}\\
    q^{\rm r}_{t-1}&\leftarrow q^{\rm r}_t
@@ -60,13 +60,13 @@ The iterations are as follows:
 .. math::
    J_{k+1}(\mathbf{s}) = \min\limits_{\mathbf{Q} \in \mathcal{D}_{\mathbf{Q}}} \left\{ c_{\rm e}q^{\rm e} + \sum\limits_{\mathbf{s}' \in \mathcal{S}} P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})(f(\mathbf{s}')+J_{k}(\mathbf{s}')) \right\}, \text{for all } \quad \mathbf{s} \in \mathcal{S}
 - Calculate the expected cost approximation :math:`\lambda_{k+1}(\mathbf{s}) = J_{k+1}(\mathbf{s}) / (k+1)`, for all :math:`\mathbf{s} \in \mathcal{S}`.
-- Iterate the above update until :math:`\max\limits_{\mathbf{s}\in\mathcal{S}}\left\{\lambda_{k+1}(\mathbf{s})-\lambda_{k}(\mathbf{s})\right\} < \epsilon`.
+- Iterate the above update until :math:`\max\limits_{\mathbf{s}\in\mathcal{S}}\left\{\lvert\lambda_{k+1}(\mathbf{s})-\lambda_{k}(\mathbf{s})\rvert\right\} < \epsilon`.
 
 
 Example Usage
 -------------
 
-We can solve dual-sourcing problems with `idinn` using `DynamicProgrammingController`, which provides a consistent API similar to that of other controllers. Note that expedited order lead time is assumed to be 0 all the time. User can increase `max_iterations` and lower `tolerance` to achieve better results, which takes more training time.
+We can solve dual-sourcing problems with `idinn` using `DynamicProgrammingController`, which provides a consistent API similar to that of other controllers. Note that expedited order lead time is assumed to be 0 all the time. The user can increase `max_iterations` and lower `tolerance` to achieve better results, which takes more training time.
 
 .. code-block:: python
 
