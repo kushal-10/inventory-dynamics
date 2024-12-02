@@ -5,6 +5,9 @@ It is possible to save the trained controller to disk. This can be done using ei
 
 .. code-block:: python
     
+    import pickle
+    
+
     from idinn.single_controller import SingleSourcingNeuralController
 
     # Save the model
