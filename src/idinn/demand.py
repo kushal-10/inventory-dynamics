@@ -70,7 +70,7 @@ class CustomDemand(BaseDemand):
         batch_size: int
             Size of generated demands which should correspond to the batch size or the number of SKUs. If the size does not match the dimension of the elements from `demand_history`, demand will be upsampled or downsampled to match the size.
         """
-        # TODO: Ensure Python >= 3.7 so order is preserved (matches insertion order)
+        # Ensure Python >= 3.7 so order is preserved (matches insertion order)
         # Draw dictionary keys with corresponding probabilities
         sampled_indices = torch.multinomial(
             torch.tensor(list(self.demand_prob.values())),

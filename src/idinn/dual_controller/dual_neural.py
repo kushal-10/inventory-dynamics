@@ -58,7 +58,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         self.activation = activation
         self.compressed = compressed
         self.lead_time = None
-        self.architecture = None
+        self.model = None
 
     def init_layers(self, regular_lead_time, expedited_lead_time):
         """
@@ -93,7 +93,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             # TODO: Mention this ReLU layer in documentation
             torch.nn.ReLU(),
         ]
-        self.architecture = torch.nn.Sequential(*architecture)
+        self.model = torch.nn.Sequential(*architecture)
 
     def predict(self, current_inventory, past_regular_orders, past_expedited_orders):
         """
@@ -104,9 +104,9 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         current_inventory : int, or torch.Tensor
             Current inventory.
         past_regular_orders : list, or torch.Tensor
-            Past regular orders.
+            Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
         past_expedited_orders : list, or torch.Tensor
-            Past expedited orders.
+            Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
 
         Returns
         -------
@@ -146,7 +146,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 [inputs, past_expedited_orders[:, -self.expedited_lead_time :]], dim=1
             )
 
-        h = self.architecture(inputs)
+        h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]
         expedited_q = q[:, [1]]
@@ -194,7 +194,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.architecture is None:
+        if self.model is None:
             self.init_layers(
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
@@ -251,11 +251,11 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         """
         Reset the controller to the initial state.
         """
-        self.architecture = None
+        self.model = None
         self.sourcing_model = None
     
-    def save(self, checkpoint_path):
-        torch.save(self.state_dict(), checkpoint_path)
+    def save(self, path):
+        torch.save(self.model, path)
 
-    def load(self, checkpoint_path):
-        self.load_state_dict(torch.load(checkpoint_path))
+    def load(self, path):
+        self.model=torch.load(path, weights_only=False)

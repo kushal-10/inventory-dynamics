@@ -1,7 +1,7 @@
 Plot Simulation Results
 =======================
 
-We can inspect how the controller performs in the specified sourcing environment by plotting the inventory and order histories.
+We can inspect how the controller performs in the specified sourcing environment by plotting the inventory and order histories. This applies to all controllers.
 
 .. code-block:: python
 
@@ -13,7 +13,3 @@ We can inspect how the controller performs in the specified sourcing environment
    :align: center
 
 Then we can calculate optimal orders using the trained model.
-
-.. code-block:: python
-    # Calculate the optimal order quantity for applications
-    single_controller.forward(current_inventory=10, past_orders=[1, 5])

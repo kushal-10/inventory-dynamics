@@ -8,6 +8,7 @@ from numba.typed import Dict, List
 class DynamicProgrammingController(BaseDualController):
     def __init__(self) -> None:
         self.qf = None
+        self.vf = None
         self.sourcing_model = None
 
     @staticmethod
@@ -173,7 +174,16 @@ class DynamicProgrammingController(BaseDualController):
         self, current_inventory, past_regular_orders, past_expedited_orders=None
     ):
         """
-        past_expedited_orders is optional since expedited lead time is assumed to be 0 and the batch size is assumed to be 1.
+        
+        Parameters
+        ----------
+        current_inventory : int, or torch.Tensor
+            Current inventory.
+        past_regular_orders : list, or torch.Tensor
+            Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
+        past_expedited_orders : list, or torch.Tensor, optional
+            Past expedited orders. Since `expedited_lead_time` is assumed to be 0 for DynamicProgrammingController and the batch size is assumed to be 1, the input of `past_expedited_orders` is optional and will be ignored.
+
         """
         regular_lead_time = self.sourcing_model.regular_lead_time
         first = (

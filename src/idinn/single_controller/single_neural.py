@@ -44,7 +44,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.sourcing_model = None
-        self.nn = None
+        self.model = None
 
     def init_layers(self):
         """
@@ -74,7 +74,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             torch.nn.Linear(self.hidden_layers[-1], 1, bias=False),
             torch.nn.ReLU(),
         ]
-        self.nn = torch.nn.Sequential(*architecture)
+        self.model = torch.nn.Sequential(*architecture)
 
     def predict(
         self,
@@ -89,7 +89,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         current_inventory : int, or torch.Tensor
             Current inventory levels.
         past_orders : list, or torch.Tensor, optional
-            Past order quantities.
+            Past order quantities. If the length of `past_orders` is lower than `lead_time`, it will be padded with zeros. If the length of `past_orders` is higher than `lead_time`, only the last `lead_time` orders will be used during inference.
 
         Returns
         -------
@@ -99,7 +99,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         if self.sourcing_model is None:
             raise ValueError("Sourcing model is not availble.")
 
-        if self.nn is None:
+        if self.model is None:
             self.init_layers()
         
         if not isinstance(current_inventory, torch.Tensor):
@@ -116,7 +116,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             )
         else:
             inputs = current_inventory
-        h = self.nn(inputs)
+        h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
         return q
 
@@ -165,7 +165,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.nn is None:
+        if self.model is None:
             self.init_layers()
 
         optimizer_init_inventory = torch.optim.RMSprop(
@@ -194,11 +194,11 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
                 )
                 if eval_cost < min_cost:
                     min_cost = eval_cost
-                    best_state = self.state_dict()
+                    best_state = self.model.state_dict()
             else:
                 if total_cost < min_cost:
                     min_cost = total_cost
-                    best_state = self.state_dict()
+                    best_state = self.model.state_dict()
             # Log train loss
             if tensorboard_writer is not None:
                 tensorboard_writer.add_scalar(
@@ -219,8 +219,14 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
                     )
                 tensorboard_writer.flush()
         # Load the best model
-        self.load_state_dict(best_state)
+        self.model.load_state_dict(best_state)
 
     def reset(self):
         self.sourcing_model = None
-        self.nn = None
+        self.model = None
+
+    def save(self, path):
+        torch.save(self.model, path)
+
+    def load(self, path):
+        self.model=torch.load(path, weights_only=False)

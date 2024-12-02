@@ -4,7 +4,7 @@ import torch
 
 class BaseSingleController(metaclass=ABCMeta):
     @abstractmethod
-    def fit(self, sourcing_model, num_samples=100000):
+    def fit(self, sourcing_model):
         """
         Fit the controller to the sourcing model.
         """
@@ -165,17 +165,3 @@ class BaseSingleController(metaclass=ABCMeta):
         ax[1].set_title("Order")
         ax[1].set_xlabel("Period")
         ax[1].set_ylabel("Quantity")
-    
-    def save(self, path):
-        """
-        Save the controller to the specified path.
-        """
-        #TODO: Implement this function
-        pass
-
-    def load(self, path):
-        """
-        Load the controller from the specified path.
-        """
-        #TODO: Implement this function
-        pass

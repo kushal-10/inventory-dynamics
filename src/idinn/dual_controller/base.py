@@ -4,16 +4,25 @@ import torch
 
 class BaseDualController(metaclass=ABCMeta):
     @abstractmethod
-    def fit(self, sourcing_model, num_samples=100000):
+    def fit(self, sourcing_model):
         """
         Fit the controller to the sourcing model.
         """
         pass
 
     @abstractmethod
-    def predict(self, current_inventory, past_orders):
+    def predict(self, current_inventory, past_regular_orders, past_expedited_orders):
         """
         Predict the replenishment order quantity.
+
+        Parameters
+        ----------
+        current_inventory : int, or torch.Tensor
+            Current inventory.
+        past_regular_orders : list, or torch.Tensor
+            Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
+        past_expedited_orders : list, or torch.Tensor
+            Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
         """
         pass
 
@@ -210,12 +219,14 @@ class BaseDualController(metaclass=ABCMeta):
         """
         Save the controller to the specified path.
         """
-        #TODO: Implement this function
-        pass
+        import pickle
+        
+        pickle.dump(self, path)
 
     def load(self, path):
         """
         Load the controller from the specified path.
         """
-        #TODO: Implement this function
-        pass
+        import pickle
+
+        pickle.load(path)

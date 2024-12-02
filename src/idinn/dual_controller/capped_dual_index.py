@@ -141,12 +141,12 @@ class CappedDualIndexController(BaseDualController):
 
         Parameters
         ----------
-        current_inventory : int
-            Current inventory level.
-        past_regular_orders : numpy.ndarray
-            Array of past regular orders.
-        past_expedited_orders : numpy.ndarray
-            Array of past expedited orders.
+        current_inventory : int, or torch.Tensor
+            Current inventory.
+        past_regular_orders : list, or torch.Tensor
+            Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
+        past_expedited_orders : list, or torch.Tensor
+            Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
 
         Returns
         -------

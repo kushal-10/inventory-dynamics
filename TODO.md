@@ -7,9 +7,9 @@
 - [x] Align parameters used in multiple documentation
 - [ ] Unify predict interfaces to accept list, array and tensor
 - [ ] Add logging, type checking, and documentation
+    - [ ] Save and load the controllers
     - [x] Documentation for new controllers
     - [ ] Documentation for utilities
     - [ ] Add unit tests, doc tests, style check, and coverage reports with CI
-    - [ ] Save and load the controllers
 - [ ] Test CUDA compatibility and performance with Docker
 - [ ] Integrate Streamlit app with Docker

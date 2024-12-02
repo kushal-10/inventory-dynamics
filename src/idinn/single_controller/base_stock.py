@@ -1,4 +1,5 @@
 import torch
+import pickle
 from .base import BaseSingleController
 
 
@@ -37,7 +38,7 @@ class BaseStockController(BaseSingleController):
         service_level = b / (b + h)
         self.z_star = torch.quantile(total_demand_samples.float(), service_level)
 
-    def predict(self, current_inventory, past_orders):
+    def predict(self, current_inventory, past_orders=None):
         """
         Calculate the replenishment order quantity.
 
@@ -45,8 +46,8 @@ class BaseStockController(BaseSingleController):
         ----------
         current_inventory : int
             Current inventory level.
-        past_orders : numpy.ndarray
-            Array of past orders.
+        past_orders : numpy.ndarray, optional
+            Array of past orders. If the length of `past_orders` is lower than `lead_time`, it will be padded with zeros. If the length of `past_orders` is higher than `lead_time`, only the last `lead_time` orders will be used during inference.
 
         Returns
         -------

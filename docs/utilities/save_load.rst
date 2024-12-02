@@ -1,14 +1,14 @@
 Save and Load Controllers
 =========================
 
-It is also a good idea to save the trained neural network controller for future use. This can be done using the `save` method. The `load` method allows one to load a previously saved controller.
+It is possible to save the trained controller to disk. This can be done using either Python’s pickle utility or controller's `save` and `load` method for SingleSourcingNeuralController and DualSourcingNeuralController.
 
 .. code-block:: python
+    
+    from idinn.single_controller import SingleSourcingNeuralController
 
     # Save the model
-    single_controller.save("optimal_single_sourcing_controller.pt")
+    single_neural_controller.save("optimal_single_neural_controller.pt")
     # Load the model
-    single_controller_loaded = SingleSourcingNeuralController(
-        hidden_layers=[2], activation=torch.nn.CELU(alpha=1)
-    )
-    single_controller_loaded.load("optimal_single_sourcing_controller.pt")
+    saved_single_controller = SingleSourcingNeuralController()
+    saved_single_controller = saved_single_controller.load("optimal_single_neural_controller.pt")

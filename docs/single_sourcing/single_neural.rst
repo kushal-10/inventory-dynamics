@@ -8,7 +8,7 @@ For further details, see Böttcher, Asikis, and Fragkos (2023).
 Example Usage
 -------------
 
-We now present one example to demonstrate how the :class:`SingleSourcingNeuralController` can be called, trained, and evaluated in `idinn`.
+We now present an example to demonstrate how the :class:`SingleSourcingNeuralController` can be called, trained, and evaluated in `idinn`.
 
 .. code-block:: python
     
@@ -39,13 +39,17 @@ We now present one example to demonstrate how the :class:`SingleSourcingNeuralCo
 
 Adjusting parameters such as `batch_size`, `init_inventory`, and `epochs` can improve the learning of sourcing policies.
 
-For a given controller, orders can be predicted as follows.
+For a given controller, orders can be predicted as follows if the lead time is 0.
 
 .. code-block:: python
 
-    controller_neural.predict(current_inventory=10, past_orders=[])
+    controller_neural.predict(current_inventory=10)
 
 If the lead-time value is greater than 0, one has to specify the corresponding `past_orders`.
+
+.. code-block:: python
+
+    controller_neural.predict(current_inventory=10, past_orders=[9, 11, 12])
 
 References
 ----------
