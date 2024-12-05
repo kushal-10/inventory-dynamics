@@ -196,4 +196,5 @@ class DynamicProgrammingController(BaseDualController):
 
     def reset(self):
         self.qf = None
+        self.vf = None
         self.sourcing_model = None
