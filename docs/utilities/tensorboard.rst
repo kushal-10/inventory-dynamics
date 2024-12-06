@@ -1,7 +1,9 @@
 Log with Tensorboard
 ====================
 
-To better monitor the training process for neural controllers, i.e. `SingleSourcingNeuralController` and `DualSourcingNeuralController`, we can specify the `tensorboard_writer` parameter to log both the training loss and validation loss. The log result can then be inspected using `tensorboard`.
+To better monitor the training process for neural controllers, i.e. :class:`SingleSourcingNeuralController` and :class:`DualSourcingNeuralController`, we can specify the `tensorboard_writer` parameter to log both the training loss and validation loss. The log result can then be inspected using `tensorboard`.
+
+Below is an example demonstrating how to integrate `tensorboard_writer` into the :class:`SingleSourcingNeuralController`.
 
 .. code-block:: python
 
@@ -17,7 +19,7 @@ To better monitor the training process for neural controllers, i.e. `SingleSourc
        shortage_cost=495,
        batch_size=32,
        init_inventory=10,
-       demand_generator=UniformDemand(low=1, high=4),
+       demand_generator=UniformDemand(low=0, high=4),
     )
     single_controller = SingleSourcingNeuralController(
         hidden_layers=[2], activation=torch.nn.CELU(alpha=1)
