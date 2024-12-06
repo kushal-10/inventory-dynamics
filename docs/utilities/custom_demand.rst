@@ -39,4 +39,4 @@ One of the most important parameters is the `demand_generator`, which controls t
         demand_generator=CustomDemand({5: 0.02, 6: 0.9, 7: 0.02, 8: 0.02, 9: 0.02, 10: 0.02})
     )
 
-For this sourcing model, there are 90% chances that the demand is 6, 2% chances that the demand is either 5, 7, 8, 9, 10 repectively. This class provides great flexibilities for users to feed demands tailored to their needs.
+In this sourcing model, there is a 90% probability that the demand will be 6, and a 2% probability that the demand will be either 5, 7, 8, 9, or 10, respectively. The `CustomDemand` generator allows users to input demands customized to their specific requirements.
