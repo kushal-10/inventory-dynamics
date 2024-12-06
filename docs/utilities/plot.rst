@@ -11,5 +11,3 @@ We can inspect how the controller performs in the specified sourcing environment
 .. image:: ../_static/single_sourcing_output.png
    :alt: Output of the single sourcing model and controller
    :align: center
-
-Then we can calculate optimal orders using the trained model.
