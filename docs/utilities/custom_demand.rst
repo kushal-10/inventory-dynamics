@@ -22,7 +22,7 @@ The code below shows how one can implement a single-sourcing model with a (discr
     # Inspect order history
     single_sourcing_model.get_past_orders()
 
-One of the most important parameters is the `demand_generator`, which controls the number of orders to be consumed each period. Most examples in the documentation use uniform demand, i.e. demands are uniformally distributed between the interval specified by the user. It is also possible to feed custom demand by feeding `CustomDemand` class to `demand_generator`. `CustomDemand` takes a dictionary that describes the number of orders and their repective probabilities, such as the following example:
+The `demand_generator` can be used to specify demand distributions. Most examples in the documentation feature a uniform demand distribution, where demands are uniformly distributed across the interval defined by the user. Alternatively, custom demand distributions can be specified by using the `CustomDemand` class with the `demand_generator`. `CustomDemand` accepts a dictionary that defines the possible demand values and their respective probabilities. We show a corresponding example below. 
 
 .. code-block:: python
     
