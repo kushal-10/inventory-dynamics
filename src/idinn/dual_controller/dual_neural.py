@@ -54,10 +54,10 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         compressed=False,
     ):
         super().__init__()
+        self.sourcing_model = None
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.compressed = compressed
-        self.lead_time = None
         self.model = None
 
     def init_layers(self, regular_lead_time, expedited_lead_time):
@@ -71,8 +71,6 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         expedited_lead_time : int
             Expedited lead time.
         """
-        self.regular_lead_time = regular_lead_time
-        self.expedited_lead_time = expedited_lead_time
         if self.compressed:
             input_length = regular_lead_time + expedited_lead_time
         else:
@@ -95,7 +93,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         ]
         self.model = torch.nn.Sequential(*architecture)
 
-    def predict(self, current_inventory, past_regular_orders, past_expedited_orders):
+    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None):
         """
         Forward pass of the neural network.
 
@@ -103,9 +101,9 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         ----------
         current_inventory : int, or torch.Tensor
             Current inventory.
-        past_regular_orders : list, or torch.Tensor
+        past_regular_orders : list, or torch.Tensor, optional
             Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
-        past_expedited_orders : list, or torch.Tensor
+        past_expedited_orders : list, or torch.Tensor, optional
             Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
 
         Returns
@@ -115,35 +113,34 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         expedited_q : torch.Tensor
             Expedited order quantity.
         """
-        if not isinstance(current_inventory, torch.Tensor):
-            current_inventory = torch.tensor([[current_inventory]], dtype=torch.float32)
-        if not isinstance(past_regular_orders, torch.Tensor):
-            past_regular_orders = torch.tensor(
-                [past_regular_orders], dtype=torch.float32
-            )
-        if not isinstance(past_expedited_orders, torch.Tensor):
-            past_expedited_orders = torch.tensor(
-                [past_expedited_orders], dtype=torch.float32
-            )
+        if self.sourcing_model is None:
+            raise AttributeError("The controller is not trained.")
 
-        if self.regular_lead_time > 0:
+        regular_lead_time = self.sourcing_model.get_regular_lead_time()
+        expedited_lead_time = self.sourcing_model.get_expedited_lead_time()
+        
+        current_inventory = self._current_inventory_check(current_inventory)
+        past_regular_orders = self._past_orders_check(past_regular_orders, regular_lead_time)
+        past_expedited_orders = self._past_orders_check(past_expedited_orders, expedited_lead_time)
+
+        if regular_lead_time > 0:
             if self.compressed:
-                inputs = past_regular_orders[:, -self.regular_lead_time :]
+                inputs = past_regular_orders[:, -regular_lead_time :]
                 inputs[:, 0] += current_inventory
             else:
                 inputs = torch.cat(
                     [
                         current_inventory,
-                        past_regular_orders[:, -self.regular_lead_time :],
+                        past_regular_orders[:, -regular_lead_time :],
                     ],
                     dim=1,
                 )
         else:
             inputs = current_inventory
 
-        if self.expedited_lead_time > 0:
+        if expedited_lead_time > 0:
             inputs = torch.cat(
-                [inputs, past_expedited_orders[:, -self.expedited_lead_time :]], dim=1
+                [inputs, past_expedited_orders[:, -expedited_lead_time :]], dim=1
             )
 
         h = self.model(inputs)
@@ -191,6 +188,9 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             Random seed for reproducibility.
             Tensorboard writer for logging.
         """
+        # Store sourcing model in self.sourcing_model
+        self.sourcing_model = sourcing_model
+
         if seed is not None:
             torch.manual_seed(seed)
 

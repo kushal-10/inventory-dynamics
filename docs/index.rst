@@ -84,6 +84,7 @@ Example Usage
    utilities/custom_demand
    utilities/save_load
    utilities/plot
+   utilities/tensorboard
 
 .. toctree::
    :hidden:

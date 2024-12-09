@@ -171,7 +171,7 @@ class DynamicProgrammingController(BaseDualController):
         self.vf = val
 
     def predict(
-        self, current_inventory, past_regular_orders, past_expedited_orders=None
+        self, current_inventory, past_regular_orders=None, past_expedited_orders=None
     ):
         """
         
@@ -179,13 +179,20 @@ class DynamicProgrammingController(BaseDualController):
         ----------
         current_inventory : int, or torch.Tensor
             Current inventory.
-        past_regular_orders : list, or torch.Tensor
+        past_regular_orders : list, or torch.Tensor, optional
             Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
         past_expedited_orders : list, or torch.Tensor, optional
             Past expedited orders. Since `expedited_lead_time` is assumed to be 0 for DynamicProgrammingController and the batch size is assumed to be 1, the input of `past_expedited_orders` is optional and will be ignored.
 
         """
-        regular_lead_time = self.sourcing_model.regular_lead_time
+        if self.sourcing_model is None:
+            raise AttributeError("The controller is not trained.")
+
+        regular_lead_time = self.sourcing_model.get_regular_lead_time()
+        
+        current_inventory = self._current_inventory_check(current_inventory)
+        past_regular_orders = self._past_orders_check(past_regular_orders, regular_lead_time)
+
         first = (
             current_inventory.squeeze()
             + past_regular_orders.squeeze()[-regular_lead_time]

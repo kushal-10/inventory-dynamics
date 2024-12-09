@@ -23,6 +23,38 @@ class BaseSingleController(metaclass=ABCMeta):
         Reset the controller to the initial state.
         """
         pass
+    
+    def _current_inventory_check(self, current_inventory):
+        """
+        Check and convert types of `current_inventory` for `predict()`.
+        """
+        if isinstance(current_inventory, int):
+            current_inventory = torch.tensor([[current_inventory]], dtype=torch.float32)
+        elif isinstance(current_inventory, torch.Tensor):
+            pass
+        else:
+            raise TypeError("`current_inventory`'s type is not supported.")
+
+        return current_inventory
+        
+    def _past_orders_check(self, past_orders, lead_time):
+        """
+        Check and convert types of `past_orders` for `predict()`. Pad `past_orders` with zeros if it is too short.
+        """
+        if past_orders is None:
+            past_orders = torch.zeros(1, lead_time)
+        elif isinstance(past_orders, list):
+            past_orders = torch.tensor([past_orders], dtype=torch.float32)
+        elif isinstance(past_orders, torch.Tensor):
+            pass
+        else:
+            raise TypeError("`past_orders`'s type is not supported.")
+        
+        order_len = past_orders.shape[1]
+        if order_len < lead_time:
+            return torch.nn.functional.pad(past_orders, (lead_time - order_len, 0))
+        else:
+            return past_orders
 
     def get_last_cost(self, sourcing_model):
         """

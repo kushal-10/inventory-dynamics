@@ -11,7 +11,7 @@ class BaseDualController(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def predict(self, current_inventory, past_regular_orders, past_expedited_orders):
+    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None):
         """
         Predict the replenishment order quantity.
 
@@ -19,9 +19,9 @@ class BaseDualController(metaclass=ABCMeta):
         ----------
         current_inventory : int, or torch.Tensor
             Current inventory.
-        past_regular_orders : list, or torch.Tensor
+        past_regular_orders : list, or torch.Tensor, optional
             Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
-        past_expedited_orders : list, or torch.Tensor
+        past_expedited_orders : list, or torch.Tensor, optional
             Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
         """
         pass
@@ -32,6 +32,39 @@ class BaseDualController(metaclass=ABCMeta):
         Reset the controller to the initial state.
         """
         pass
+
+    def _current_inventory_check(self, current_inventory):
+        """
+        Check and convert types of `current_inventory` for `predict()`.
+        """
+        if isinstance(current_inventory, int):
+            current_inventory = torch.tensor([[current_inventory]], dtype=torch.float32)
+        elif isinstance(current_inventory, torch.Tensor):
+            pass
+        else:
+            raise TypeError("`current_inventory`'s type is not supported.")
+
+        return current_inventory
+    
+    def _past_orders_check(self, past_orders, lead_time):
+        """
+        Check and convert types of `past_regular_orders` for `predict()`.
+        Pad `past_orders` with zeros if either is too short.
+        """
+        if past_orders is None:
+            past_orders = torch.zeros(1, lead_time)
+        elif isinstance(past_orders, list):
+            past_orders = torch.tensor([past_orders], dtype=torch.float32)
+        elif isinstance(past_orders, torch.Tensor):
+            pass
+        else:
+            raise TypeError("`past_orders`'s type is not supported.")
+        
+        order_len = past_orders.shape[1]
+        if order_len < lead_time:
+            return torch.nn.functional.pad(past_orders, (lead_time - order_len, 0))
+        else:
+            return past_orders
 
     def get_last_cost(self, sourcing_model):
         """

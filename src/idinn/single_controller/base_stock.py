@@ -1,5 +1,4 @@
 import torch
-import pickle
 from .base import BaseSingleController
 
 
@@ -46,20 +45,29 @@ class BaseStockController(BaseSingleController):
         ----------
         current_inventory : int
             Current inventory level.
-        past_orders : numpy.ndarray, optional
-            Array of past orders. If the length of `past_orders` is lower than `lead_time`, it will be padded with zeros. If the length of `past_orders` is higher than `lead_time`, only the last `lead_time` orders will be used during inference.
+        past_orders : list, or torch.Tensor, optional
+            Array of past orders. If `past_orders` is None, or the length of `past_orders` is lower than `lead_time`, it will be padded with zeros. If the length of `past_orders` is higher than `lead_time`, only the last `lead_time` orders will be used during inference.
 
         Returns
         -------
         float
             The replenishment order quantity.
         """
-        if self.sourcing_model.lead_time == 0:
+        if self.sourcing_model is None:
+            raise AttributeError("The controller is not trained.")
+        
+        lead_time = self.sourcing_model.get_lead_time()
+        
+        current_inventory = self._current_inventory_check(current_inventory)
+        past_orders = self._past_orders_check(past_orders, lead_time)
+
+        if lead_time == 0:
             inventory_position = current_inventory
+        elif lead_time > 0:
+            inventory_position = current_inventory + past_orders[:, -lead_time:].sum(dim=1, keepdim=True)
         else:
-            inventory_position = current_inventory + past_orders[
-                :, -self.sourcing_model.lead_time :
-            ].sum(dim=1, keepdim=True)
+            raise ValueError("`lead_time` cannot be less than 0")
+    
         return torch.relu(self.z_star - inventory_position)
 
     def reset(self):

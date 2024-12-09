@@ -41,9 +41,9 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
 
     def __init__(self, hidden_layers=[2], activation=torch.nn.CELU(alpha=1)):
         super().__init__()
+        self.sourcing_model = None
         self.hidden_layers = hidden_layers
         self.activation = activation
-        self.sourcing_model = None
         self.model = None
 
     def init_layers(self):
@@ -97,25 +97,22 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             Order quanty calculated by the neural network.
         """
         if self.sourcing_model is None:
-            raise ValueError("Sourcing model is not availble.")
-
-        if self.model is None:
-            self.init_layers()
+            raise AttributeError("The controller is not trained.")
         
-        if not isinstance(current_inventory, torch.Tensor):
-            current_inventory = torch.tensor([[current_inventory]], dtype=torch.float32)
-        if not isinstance(past_orders, torch.Tensor):
-            past_orders = torch.tensor([past_orders], dtype=torch.float32)
-
-        # Get lead time from self.sourcing model
         lead_time = self.sourcing_model.get_lead_time()
-    
-        if lead_time > 0:
+        
+        current_inventory = self._current_inventory_check(current_inventory)
+        past_orders = self._past_orders_check(past_orders, lead_time)
+
+        if lead_time == 0:
+            inputs = current_inventory
+        elif lead_time > 0:
             inputs = torch.cat(
                 [current_inventory, past_orders[:, -lead_time :]], dim=1
             )
         else:
-            inputs = current_inventory
+            raise ValueError("`lead_time` cannot be less than 0")
+        
         h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
         return q

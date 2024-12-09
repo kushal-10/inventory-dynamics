@@ -54,7 +54,7 @@ For a given controller, orders can be predicted as follows.
 
 .. code-block:: python
 
-    controller_neural.predict(current_inventory=10, past_regular_orders=[1, 1], past_expedited_orders=[])
+    controller_neural.predict(current_inventory=10, past_regular_orders=[1, 1], past_expedited_orders=None)
 
 If the regular and expedited lead-time values are greater than 0, one has to specify the corresponding `past_regular_orders` and `past_expedited_orders`.
 

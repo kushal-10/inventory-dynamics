@@ -37,7 +37,6 @@ We now present two examples to demonstrate how the :class:`BaseStockController` 
     lead_time=0,
     holding_cost=5,
     shortage_cost=495,
-    batch_size=32,
     init_inventory=10,
     demand_generator=UniformDemand(low=0, high=4),
    )
@@ -53,7 +52,6 @@ We now present two examples to demonstrate how the :class:`BaseStockController` 
       lead_time=2,
       holding_cost=5,
       shortage_cost=495,
-      batch_size=32,
       init_inventory=10,
       demand_generator=UniformDemand(low=0, high=4),
    )

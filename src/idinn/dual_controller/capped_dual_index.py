@@ -46,9 +46,9 @@ class CappedDualIndexController(BaseDualController):
         ----------
         current_inventory : int
             Current inventory level.
-        past_regular_orders : numpy.ndarray
+        past_regular_orders : torch.Tensor
             Array of past regular orders.
-        past_expedited_orders : numpy.ndarray
+        past_expedited_orders : torch.Tensor
             Array of past expedited orders.
         regular_lead_time : int
             Regular lead time.
@@ -63,8 +63,15 @@ class CappedDualIndexController(BaseDualController):
         int
             The capped dual index sum.
         """
+        if self.sourcing_model is None:
+            raise AttributeError("The controller is not trained.")
+
         regular_lead_time = self.sourcing_model.get_regular_lead_time()
         expedited_lead_time = self.sourcing_model.get_expedited_lead_time()
+        
+        current_inventory = self._current_inventory_check(current_inventory)
+        past_regular_orders = self._past_orders_check(past_regular_orders, regular_lead_time)
+        past_expedited_orders = self._past_orders_check(past_expedited_orders, expedited_lead_time)
 
         if limit:
             k = regular_lead_time - expedited_lead_time - 1
@@ -135,7 +142,7 @@ class CappedDualIndexController(BaseDualController):
         self.s_r = s_r_optimal
         self.q_r = q_r_optimal
 
-    def predict(self, current_inventory, past_regular_orders, past_expedited_orders):
+    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None):
         """
         Perform forward calculation for capped dual index optimization.
 
@@ -143,9 +150,9 @@ class CappedDualIndexController(BaseDualController):
         ----------
         current_inventory : int, or torch.Tensor
             Current inventory.
-        past_regular_orders : list, or torch.Tensor
+        past_regular_orders : list, or torch.Tensor, optional
             Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
-        past_expedited_orders : list, or torch.Tensor
+        past_expedited_orders : list, or torch.Tensor, optional
             Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
 
         Returns
@@ -165,7 +172,7 @@ class CappedDualIndexController(BaseDualController):
             past_expedited_orders,
             limit=True,
         )
-        regular_q = min(max(0, self.s_r - inventory_position_lm1), self.q_r)
+        regular_q = int(min(max(0, self.s_r - inventory_position_lm1), self.q_r))
         expedited_q = max(0, self.s_e - inventory_position)
         return regular_q, expedited_q
 
