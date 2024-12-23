@@ -175,3 +175,7 @@ runs/
 # JOSS
 jats/
 output/
+
+# uv
+.python-version
+uv.lock
