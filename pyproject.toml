@@ -2,7 +2,7 @@
 name = "idinn"
 description = "Inventory dynamics–informed neural networks for solving single-sourcing and dual-sourcing problems."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8, <3.13"
 license = { file = "LICENSE" }
 authors = [
   { name = "Jiawei Li", email = "sud.concept0x@icloud.com" },
@@ -16,7 +16,13 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
-dependencies = ["numpy", "matplotlib", "tensorboard", "numba", "torch~=2.0"]
+dependencies = [
+  "numba",
+  "numpy",
+  "matplotlib",
+  "tensorboard",
+  "torch>=2.0"
+]
 dynamic = ["version"]
 
 [project.urls]
@@ -30,3 +36,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 path = "src/idinn/__init__.py"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "pytest>=8.3.4",
+]

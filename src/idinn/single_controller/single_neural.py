@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+
 from .base import BaseSingleController
 
 
@@ -50,11 +51,6 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         """
         Initialize the layers of the neural network based on the lead time.
 
-        Parameters
-        ----------
-        lead_time : int
-            The lead time for sourcing.
-
         Returns
         -------
         None
@@ -98,21 +94,19 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         """
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
-        
+
         lead_time = self.sourcing_model.get_lead_time()
-        
+
         current_inventory = self._current_inventory_check(current_inventory)
         past_orders = self._past_orders_check(past_orders, lead_time)
 
         if lead_time == 0:
             inputs = current_inventory
         elif lead_time > 0:
-            inputs = torch.cat(
-                [current_inventory, past_orders[:, -lead_time :]], dim=1
-            )
+            inputs = torch.cat([current_inventory, past_orders[:, -lead_time:]], dim=1)
         else:
             raise ValueError("`lead_time` cannot be less than 0")
-        
+
         h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
         return q
@@ -170,7 +164,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         )
         optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_cost = np.inf
-        
+
         for epoch in range(epochs):
             # Clear grad cache
             optimizer_parameters.zero_grad()
@@ -226,4 +220,4 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         torch.save(self.model, path)
 
     def load(self, path):
-        self.model=torch.load(path, weights_only=False)
+        self.model = torch.load(path, weights_only=False)

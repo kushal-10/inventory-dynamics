@@ -1,6 +1,7 @@
-from .base import BaseDualController
 import numpy as np
 import torch
+
+from .base import BaseDualController
 
 
 class CappedDualIndexController(BaseDualController):
@@ -68,10 +69,14 @@ class CappedDualIndexController(BaseDualController):
 
         regular_lead_time = self.sourcing_model.get_regular_lead_time()
         expedited_lead_time = self.sourcing_model.get_expedited_lead_time()
-        
+
         current_inventory = self._current_inventory_check(current_inventory)
-        past_regular_orders = self._past_orders_check(past_regular_orders, regular_lead_time)
-        past_expedited_orders = self._past_orders_check(past_expedited_orders, expedited_lead_time)
+        past_regular_orders = self._past_orders_check(
+            past_regular_orders, regular_lead_time
+        )
+        past_expedited_orders = self._past_orders_check(
+            past_expedited_orders, expedited_lead_time
+        )
 
         if limit:
             k = regular_lead_time - expedited_lead_time - 1
@@ -142,7 +147,9 @@ class CappedDualIndexController(BaseDualController):
         self.s_r = s_r_optimal
         self.q_r = q_r_optimal
 
-    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None):
+    def predict(
+        self, current_inventory, past_regular_orders=None, past_expedited_orders=None
+    ):
         """
         Perform forward calculation for capped dual index optimization.
 
@@ -173,7 +180,7 @@ class CappedDualIndexController(BaseDualController):
             limit=True,
         )
         regular_q = int(min(max(0, self.s_r - inventory_position_lm1), self.q_r))
-        expedited_q = max(0, self.s_e - inventory_position)
+        expedited_q = int(max(0, self.s_e - inventory_position))
         return regular_q, expedited_q
 
     def reset(self):

@@ -1,4 +1,6 @@
 import torch
+
+from ..sourcing_model import SingleSourcingModel
 from .base import BaseSingleController
 
 
@@ -11,7 +13,12 @@ class BaseStockController(BaseSingleController):
         self.sourcing_model = None
         self.z_star = None
 
-    def fit(self, sourcing_model, num_samples=100000):
+    def fit(
+        self,
+        sourcing_model: SingleSourcingModel,
+        num_samples: int = 100000,
+        seed: int = None,
+    ):
         """
         Calculate the optimal target inventory level z* and store it in self.z_star.
 
@@ -19,19 +26,22 @@ class BaseStockController(BaseSingleController):
         -------
         None
         """
+        if seed is not None:
+            torch.manual_seed(seed)
+
         self.sourcing_model = sourcing_model
-        # Get lead time, shortage cost and holding cost from sourcing model
-        b = sourcing_model.shortage_cost
-        h = sourcing_model.holding_cost
-        l = sourcing_model.lead_time
 
         # Generate samples for l + 1 periods
         samples = sourcing_model.demand_generator.sample(
-            batch_size=num_samples, batch_width=l + 1
+            batch_size=num_samples, batch_width=self.sourcing_model.get_lead_time() + 1
         )
 
         # Calculate the total demand for each sample
         total_demand_samples = samples.sum(dim=1)
+
+        # Get shortage cost and holding cost from sourcing model
+        b = sourcing_model.get_shortage_cost()
+        h = sourcing_model.get_holding_cost()
 
         # Calculate z* using the empirical percentile (inverse CDF)
         service_level = b / (b + h)
@@ -55,19 +65,21 @@ class BaseStockController(BaseSingleController):
         """
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
-        
+
         lead_time = self.sourcing_model.get_lead_time()
-        
+
         current_inventory = self._current_inventory_check(current_inventory)
         past_orders = self._past_orders_check(past_orders, lead_time)
 
         if lead_time == 0:
             inventory_position = current_inventory
         elif lead_time > 0:
-            inventory_position = current_inventory + past_orders[:, -lead_time:].sum(dim=1, keepdim=True)
+            inventory_position = current_inventory + past_orders[:, -lead_time:].sum(
+                dim=1, keepdim=True
+            )
         else:
             raise ValueError("`lead_time` cannot be less than 0")
-    
+
         return torch.relu(self.z_star - inventory_position)
 
     def reset(self):
