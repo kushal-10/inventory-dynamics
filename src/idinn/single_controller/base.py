@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+
 import torch
 
 
@@ -11,7 +12,7 @@ class BaseSingleController(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def predict(self, current_inventory, past_orders):
+    def predict(self, current_inventory, past_orders, output_tensor):
         """
         Predict the replenishment order quantity.
         """
@@ -23,7 +24,7 @@ class BaseSingleController(metaclass=ABCMeta):
         Reset the controller to the initial state.
         """
         pass
-    
+
     def _current_inventory_check(self, current_inventory):
         """
         Check and convert types of `current_inventory` for `predict()`.
@@ -36,7 +37,7 @@ class BaseSingleController(metaclass=ABCMeta):
             raise TypeError("`current_inventory`'s type is not supported.")
 
         return current_inventory
-        
+
     def _past_orders_check(self, past_orders, lead_time):
         """
         Check and convert types of `past_orders` for `predict()`. Pad `past_orders` with zeros if it is too short.
@@ -49,7 +50,7 @@ class BaseSingleController(metaclass=ABCMeta):
             pass
         else:
             raise TypeError("`past_orders`'s type is not supported.")
-        
+
         order_len = past_orders.shape[1]
         if order_len < lead_time:
             return torch.nn.functional.pad(past_orders, (lead_time - order_len, 0))
@@ -78,7 +79,7 @@ class BaseSingleController(metaclass=ABCMeta):
             current_inventory
         ) + shortage_cost * torch.relu(-current_inventory)
         return last_cost
-    
+
     def get_total_cost(self, sourcing_model, sourcing_periods, seed=None):
         """
         Calculate the total cost for single-sourcing optimization.
@@ -109,8 +110,7 @@ class BaseSingleController(metaclass=ABCMeta):
             last_cost = self.get_last_cost(sourcing_model)
             total_cost += last_cost.mean()
         return total_cost
-    
-    
+
     def get_average_cost(self, sourcing_model, sourcing_periods, seed=None):
         """
         Calculate the average cost for single-sourcing optimization.
@@ -129,8 +129,11 @@ class BaseSingleController(metaclass=ABCMeta):
         float
             The average cost.
         """
-        return self.get_total_cost(sourcing_model, sourcing_periods, seed)/sourcing_periods
-    
+        return (
+            self.get_total_cost(sourcing_model, sourcing_periods, seed)
+            / sourcing_periods
+        )
+
     def simulate(self, sourcing_model, sourcing_periods, seed=None):
         """
         Simulate the sourcing model's output using the given controller.
@@ -158,7 +161,7 @@ class BaseSingleController(metaclass=ABCMeta):
         for i in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
             past_orders = sourcing_model.get_past_orders()
-            q = self.predict(current_inventory, past_orders)
+            q = self.predict(current_inventory, past_orders, output_tensor=True)
             sourcing_model.order(q)
         past_inventories = sourcing_model.get_past_inventories()[0, :].detach().numpy()
         past_orders = sourcing_model.get_past_orders()[0, :].detach().numpy()
@@ -186,14 +189,26 @@ class BaseSingleController(metaclass=ABCMeta):
         )
         fig, ax = plt.subplots(ncols=2, figsize=(10, 4))
 
-        ax[0].step(range(sourcing_periods), past_inventories[-sourcing_periods:], linewidth=linewidth, color='tab:blue')
+        ax[0].step(
+            range(sourcing_periods),
+            past_inventories[-sourcing_periods:],
+            linewidth=linewidth,
+            color="tab:blue",
+        )
         ax[0].yaxis.get_major_locator().set_params(integer=True)
         ax[0].set_title("Inventory")
         ax[0].set_xlabel("Period")
         ax[0].set_ylabel("Quantity")
 
-        ax[1].step(range(sourcing_periods), past_orders[-sourcing_periods:], linewidth=linewidth, color='tab:orange')
+        ax[1].step(
+            range(sourcing_periods),
+            past_orders[-sourcing_periods:],
+            linewidth=linewidth,
+            color="tab:orange",
+        )
         ax[1].yaxis.get_major_locator().set_params(integer=True)
         ax[1].set_title("Order")
         ax[1].set_xlabel("Period")
         ax[1].set_ylabel("Quantity")
+
+        return fig, ax
