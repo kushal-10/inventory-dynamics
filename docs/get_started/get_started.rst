@@ -4,64 +4,61 @@ Get Started
 Initialization
 --------------
 
-The basic usage of `idinn` starts with a sourcing model and a controller. First, initialize a sourcing model, such as :class:`SingleSourcingModel`, with your preferred parameters.
+The basic usage of `idinn` starts with a sourcing model and a controller. First, initialize a sourcing model, such as :class:`idinn.sourcing_model.SingleSourcingModel`, with your preferred parameters.
 
-.. code-block:: python
-    
-   import torch
-   from idinn.sourcing_model import SingleSourcingModel
-   from idinn.demand import UniformDemand
+.. doctest:: python
 
-   # Initialize the sourcing model
-   sourcing_model = SingleSourcingModel(
-      lead_time=2,
-      holding_cost=5,
-      shortage_cost=495,
-      batch_size=32,
-      init_inventory=10,
-      demand_generator=UniformDemand(low=0, high=4),
-   )
+    >>> from idinn.sourcing_model import SingleSourcingModel
+    >>> from idinn.demand import UniformDemand
+
+    >>> # Initialize the sourcing model
+    >>> single_sourcing_model = SingleSourcingModel(
+    ...     lead_time=0,
+    ...     holding_cost=5,
+    ...     shortage_cost=495,
+    ...     batch_size=32,
+    ...     init_inventory=10,
+    ...     demand_generator=UniformDemand(low=1, high=4),
+    ... )
 
 
-Afterwards, initialize a controller that is compatible with the chosen sourcing model. In the above single-sourcing example, the relevant neural controller is :class:`SingleSourcingNeuralController`.
+Afterwards, initialize a controller that is compatible with the chosen sourcing model. In the above single-sourcing example, the relevant controller is :class:`idinn.single_controller.BaseStockController`. It is also possible to use other controllers that solve single-sourcing problems, such as :class:`idinn.single_controller.SingleSourcingNeuralController`.
 
-.. code-block:: python
+.. doctest:: python
 
-    from idinn.single_controller import SingleSourcingNeuralController
-    # Initialize the neural controller
-    controller = SingleSourcingNeuralController()
+    >>> from idinn.single_controller import BaseStockController
+    >>> # Initialize the controller
+    >>> controller = BaseStockController()
 
 Training
 --------
 
-The selected controller needs to be trained to find suitale parameters.
+The selected controller needs to be trained to find suitable parameters.
 
-.. code-block:: python
+.. doctest:: python
 
-   # Train the neural controller
-   controller.fit(
-      sourcing_model=sourcing_model,
-      sourcing_periods=50,
-      epochs=5000
-   )
+    >>> # Train the controller
+    >>> controller.fit(sourcing_model=single_sourcing_model)
 
 Plotting and Order Calculation
 ------------------------------------------
 
-After completed training, we can inspect how the controller performs in the specified sourcing environment by plotting the inventory and order evolution.
+After completing training, we can inspect how the controller performs in the specified sourcing environment by plotting the inventory and order evolution.
 
-.. code-block:: python
+.. doctest:: python
 
-   # Simulate and plot the results
-   controller.plot(sourcing_model=sourcing_model, sourcing_periods=100)
+    >>> # Simulate and plot the results
+    >>> controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100)  # doctest: +SKIP
 
-.. image:: ../_static/single_sourcing_output.png
+.. image:: ../_static/single_sourcing_output.svg
    :alt: Output of the single sourcing model and controller
    :align: center
 
 The trained controller can be used to predict order quantities.
 
-.. code-block:: python
+.. doctest:: python
 
-   # Predict order quantity for a given system state
-   controller.predict(current_inventory=10, past_orders=[1, 5])
+    >>> # Predict order quantity for a given system state
+    >>> controller.predict(current_inventory=10, past_orders=[1, 5])
+    0
+
