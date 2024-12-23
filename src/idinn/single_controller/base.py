@@ -105,7 +105,7 @@ class BaseSingleController(metaclass=ABCMeta):
         for i in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
             past_orders = sourcing_model.get_past_orders()
-            q_t = self.predict(current_inventory, past_orders)
+            q_t = self.predict(current_inventory, past_orders, output_tensor=True)
             sourcing_model.order(q_t)
             last_cost = self.get_last_cost(sourcing_model)
             total_cost += last_cost.mean()
