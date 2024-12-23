@@ -50,8 +50,8 @@ Here, :math:`\max(0, I_{t+1})` represents the positive inventory, and :math:`\ma
 Available Controllers
 ---------------------
 
-- **BaseStockController:** The base-stock policy is a widely used approach in inventory management that aims to maintain a consistent inventory level by ordering enough stock to replenish the expected demand, which is calculated based on simulated historical demand in ``idinn``. 
-- **SingleSourcingNeuralController:** This controller uses a neural network to determine the order quantity. The neural network is trained to minimize the total cost over time in simulated environments.
+- **BaseStockController:** The base-stock policy is a widely used approach in inventory management that aims to maintain a consistent inventory level by ordering enough stock to replenish the expected demand, which is calculated based on simulated historical demands in ``idinn``. 
+- **SingleSourcingNeuralController:** The neural controller trained a neural network to determine the order quantity by minimizing the total cost over time of a simulated sourcing model.
 
 This introduction provides a foundation for understanding single-sourcing problems and their solutions. For more details on using these controllers, refer to the following sections.
 

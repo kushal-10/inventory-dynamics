@@ -1,7 +1,16 @@
 Single-Sourcing Neural Network Controller
 =========================================
 
-Rather than using a base-stock controller, we can parameterize actions using a neural network. This network is trained to generate actions that minimize the expected cost per period for a single-sourcing system that evolves according to its discrete-time dynamics.
+Instead of relying on a traditional base-stock controller, actions in a single-sourcing inventory system can be guided by a neural network. This modern approach leverages neural networks and automatic differentiation to create a system capable of making dynamics-informed decisions for inventory management. 
+
+Key Concepts
+------------
+
+Neural Network: Instead of relying on fixed rules like the base-stock policy, actions are parameterized through a neural network that adapts based on training data.
+
+Discrete-Time Dynamics: The system evolves over discrete time intervals, and the controller must optimize actions at each step to reduce long-term costs.
+
+Training and Optimization: The neural network aims to minimize the expected per-period cost, balancing factors such as lead time, holding costs, shortage costs, past orders and inventory level. It is trained using simulated data provided by the sourcing mode to learn optimal policies for varying demand patterns and lead times.
 
 For further details, see Böttcher, Asikis, and Fragkos (2023).
 
@@ -45,7 +54,7 @@ For a given controller, orders can be predicted as follows if the lead time is 0
 
     controller_neural.predict(current_inventory=10)
 
-If the lead-time value is greater than 0, one has to specify the corresponding `past_orders`.
+If the lead-time value is greater than 0, one has to specify the corresponding `past_orders`, otherwise the past orders are assumed to be 0.
 
 .. code-block:: python
 

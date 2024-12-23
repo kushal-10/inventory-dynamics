@@ -1,7 +1,12 @@
 Base-Stock Controller
 =====================
 
-The base-stock controller for single-sourcing problems of infinite horizon is an inventory control approach where a fixed target inventory position, or "base-stock level", is maintained. Whenever inventory drops below this level due to demand, a replenishment order is placed to bring it back up to the target. This policy balances holding costs (by limiting excess stock) and stockout costs (by ensuring enough inventory to meet demand) and is optimal for products with consistent demand in the sense that minimizes the expected (per period) inventory cost over an infinite time horizon.
+For single-sourcing problems over an infinite time horizon, the base-stock controller maintains a fixed target inventory level. When inventory falls below this level due to demand fluctuations, a replenishment order is immediately placed to restore the stock to the target level.
+
+Key Concepts
+------------
+
+**Target Inventory Level:** The target inventory level that triggers replenishment orders whenever stock dips below it.
 
 Mathematical Structure
 ----------------------
@@ -13,7 +18,7 @@ To mathematically describe the optimal order policy of single-sourcing problems 
    \tilde{I}_t =
    \begin{cases}
       I_t & \text{if} \,\, l=0 \\
-      I_t + \sum_{i=1}^l q_{t-i} & \text{if} \,\, l>0 \,,
+      I_t + \sum_{i=1}^l q_{t-i} & \text{if} \,\, l>0 \\
    \end{cases}
 
 where :math:`I_t` and :math:`q_t` denote the net inventory at time :math:`t` and the replenishment order placed at time :math:`t`, respectively. 
@@ -25,44 +30,48 @@ Example Usage
 
 We now present two examples to demonstrate how the :class:`BaseStockController` can be called and evaluated in `idinn`.
 
-.. code-block:: python
-    
-   import torch
-   from idinn.sourcing_model import SingleSourcingModel
-   from idinn.single_controller import BaseStockController
-   from idinn.demand import UniformDemand
+.. doctest::
 
-   # First example
-   single_sourcing_model = SingleSourcingModel(
-    lead_time=0,
-    holding_cost=5,
-    shortage_cost=495,
-    init_inventory=10,
-    demand_generator=UniformDemand(low=0, high=4),
-   )
-   controller_base = BaseStockController()
-   # z_star should be 4
-   controller_base.fit(single_sourcing_model)
-   print(f"z_star: {controller_base.z_star}")
-   # Avg. cost near 10
-   controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
+   >>> import torch
+   >>> from idinn.sourcing_model import SingleSourcingModel
+   >>> from idinn.single_controller import BaseStockController
+   >>> from idinn.demand import UniformDemand
 
-   # Second example
-   single_sourcing_model = SingleSourcingModel(
-      lead_time=2,
-      holding_cost=5,
-      shortage_cost=495,
-      init_inventory=10,
-      demand_generator=UniformDemand(low=0, high=4),
-   )
-   controller_base = BaseStockController()
-   controller_base.fit(single_sourcing_model)
-   # z_star should be 11
-   controller_base.fit(single_sourcing_model)
-   print(f"z_star: {controller_base.z_star}")
-   # Avg. cost near 29
-   controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
+   >>> # First example
+   >>> single_sourcing_model = SingleSourcingModel(
+   ...     lead_time=0,
+   ...     holding_cost=5,
+   ...     shortage_cost=495,
+   ...     init_inventory=10,
+   ...     demand_generator=UniformDemand(low=0, high=4),
+   ... )
+   >>> controller_base = BaseStockController()
+   >>> # z_star should be 4
+   >>> controller_base.fit(single_sourcing_model)
+   >>> print(f"z_star: {controller_base.z_star}")
+   z_star: 4
+   >>> # Avg. cost near 10
+   >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42).mean()
+   >>> print(f"Average Cost: {avg_cost:.2f}")
+   Average Cost: 10.39
 
+   >>> # Second example
+   >>> single_sourcing_model = SingleSourcingModel(
+   ...     lead_time=2,
+   ...     holding_cost=5,
+   ...     shortage_cost=495,
+   ...     init_inventory=10,
+   ...     demand_generator=UniformDemand(low=0, high=4),
+   ... )
+   >>> controller_base = BaseStockController()
+   >>> controller_base.fit(single_sourcing_model)
+   >>> # z_star should be 11
+   >>> print(f"z_star: {controller_base.z_star}")
+   z_star: 11
+   >>> # Avg. cost near 29
+   >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42).mean()
+   >>> print(f"Average Cost: {avg_cost:.2f}")
+   Average Cost: 29.53
 
 References
 ----------
