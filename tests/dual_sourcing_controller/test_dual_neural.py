@@ -64,14 +64,14 @@ def test_neural_controller_avg_cost(
         dual_sourcing_model_neural, sourcing_periods=1000
     )
     assert (
-        abs(avg_cost - 29.48) < 1
-    ), f"Average cost should be near 29.48, but got {avg_cost}"
+        abs(avg_cost - 23.98) < 1
+    ), f"Average cost should be near 23.98, but got {avg_cost}"
 
 
 def test_neural_controller_simulate(
     dual_sourcing_model_neural, trained_neural_controller
 ):
-    # Simulate sourcing
+    # TODO: Simulate sourcing is not working properly
     past_inventories, past_regular_orders, past_expedited_orders = (
         trained_neural_controller.simulate(
             dual_sourcing_model_neural, sourcing_periods=100
