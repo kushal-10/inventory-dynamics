@@ -1,44 +1,57 @@
 Introduction
 ============
 
-The overall objective in single-sourcing and related inventory management problems is to identify the optimal order quantities to minimize expected inventory-related costs, given stochastic demand over a finite or inifinite time horizon. During periods when inventory remains after demand is met, each unit of excess inventory incurs a holding cost :math:`h`. If the demand exceeds the available inventory in a period, the surplus demand is considered satisfied in subsequent periods, incurring a shortage cost :math:`b` per unit. 
+Single-sourcing problems are common in inventory management and involve finding the optimal order quantities to minimize costs associated with holding excess inventory and experiencing shortages. This guide explains the basic concepts and introduces controllers available in ``idinn`` to solve these problems.
 
-The optimal solution to this problem is the so-called :doc:`base-stock policy </single/base_stock>`. This problem can also be addressed using the :doc:`neural network controllers </single/single_neural>` available in `idinn`.
+Key Concepts
+------------
 
-We use the following notation to formulate the problem.
+- **Holding Cost:** The cost incurred for keeping excess inventory. The more inventory you have, the higher the holding cost.
+- **Shortage Cost:** The penalty for not having enough inventory to meet demand. The higher the shortage cost, the more critical it is to avoid stockouts.
+- **Stochastic Demand:** Demand varies over time and is unpredictable, requiring careful planning.
 
-:math:`I_t`:  Net inventory before replenishment in period :math:`t`.
+Notation
+--------
 
-:math:`D_t`:  Demand in period :math:`t`.
+We use the following notation to describe the problem:
 
-:math:`b, h`: Unit backlogging and holding costs.
+- :math:`I_t`: Inventory level before replenishment in period :math:`t`.
+- :math:`D_t`: Demand in period :math:`t`.
+- :math:`q_t`: Quantity ordered from the supplier in period :math:`t`.
+- :math:`l`: Supplier's lead time.
+- :math:`h`: Holding cost per unit of inventory.
+- :math:`b`: Shortage cost per unit of inventory.
 
-:math:`q_t`:  Quantity ordered from the supplier in period :math:`t`.
+The sequence of events in each period is as follows:
 
-:math:`l`:  Supplier lead time.
+1. Order placed in period :math:`t-l` arrives.
+2. New order :math:`q_t` is placed.
+3. Demand :math:`D_t` is realized.
+4. Inventory cost is registered.
+5. Inventory state is updated.
 
-The sequence of events in a single period :math:`t` is as follows:
+Formulation
+-----------
 
-- Order quanity :math:`q_{t-l}`, ordered in period :math:`t-l`, arrives
-
-- Order quantity :math:`q_t` is placed
-
-- Demand :math:`D_t` is realized
-
-- Inventory cost for the period is registered as :math:`h[I_t+q_{t-l}-D_t]^++b[D_t-I_t-q_{t+l}]^+`, where :math:`[x]^+=\max\{0, x\}`
-
-- New state is updated as :math:`(I_t+q_{t-l}-D_t, q_{t-l+1}, q_{t-l+2},\dots,q_{t})`
-
-The net inventory evolves according to
-
-.. math::
-
-   I_{t+1} = I_{t} + q_{t-l} - D_t \,,
-
-and the cost at period :math:`t`, :math:`c_t`, is
+The net inventory evolves according to the formula:
 
 .. math::
 
-   c_t = h \max(0, I_{t+1}) + b \max(0, - I_{t+1})\,.
+   I_{t+1} = I_{t} + q_{t-l} - D_t
 
-The higher the holding cost, the more costly it is to keep the inventory postive and high. The higher the shortage cost, the more costly it is to run out of stock when the inventory level is negative. 
+The cost incurred at period :math:`t` is given by:
+
+.. math::
+
+   c_t = h \max(0, I_{t+1}) + b \max(0, -I_{t+1})
+
+Here, :math:`\max(0, I_{t+1})` represents the positive inventory, and :math:`\max(0, -I_{t+1})` represents the shortage. The goal is to minimize these costs summed over time.
+
+Available Controllers
+---------------------
+
+- **BaseStockController:** The base-stock policy is a widely used approach in inventory management that aims to maintain a consistent inventory level by ordering enough stock to replenish the expected demand, which is calculated based on simulated historical demand in ``idinn``. 
+- **SingleSourcingNeuralController:** This controller uses a neural network to determine the order quantity. The neural network is trained to minimize the total cost over time in simulated environments.
+
+This introduction provides a foundation for understanding single-sourcing problems and their solutions. For more details on using these controllers, refer to the following sections.
+
