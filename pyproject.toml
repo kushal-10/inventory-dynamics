@@ -41,4 +41,8 @@ path = "src/idinn/__init__.py"
 dev = [
     "ipykernel>=6.29.5",
     "pytest>=8.3.4",
+    "sphinx-rtd-theme>=3.0.2",
+    "sphinx>=7.1.2",
+    "sphinxcontrib-youtube>=1.4.1",
+    "esbonio>=0.16.5",
 ]
