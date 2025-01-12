@@ -32,29 +32,30 @@ Example Usage
 
 We now present one example to demonstrate how the :class:`CappedDualIndexController` can be called, trained, and evaluated in `idinn`.
 
-.. code-block:: python
+.. doctest::
     
-   from idinn.sourcing_model import DualSourcingModel
-   from idinn.dual_controller import CappedDualIndexController
-   from idinn.demand import UniformDemand
+   >>> from idinn.sourcing_model import DualSourcingModel
+   >>> from idinn.dual_controller import CappedDualIndexController
+   >>> from idinn.demand import UniformDemand
 
-   dual_sourcing_model = DualSourcingModel(
-      regular_lead_time=2,
-      expedited_lead_time=0,
-      regular_order_cost=0,
-      expedited_order_cost=20,
-      holding_cost=5,
-      shortage_cost=495,
-      init_inventory=0,
-      demand_generator=UniformDemand(low=0, high=4)
-   )
-   controller_cdi = CappedDualIndexController()
-   controller_cdi.fit(
-      dual_sourcing_model,
-      sourcing_periods=100
-   )
-   # Avg. cost near 25
-   controller_cdi.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+   >>> dual_sourcing_model = DualSourcingModel(
+   ...    regular_lead_time=2,
+   ...    expedited_lead_time=0,
+   ...    regular_order_cost=0,
+   ...    expedited_order_cost=20,
+   ...    holding_cost=5,
+   ...    shortage_cost=495,
+   ...    init_inventory=0,
+   ...    demand_generator=UniformDemand(low=0, high=4)
+   ... )
+   >>> controller_cdi = CappedDualIndexController()
+   >>> controller_cdi.fit(
+   ...    dual_sourcing_model,
+   ...    sourcing_periods=100
+   ... )
+   >>> # Avg. cost near 25
+   >>> controller_cdi.get_average_cost(dual_sourcing_model, sourcing_periods=1000)  # doctest: +ELLIPSIS
+   25...
 
 Adjusting the `sourcing_periods` parameter in `controller_cdi` can improve the controller's performance.
 

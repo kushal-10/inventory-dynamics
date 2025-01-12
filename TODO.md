@@ -10,7 +10,10 @@
 - [x] Save and load the controllers
 - [x] Documentation for new controllers
 - [x] Documentation for utilities
-- [ ] Add unit tests, doc tests, style check, and coverage reports with CI
+- [x] Add unit tests
+- [ ] Add doc tests
+- [ ] style check and coverage reports
+- [ ] CI
 - [ ] Test CUDA compatibility and performance
 - [ ] Integrate Docker
 - [ ] Integrate Streamlit app with Docker

@@ -71,7 +71,7 @@ def test_neural_controller_avg_cost(
 def test_neural_controller_simulate(
     dual_sourcing_model_neural, trained_neural_controller
 ):
-    # TODO: Simulate sourcing is not working properly
+    # TODO: Simulate is not working properly
     past_inventories, past_regular_orders, past_expedited_orders = (
         trained_neural_controller.simulate(
             dual_sourcing_model_neural, sourcing_periods=100

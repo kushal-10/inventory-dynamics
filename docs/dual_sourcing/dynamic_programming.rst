@@ -53,14 +53,21 @@ Using renewal theory, it can be shown that for stationary demand distributions
 
 
 The implemented dynamic-programming controller solves the Bellman equation using value iteration.
+
 The iterations are as follows:
- - For each state :math:`\mathbf{s} \in \mathcal{S}`, select an arbitrary initial cost :math:`J_0(\mathbf{s})`.
- - For a given state :math:`\mathbf{s}` and action :math:`\mathbf{Q}`, find the transition probabilities to state :math:`\mathbf{s}'` according to the demand distribution :math:`\phi`. Let us denote those probabilities by :math:`P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})`. Calculate the cost :math:`f(\mathbf{s}')` associated with each transition :math:`\mathbf{s}\xrightarrow{\mathbf{Q}} \mathbf{s}'`. Iterate those calculations for all combinations :math:`(\mathbf{s}, \mathbf{Q}) \in \mathcal{S} \times \mathcal{D}_{\mathbf{Q}}`. 
- - Apply the update:
+
+For each state :math:`\mathbf{s} \in \mathcal{S}`, select an arbitrary initial cost :math:`J_0(\mathbf{s})`.
+
+For a given state :math:`\mathbf{s}` and action :math:`\mathbf{Q}`, find the transition probabilities to state :math:`\mathbf{s}'` according to the demand distribution :math:`\phi`. Let us denote those probabilities by :math:`P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})`. Calculate the cost :math:`f(\mathbf{s}')` associated with each transition :math:`\mathbf{s}\xrightarrow{\mathbf{Q}} \mathbf{s}'`. Iterate those calculations for all combinations :math:`(\mathbf{s}, \mathbf{Q}) \in \mathcal{S} \times \mathcal{D}_{\mathbf{Q}}`. 
+
+Apply the update:
+
 .. math::
    J_{k+1}(\mathbf{s}) = \min\limits_{\mathbf{Q} \in \mathcal{D}_{\mathbf{Q}}} \left\{ c_{\rm e}q^{\rm e} + \sum\limits_{\mathbf{s}' \in \mathcal{S}} P(\mathbf{s}' | \mathbf{s}, \mathbf{Q})(f(\mathbf{s}')+J_{k}(\mathbf{s}')) \right\}, \text{for all } \quad \mathbf{s} \in \mathcal{S}
-- Calculate the expected cost approximation :math:`\lambda_{k+1}(\mathbf{s}) = J_{k+1}(\mathbf{s}) / (k+1)`, for all :math:`\mathbf{s} \in \mathcal{S}`.
-- Iterate the above update until :math:`\max\limits_{\mathbf{s}\in\mathcal{S}}\left\{\lvert\lambda_{k+1}(\mathbf{s})-\lambda_{k}(\mathbf{s})\rvert\right\} < \epsilon`.
+
+Calculate the expected cost approximation :math:`\lambda_{k+1}(\mathbf{s}) = J_{k+1}(\mathbf{s}) / (k+1)`, for all :math:`\mathbf{s} \in \mathcal{S}`.
+
+Iterate the above update until :math:`\max\limits_{\mathbf{s}\in\mathcal{S}}\left\{\lvert\lambda_{k+1}(\mathbf{s})-\lambda_{k}(\mathbf{s})\rvert\right\} < \epsilon`.
 
 
 Example Usage
@@ -68,30 +75,32 @@ Example Usage
 
 We can solve dual-sourcing problems with `idinn` using :class:`DynamicProgrammingController`, which provides a consistent API similar to that of other controllers. Note that expedited orders are assumed to have a lead time of 0. The user can increase the `max_iterations` parameter and descrease the `tolerance` to achieve better results, though this will require additional time.
 
-.. code-block:: python
+.. doctest::
 
-   from idinn.sourcing_model import DualSourcingModel
-   from idinn.dual_controller import DynamicProgrammingController
-   from idinn.demand import UniformDemand
+   >>> from idinn.sourcing_model import DualSourcingModel
+   >>> from idinn.dual_controller import DynamicProgrammingController
+   >>> from idinn.demand import UniformDemand
 
-   dual_sourcing_model = DualSourcingModel(
-      regular_lead_time=2,
-      expedited_lead_time=0,
-      regular_order_cost=0,
-      expedited_order_cost=20,
-      holding_cost=5,
-      shortage_cost=495,
-      init_inventory=0,
-      demand_generator=UniformDemand(low=0, high=4)
-   )
-   controller_dp = DynamicProgrammingController()
-   controller_dp.fit(
-      dual_sourcing_model,
-      max_iterations=10000,
-      tolerance=1e-6
-   )
-  
-   print(f'Exact average cost: {controller_dp.vf:.2f}')
-   print(f'Policy Dictionary: {controller_dp.qf}')
-   # Average cost for a specific trajectory
-   controller_dp.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+   >>> dual_sourcing_model = DualSourcingModel(
+   ...    regular_lead_time=2,
+   ...    expedited_lead_time=0,
+   ...    regular_order_cost=0,
+   ...    expedited_order_cost=20,
+   ...    holding_cost=5,
+   ...    shortage_cost=495,
+   ...    init_inventory=0,
+   ...    demand_generator=UniformDemand(low=0, high=4)
+   ... )
+   >>> controller_dp = DynamicProgrammingController()
+   >>> controller_dp.fit(
+   ...    dual_sourcing_model,
+   ...    max_iterations=10000,
+   ...    tolerance=1e-6
+   ... )
+   >>> print(f'Exact average cost: {controller_dp.vf:.2f}')
+   Exact average cost: 123.45  # Example output, replace with actual expected value
+   >>> print(f'Policy Dictionary: {controller_dp.qf}')
+   Policy Dictionary: {...}  # Example output, replace with actual expected value
+   >>> # Average cost for a specific trajectory
+   >>> controller_dp.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+   123.45  # Example output, replace with actual expected value
