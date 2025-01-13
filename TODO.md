@@ -10,10 +10,13 @@
 - [x] Save and load the controllers
 - [x] Documentation for new controllers
 - [x] Documentation for utilities
-- [x] Add unit tests
+- [ ] Improve unit tests
+- [ ] Improve code reduntancy
 - [ ] Add doc tests
-- [ ] style check and coverage reports
-- [ ] CI
+- [ ] Type annotation
+- [ ] Style check and mypy check
+- [ ] Coverage reports
 - [ ] Test CUDA compatibility and performance
-- [ ] Integrate Docker
-- [ ] Integrate Streamlit app with Docker
+- [ ] Produce Docker image 
+- [ ] Produce Streamlit app with Docker
+- [ ] CI
