@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Single-sourcing problems are common in inventory management and involve finding the optimal order quantities to minimize costs associated with holding excess inventory and experiencing shortages. This guide explains the basic concepts and introduces controllers available in ``idinn`` to solve these problems.
+Single-sourcing problems are common in inventory management and involve finding the optimal order quantities to minimize costs associated with holding excess inventory and experiencing shortages facing stochastic demands. This guide explains the basic concepts and introduces controllers available in ``idinn`` to solve these problems.
 
 Key Concepts
 ------------
@@ -9,6 +9,7 @@ Key Concepts
 - **Holding Cost:** The cost incurred for keeping excess inventory. The more inventory you have, the higher the holding cost.
 - **Shortage Cost:** The penalty for not having enough inventory to meet demand. The higher the shortage cost, the more critical it is to avoid stockouts.
 - **Stochastic Demand:** Demand varies over time and is unpredictable, requiring careful planning.
+- **Shortage and Holding Costs (:math:`b`, :math:`h`):** Costs associated with not having enough inventory to meet demand (shortage cost) and the costs of holding excess inventory (holding cost).
 
 Notation
 --------
@@ -19,8 +20,11 @@ We use the following notation to describe the problem:
 - :math:`D_t`: Demand in period :math:`t`.
 - :math:`q_t`: Quantity ordered from the supplier in period :math:`t`.
 - :math:`l`: Supplier's lead time.
-- :math:`h`: Holding cost per unit of inventory.
 - :math:`b`: Shortage cost per unit of inventory.
+- :math:`h`: Holding cost per unit of inventory.
+
+Formulation
+-----------
 
 The sequence of events in each period is as follows:
 
@@ -29,9 +33,6 @@ The sequence of events in each period is as follows:
 3. Demand :math:`D_t` is realized.
 4. Inventory cost is registered.
 5. Inventory state is updated.
-
-Formulation
------------
 
 The net inventory evolves according to the formula:
 

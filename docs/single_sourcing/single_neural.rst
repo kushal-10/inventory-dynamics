@@ -6,11 +6,11 @@ Instead of relying on a traditional base-stock controller, actions in a single-s
 Key Concepts
 ------------
 
-Neural Network: Instead of relying on fixed rules like the base-stock policy, actions are parameterized through a neural network that adapts based on training data.
+- **Neural Network**: Instead of relying on fixed rules like the base-stock policy, actions are parameterized through a neural network that adapts based on training data.
 
-Discrete-Time Dynamics: The system evolves over discrete time intervals, and the controller must optimize actions at each step to reduce long-term costs.
+- **Discrete-Time Dynamics**: The system evolves over discrete time intervals, and the controller must optimize actions at each step to reduce long-term costs.
 
-Training and Optimization: The neural network aims to minimize the expected per-period cost, balancing factors such as lead time, holding costs, shortage costs, past orders and inventory level. It is trained using simulated data provided by the sourcing mode to learn optimal policies for varying demand patterns and lead times.
+- **Training and Optimization**: The neural network aims to minimize the expected per-period cost, balancing factors such as lead time, holding costs, shortage costs, past orders and inventory level. It is trained using simulated data provided by the sourcing mode to learn optimal policies for varying demand patterns and lead times.
 
 For further details, see Böttcher, Asikis, and Fragkos (2023).
 

@@ -6,7 +6,7 @@ For single-sourcing problems over an infinite time horizon, the base-stock contr
 Key Concepts
 ------------
 
-**Target Inventory Level:** The target inventory level that triggers replenishment orders whenever stock dips below it.
+- **Target Inventory Level:** The target inventory level that triggers replenishment orders whenever stock dips below it.
 
 Mathematical Structure
 ----------------------
