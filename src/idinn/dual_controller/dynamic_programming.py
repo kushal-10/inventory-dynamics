@@ -1,5 +1,5 @@
 from itertools import product
-from typing import Dict as TypingDict, List, Optional, Tuple, Union
+from typing import Dict as TypingDict, List as TypingList, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -7,6 +7,7 @@ from numba import njit, types
 from numba.typed import Dict, List
 
 from ..sourcing_model import DualSourcingModel
+from ..demand import UniformDemand
 from .base import BaseDualController
 
 
@@ -27,7 +28,7 @@ class DynamicProgrammingController(BaseDualController):
         b: float,
         state: Tuple[int, ...],
         vf: TypingDict[Tuple[int, ...], float],
-        actions: List[Tuple[int, int]],
+        actions: TypingList[Tuple[int, int]],
     ) -> Tuple[float, Optional[Tuple[int, int]]]:
         """
         vf_update is a function that calculates a single value iteration update.
@@ -77,20 +78,32 @@ class DynamicProgrammingController(BaseDualController):
         sourcing_model: DualSourcingModel,
         max_iterations: int = 1000000,
         tolerance: float = 10e-8,
+        validation_freq: int = 100,
     ) -> None:
-        # TODO: Check demand is uniform distributed
-        # Log when sourcing_model's lead time do not correspond to the one in the controller
-        # if self.regular_lead_time is None:
-        #     info("Model starts training.")
-        # else:
-        # if sourcing_model.regular_lead_time != self.regular_lead_time:
-        #     info("Regular lead time does not match the controller's previous specified regular lead time.")
-        # if sourcing_model.expedited_lead_time != self.expedited_lead_time:
-        #     info("Expedited lead time does not match the controller's previous specified expedited lead time.")
-        # TODO: Check if the expedited_lead_time is 0
-        # if sourcing_model.expedited_lead_time > 0:
-        #     lr = sourcing_model.regular_lead_time - sourcing_model.expedited_lead_time
-        #     le = 0
+        """
+        Fit the controller to the given sourcing model.
+
+        Parameters
+        ----------
+        sourcing_model : DualSourcingModel
+            The sourcing model to fit the controller to.
+        max_iterations : int, default is 1000000
+            Specifies the maximum number of iterations to run.
+        tolerance : float, default is 10e-8
+            Specifies the tolerance to check if the value function has converged.
+        validation_freq : int, default is 100
+            Specifies how many iteration to run before checking the tolerance is reached, e.g. `validation_freq=10` runs validation every 10 epochs.
+        """
+        # Check demand is uniform distributed
+        if not isinstance(sourcing_model.demand_generator, UniformDemand):
+            raise ValueError(
+                "DynamicProgrammingController only supports uniform demand distribution."
+            )
+        # Check if the expedited_lead_time is 0
+        if sourcing_model.expedited_lead_time != 0:
+            raise ValueError(
+                "DynamicProgrammingController only supports expedited_lead_time = 0."
+            )
         self.sourcing_model = sourcing_model
 
         min_demand = int(sourcing_model.demand_generator.get_min_demand())
@@ -167,11 +180,10 @@ class DynamicProgrammingController(BaseDualController):
             val = this_average / (iteration + 1)
             all_values[iteration] = val
 
-            if iteration > 1 and iteration % 100 == 0:
+            if iteration > 1 and iteration % validation_freq == 0:
                 iteration_arr.append(iteration)
                 value_arr.append(all_values[iteration])
                 delta = all_values[iteration - 1] - all_values[iteration]
-                # print(f"iteration: {iteration} delta: {delta}")
                 if delta <= tolerance:
                     for state in states:
                         qa = DynamicProgrammingController.__vf_update(
@@ -195,8 +207,8 @@ class DynamicProgrammingController(BaseDualController):
     def predict(
         self,
         current_inventory: Union[int, torch.Tensor],
-        past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
-        past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        past_regular_orders: Optional[Union[TypingList[int], torch.Tensor]] = None,
+        past_expedited_orders: Optional[Union[TypingList[int], torch.Tensor]] = None,
         output_tensor: bool = False,
     ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
         """

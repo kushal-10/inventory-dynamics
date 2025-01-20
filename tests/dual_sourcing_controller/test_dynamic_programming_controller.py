@@ -32,7 +32,7 @@ def trained_dp_controller():
         demand_generator=UniformDemand(low=0, high=4),
     )
     controller_dp = DynamicProgrammingController()
-    controller_dp.fit(dual_sourcing_model_train, max_iterations=101, tolerance=1)
+    controller_dp.fit(dual_sourcing_model_train, max_iterations=101, tolerance=1, validation_freq=100,)
     return controller_dp
 
 
