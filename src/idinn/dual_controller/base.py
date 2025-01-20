@@ -11,7 +11,7 @@ class BaseDualController(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None):
+    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None, output_tensor=False):
         """
         Predict the replenishment order quantity.
 
@@ -23,6 +23,8 @@ class BaseDualController(metaclass=ABCMeta):
             Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
         past_expedited_orders : list, or torch.Tensor, optional
             Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
+        output_tensor : bool, default is False
+            If True, the replenishment order quantity will be returned as a torch.Tensor. Otherwise, it will be returned as an integer.
         """
         pass
 
@@ -136,7 +138,7 @@ class BaseDualController(metaclass=ABCMeta):
 
         Parameters
         ----------
-        sourcing_model : SourcingModel
+        sourcing_model : DualSourcingModel
             The sourcing model.
         sourcing_periods : int
             Number of sourcing periods.

@@ -1,5 +1,8 @@
+from typing import List, Optional, Tuple, Union
+
 import torch
 
+from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
 
@@ -26,19 +29,19 @@ class CappedDualIndexController(BaseDualController):
            Manufacturing & Service Operations Management, 21(4), 912-931.
     """
 
-    def __init__(self, s_e=0, s_r=0, q_r=0):
+    def __init__(self, s_e: int = 0, s_r: int = 0, q_r: int = 0) -> None:
         self.s_e = s_e
         self.s_r = s_r
         self.q_r = q_r
-        self.sourcing_model = None
+        self.sourcing_model: Optional[DualSourcingModel] = None
 
     def capped_dual_index_sum(
         self,
-        current_inventory,
-        past_regular_orders,
-        past_expedited_orders,
-        limit=False,
-    ):
+        current_inventory: int,
+        past_regular_orders: torch.Tensor,
+        past_expedited_orders: torch.Tensor,
+        limit: bool = False,
+    ) -> int:
         """
         Calculate the capped dual index sum.
 
@@ -98,13 +101,13 @@ class CappedDualIndexController(BaseDualController):
 
     def fit(
         self,
-        sourcing_model,
-        sourcing_periods,
-        s_e_range=torch.arange(2, 11),
-        s_r_range=torch.arange(2, 11),
-        q_r_range=torch.arange(2, 11),
-        seed=None,
-    ):
+        sourcing_model: DualSourcingModel,
+        sourcing_periods: int,
+        s_e_range: torch.Tensor = torch.arange(2, 11),
+        s_r_range: torch.Tensor = torch.arange(2, 11),
+        q_r_range: torch.Tensor = torch.arange(2, 11),
+        seed: Optional[int] = None,
+    ) -> None:
         """
         Train the capped dual index controller.
 
@@ -147,8 +150,12 @@ class CappedDualIndexController(BaseDualController):
         self.q_r = q_r_optimal
 
     def predict(
-        self, current_inventory, past_regular_orders=None, past_expedited_orders=None, output_tensor=False
-    ):
+        self,
+        current_inventory: int,
+        past_regular_orders: Optional[torch.Tensor] = None,
+        past_expedited_orders: Optional[torch.Tensor] = None,
+        output_tensor: bool = False
+    ) -> Tuple[Union[torch.Tensor, int], Union[torch.Tensor, int]]:
         """
         Perform forward calculation for capped dual index optimization.
 
@@ -188,7 +195,7 @@ class CappedDualIndexController(BaseDualController):
         else:
             return regular_q, expedited_q
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Reset the controller to the initial state.
         """

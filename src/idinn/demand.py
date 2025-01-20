@@ -2,10 +2,9 @@ from abc import ABCMeta, abstractmethod
 
 import torch
 
-
 class BaseDemand(metaclass=ABCMeta):
     @abstractmethod
-    def sample(self, batch_size) -> torch.Tensor:
+    def sample(self, batch_size: int) -> torch.Tensor:
         """
         Generate demand for one period.
 
@@ -16,41 +15,41 @@ class BaseDemand(metaclass=ABCMeta):
         """
         pass
 
-    def enumerate_support(self):
+    def enumerate_support(self) -> dict:
         pass
 
-    def get_min_demand(self):
+    def get_min_demand(self) -> int:
         pass
 
-    def get_max_demand(self):
+    def get_max_demand(self) -> int:
         pass
 
 
 class UniformDemand(BaseDemand):
-    def __init__(self, low, high):
+    def __init__(self, low: int, high: int):
         self.distribution = torch.distributions.Uniform(low=low, high=high + 1)
         self.demand_prob = 1 / (high - low + 1)
         self.min_demand = low
         self.max_demand = high
 
-    def sample(self, batch_size, batch_width=1) -> torch.Tensor:
+    def sample(self, batch_size: int, batch_width: int = 1) -> torch.Tensor:
         return self.distribution.sample([batch_size, batch_width]).int()
 
-    def enumerate_support(self):
+    def enumerate_support(self) -> dict:
         return {
             x: 1 / (self.max_demand + 1 - self.min_demand)
             for x in range(self.min_demand, self.max_demand + 1)
         }
 
-    def get_min_demand(self):
+    def get_min_demand(self) -> int:
         return self.min_demand
 
-    def get_max_demand(self):
+    def get_max_demand(self) -> int:
         return self.max_demand
 
 
 class CustomDemand(BaseDemand):
-    def __init__(self, demand_prob=None):
+    def __init__(self, demand_prob: dict = None):
         from math import isclose
 
         # All demand values should be int
@@ -70,7 +69,7 @@ class CustomDemand(BaseDemand):
 
         self.demand_prob = demand_prob
 
-    def sample(self, batch_size, batch_width=1) -> torch.Tensor:
+    def sample(self, batch_size: int, batch_width: int = 1) -> torch.Tensor:
         """
         Generate demand for one period.
 
@@ -90,11 +89,11 @@ class CustomDemand(BaseDemand):
             batch_size, batch_width
         )
 
-    def enumerate_support(self):
+    def enumerate_support(self) -> dict:
         return self.demand_prob
 
-    def get_min_demand(self):
+    def get_min_demand(self) -> int:
         return min(self.demand_prob.keys())
 
-    def get_max_demand(self):
+    def get_max_demand(self) -> int:
         return max(self.demand_prob.keys())

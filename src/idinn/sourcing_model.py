@@ -1,19 +1,22 @@
+from typing import Union
+
 import torch
+from .demand import CustomDemand, UniformDemand
 
 
 class BaseSourcingModel:
     def __init__(
         self,
-        holding_cost,
-        shortage_cost,
-        init_inventory,
-        demand_generator,
-        batch_size,
-        lead_time=None,
-        regular_lead_time=None,
-        expedited_lead_time=None,
-        regular_order_cost=None,
-        expedited_order_cost=None,
+        holding_cost: float,
+        shortage_cost: float,
+        init_inventory: float,
+        demand_generator: Union[UniformDemand, CustomDemand],
+        batch_size: int,
+        lead_time: int = None,
+        regular_lead_time: int = None,
+        expedited_lead_time: int = None,
+        regular_order_cost: float = None,
+        expedited_order_cost: float = None,
     ):
         self.holding_cost = holding_cost
         self.shortage_cost = shortage_cost
@@ -29,10 +32,7 @@ class BaseSourcingModel:
         self.demand_generator = demand_generator
         self.reset()
 
-    def reset(
-        self,
-        batch_size=None,
-    ):
+    def reset(self, batch_size: int = None) -> None:
         if batch_size is not None and self.batch_size != batch_size:
             self.batch_size = batch_size
 
@@ -56,25 +56,25 @@ class BaseSourcingModel:
                 "Either `lead_time` or (`regular_lead_time` and `expedited_lead_time`) must be provided."
             )
 
-    def get_holding_cost(self):
+    def get_holding_cost(self) -> float:
         return self.holding_cost
 
-    def get_shortage_cost(self):
+    def get_shortage_cost(self) -> float:
         return self.shortage_cost
 
-    def get_init_inventory(self):
+    def get_init_inventory(self) -> torch.Tensor:
         init_inventory = (
             self.init_inventory - torch.frac(self.init_inventory).clone().detach()
         )
         return init_inventory
 
-    def get_past_inventories(self):
+    def get_past_inventories(self) -> torch.Tensor:
         return self.past_inventories
 
-    def get_past_demands(self):
+    def get_past_demands(self) -> torch.Tensor:
         return self.past_demands
 
-    def get_current_inventory(self):
+    def get_current_inventory(self) -> torch.Tensor:
         # Keep dim when slicing past_inventories
         # https://stackoverflow.com/questions/57237352/why-does-torch-slice-lose-dimension
         # https://discuss.pytorch.org/t/solved-simple-question-about-keep-dim-when-slicing-the-tensor/9280
@@ -84,17 +84,17 @@ class BaseSourcingModel:
 class SingleSourcingModel(BaseSourcingModel):
     def __init__(
         self,
-        lead_time,
-        holding_cost,
-        shortage_cost,
-        init_inventory,
-        demand_generator,
-        batch_size=1,
+        lead_time: int,
+        holding_cost: float,
+        shortage_cost: float,
+        init_inventory: float,
+        demand_generator: Union[UniformDemand, CustomDemand],
+        batch_size: int = 1,
     ):
         """
         Parameters
         ----------
-        lead_time : float
+        lead_time : int
             The lead time for orders.
         holding_cost : float
             The cost of holding inventory.
@@ -115,19 +115,19 @@ class SingleSourcingModel(BaseSourcingModel):
             demand_generator=demand_generator,
         )
 
-    def get_lead_time(self):
+    def get_lead_time(self) -> int:
         return self.lead_time
 
-    def get_past_orders(self):
+    def get_past_orders(self) -> torch.Tensor:
         return self.past_orders
 
-    def order(self, q, seed=None):
+    def order(self, q: torch.Tensor, seed: int = None) -> None:
         """
         Orders items to the inventory and update the inventory with generated demands.
 
         Parameters
         ----------
-        q : int, or torch.Tensor
+        q : torch.Tensor
             The quantity of items to order.
         seed : int, optional
             Random seed for reproducibility.
@@ -158,22 +158,22 @@ class SingleSourcingModel(BaseSourcingModel):
 class DualSourcingModel(BaseSourcingModel):
     def __init__(
         self,
-        regular_lead_time,
-        expedited_lead_time,
-        regular_order_cost,
-        expedited_order_cost,
-        holding_cost,
-        shortage_cost,
-        init_inventory,
-        demand_generator,
-        batch_size=1,
+        regular_lead_time: int,
+        expedited_lead_time: int,
+        regular_order_cost: float,
+        expedited_order_cost: float,
+        holding_cost: float,
+        shortage_cost: float,
+        init_inventory: float,
+        demand_generator: Union[UniformDemand, CustomDemand],
+        batch_size: int = 1,
     ):
         """
         Parameters
         ----------
-        regular_lead_time : float
+        regular_lead_time : int
             The lead time for regular orders.
-        expedited_lead_time : float
+        expedited_lead_time : int
             The lead time for expedited orders.
         regular_order_cost : float
             The cost of placing a regular order.
@@ -208,39 +208,39 @@ class DualSourcingModel(BaseSourcingModel):
             demand_generator=demand_generator,
         )
 
-    def get_past_regular_orders(self):
+    def get_past_regular_orders(self) -> torch.Tensor:
         return self.past_regular_orders
 
-    def get_past_expedited_orders(self):
+    def get_past_expedited_orders(self) -> torch.Tensor:
         return self.past_expedited_orders
 
-    def get_last_regular_order(self):
+    def get_last_regular_order(self) -> torch.Tensor:
         return self.past_regular_orders[:, [-1]]
 
-    def get_last_expedited_order(self):
+    def get_last_expedited_order(self) -> torch.Tensor:
         return self.past_expedited_orders[:, [-1]]
 
-    def get_regular_lead_time(self):
+    def get_regular_lead_time(self) -> int:
         return self.regular_lead_time
 
-    def get_expedited_lead_time(self):
+    def get_expedited_lead_time(self) -> int:
         return self.expedited_lead_time
 
-    def get_regular_order_cost(self):
+    def get_regular_order_cost(self) -> float:
         return self.regular_order_cost
 
-    def get_expedited_order_cost(self):
+    def get_expedited_order_cost(self) -> float:
         return self.expedited_order_cost
 
-    def order(self, regular_q, expedited_q, seed=None):
+    def order(self, regular_q: torch.Tensor, expedited_q: torch.Tensor, seed: int = None) -> None:
         """
         Orders items to the inventory and update the inventory with generated demands.
 
         Parameters
         ----------
-        regular_q : int, or torch.Tensor
+        regular_q : torch.Tensor
             The quantity of items to order from the regular supplier.
-        expedited_q : int, or torch.Tensor
+        expedited_q : torch.Tensor
             The quantity of items to order from the expedited supplier.
         seed : int, optional
             Random seed for reproducibility.

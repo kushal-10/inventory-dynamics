@@ -1,22 +1,34 @@
 from itertools import product
+from typing import Dict as TypingDict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 from numba import njit, types
 from numba.typed import Dict, List
 
+from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
 
 class DynamicProgrammingController(BaseDualController):
     def __init__(self) -> None:
-        self.qf = None
-        self.vf = None
-        self.sourcing_model = None
+        self.qf: Optional[TypingDict[Tuple[int, ...], Tuple[int, int]]] = None
+        self.vf: Optional[float] = None
+        self.sourcing_model: Optional[DualSourcingModel] = None
 
     @staticmethod
     @njit
-    def __vf_update(demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions):
+    def __vf_update(
+        demand_prob: TypingDict[int, float],
+        min_demand: int,
+        max_demand: int,
+        ce: float,
+        h: float,
+        b: float,
+        state: Tuple[int, ...],
+        vf: TypingDict[Tuple[int, ...], float],
+        actions: List[Tuple[int, int]],
+    ) -> Tuple[float, Optional[Tuple[int, int]]]:
         """
         vf_update is a function that calculates a single value iteration update.
         """
@@ -49,7 +61,9 @@ class DynamicProgrammingController(BaseDualController):
         return best_cost, best_action
 
     @staticmethod
-    def __get_basestock_ub(exp_demand, lead_time, support, h, b):
+    def __get_basestock_ub(
+        exp_demand: float, lead_time: int, support: float, h: float, b: float
+    ) -> float:
         """
         Get an upper bound on the single-source basestock level based on
         Hoeffding's inequality.
@@ -58,7 +72,12 @@ class DynamicProgrammingController(BaseDualController):
         base_stock_ub = n * exp_demand + support * np.sqrt(n * np.log(1 + b / h) / 2)
         return np.ceil(base_stock_ub)
 
-    def fit(self, sourcing_model, max_iterations=1000000, tolerance=10e-8):
+    def fit(
+        self,
+        sourcing_model: DualSourcingModel,
+        max_iterations: int = 1000000,
+        tolerance: float = 10e-8,
+    ) -> None:
         # TODO: Check demand is uniform distributed
         # Log when sourcing_model's lead time do not correspond to the one in the controller
         # if self.regular_lead_time is None:
@@ -175,11 +194,11 @@ class DynamicProgrammingController(BaseDualController):
 
     def predict(
         self,
-        current_inventory,
-        past_regular_orders=None,
-        past_expedited_orders=None,
-        output_tensor=False,
-    ):
+        current_inventory: Union[int, torch.Tensor],
+        past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        output_tensor: bool = False,
+    ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
         """
 
         Parameters
@@ -215,7 +234,7 @@ class DynamicProgrammingController(BaseDualController):
         else:
             return self.qf[key]
 
-    def reset(self):
+    def reset(self) -> None:
         self.qf = None
         self.vf = None
         self.sourcing_model = None

@@ -1,6 +1,10 @@
+from typing import List, Optional, Union
+
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
+from ..sourcing_model import SingleSourcingModel
 from .base import BaseSingleController
 
 
@@ -40,14 +44,14 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         Plot the inventory and order quantities over a given number of sourcing periods.
     """
 
-    def __init__(self, hidden_layers=[2], activation=torch.nn.CELU(alpha=1)):
+    def __init__(self, hidden_layers: List[int] = [2], activation: torch.nn.Module = torch.nn.CELU(alpha=1)):
         super().__init__()
         self.sourcing_model = None
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.model = None
 
-    def init_layers(self):
+    def init_layers(self) -> None:
         """
         Initialize the layers of the neural network based on the lead time.
 
@@ -74,10 +78,10 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
 
     def predict(
         self,
-        current_inventory,
-        past_orders=None,
-        output_tensor=False,
-    ):
+        current_inventory: Union[int, torch.Tensor],
+        past_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        output_tensor: bool = False,
+    ) -> Union[torch.Tensor, int]:
         """
         Perform forward pass through the neural network.
 
@@ -120,17 +124,17 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
 
     def fit(
         self,
-        sourcing_model,
-        sourcing_periods,
-        epochs,
-        validation_sourcing_periods=None,
-        validation_freq=10,
-        init_inventory_lr=1e-1,
-        init_inventory_freq=4,
-        parameters_lr=3e-3,
-        tensorboard_writer=None,
-        seed=None,
-    ):
+        sourcing_model: SingleSourcingModel,
+        sourcing_periods: int,
+        epochs: int,
+        validation_sourcing_periods: Optional[int] = None,
+        validation_freq: int = 10,
+        init_inventory_lr: float = 1e-1,
+        init_inventory_freq: int = 4,
+        parameters_lr: float = 3e-3,
+        tensorboard_writer: Optional[SummaryWriter] = None,
+        seed: Optional[int] = None,
+    ) -> None:
         """
         Train the neural network controller using the sourcing model and specified parameters.
 
@@ -219,12 +223,12 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         # Load the best model
         self.model.load_state_dict(best_state)
 
-    def reset(self):
+    def reset(self) -> None:
         self.sourcing_model = None
         self.model = None
 
-    def save(self, path):
+    def save(self, path: str) -> None:
         torch.save(self.model, path)
 
-    def load(self, path):
+    def load(self, path: str) -> None:
         self.model = torch.load(path, weights_only=False)

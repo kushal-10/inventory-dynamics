@@ -11,9 +11,9 @@
 - [x] Documentation for new controllers
 - [x] Documentation for utilities
 - [x] Improve unit tests
-- [ ] Improve code reduntancy
-- [ ] Add doc tests
-- [ ] Type annotation
+- [x] Improve doc tests
+- [x] Improve code reduntancy
+- [x] Type annotation
 - [ ] Style check and mypy check
 - [ ] Coverage reports
 - [ ] Test CUDA compatibility and performance

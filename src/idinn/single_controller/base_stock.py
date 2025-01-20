@@ -1,4 +1,5 @@
 import torch
+from typing import Optional, Union
 
 from ..sourcing_model import SingleSourcingModel
 from .base import BaseSingleController
@@ -9,16 +10,16 @@ class BaseStockController(BaseSingleController):
     Base stock controller for single-sourcing inventory optimization.
     """
 
-    def __init__(self):
-        self.sourcing_model = None
-        self.z_star = None
+    def __init__(self) -> None:
+        self.sourcing_model: Optional[SingleSourcingModel] = None
+        self.z_star: Optional[int] = None
 
     def fit(
         self,
         sourcing_model: SingleSourcingModel,
         num_samples: int = 100000,
-        seed: int = None,
-    ):
+        seed: Optional[int] = None,
+    ) -> None:
         """
         Calculate the optimal target inventory level z* and store it in self.z_star.
 
@@ -49,7 +50,12 @@ class BaseStockController(BaseSingleController):
             torch.quantile(total_demand_samples.float(), service_level).int().item()
         )
 
-    def predict(self, current_inventory, past_orders=None, output_tensor=False):
+    def predict(
+        self,
+        current_inventory: Union[int, torch.Tensor],
+        past_orders: Optional[Union[list, torch.Tensor]] = None,
+        output_tensor: bool = False
+    ) -> Union[torch.Tensor, int]:
         """
         Calculate the replenishment order quantity.
 
@@ -91,6 +97,6 @@ class BaseStockController(BaseSingleController):
         else:
             return result.int().item()
 
-    def reset(self):
+    def reset(self) -> None:
         self.z_star = None
         self.sourcing_model = None

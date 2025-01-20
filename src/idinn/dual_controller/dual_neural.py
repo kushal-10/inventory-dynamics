@@ -1,5 +1,10 @@
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
+
+from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
 
@@ -49,9 +54,9 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
 
     def __init__(
         self,
-        hidden_layers=[128, 64, 32, 16, 8, 4],
-        activation=torch.nn.ReLU(),
-        compressed=False,
+        hidden_layers: List[int] = [128, 64, 32, 16, 8, 4],
+        activation: torch.nn.Module = torch.nn.ReLU(),
+        compressed: bool = False,
     ):
         super().__init__()
         self.sourcing_model = None
@@ -60,7 +65,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         self.compressed = compressed
         self.model = None
 
-    def init_layers(self, regular_lead_time, expedited_lead_time):
+    def init_layers(self, regular_lead_time: int, expedited_lead_time: int) -> None:
         """
         Initialize the layers of the neural network.
 
@@ -93,7 +98,13 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         ]
         self.model = torch.nn.Sequential(*architecture)
 
-    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None, output_tensor=False):
+    def predict(
+        self,
+        current_inventory: Union[int, torch.Tensor],
+        past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        output_tensor: bool = False,
+    ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
         """
         Forward pass of the neural network.
 
@@ -154,17 +165,17 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
 
     def fit(
         self,
-        sourcing_model,
-        sourcing_periods,
-        epochs,
-        validation_sourcing_periods=None,
-        validation_freq=50,
-        init_inventory_freq=4,
-        init_inventory_lr=1e-1,
-        parameters_lr=3e-3,
-        tensorboard_writer=None,
-        seed=None,
-    ):
+        sourcing_model: DualSourcingModel,
+        sourcing_periods: int,
+        epochs: int,
+        validation_sourcing_periods: Optional[int] = None,
+        validation_freq: int = 50,
+        init_inventory_freq: int = 4,
+        init_inventory_lr: float = 1e-1,
+        parameters_lr: float = 3e-3,
+        tensorboard_writer: Optional[SummaryWriter] = None,
+        seed: Optional[int] = None,
+    ) -> None:
         """
         Train the neural network controller using the sourcing model and specified parameters.
 
@@ -250,15 +261,15 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
 
         self.load_state_dict(best_state)
     
-    def reset(self):
+    def reset(self) -> None:
         """
         Reset the controller to the initial state.
         """
         self.model = None
         self.sourcing_model = None
     
-    def save(self, path):
+    def save(self, path: str) -> None:
         torch.save(self.model, path)
 
-    def load(self, path):
+    def load(self, path: str) -> None:
         self.model=torch.load(path, weights_only=False)
