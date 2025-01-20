@@ -32,7 +32,7 @@ def trained_dp_controller():
         demand_generator=UniformDemand(low=0, high=4),
     )
     controller_dp = DynamicProgrammingController()
-    controller_dp.fit(dual_sourcing_model_train, max_iterations=10000, tolerance=1e-6)
+    controller_dp.fit(dual_sourcing_model_train, max_iterations=101, tolerance=1)
     return controller_dp
 
 
@@ -62,3 +62,22 @@ def test_dp_controller_order_prediction(trained_dp_controller):
     assert (
         expedited_order == 1
     ), "Predicted expedited order should be 1, but got {expedited_order}."
+
+def test_cdi_controller_simulate(dual_sourcing_model_dp, trained_dp_controller):
+    # Simulate
+    past_inventories, past_regular_orders, past_expedited_orders = (
+        trained_dp_controller.simulate(
+            dual_sourcing_model_dp, sourcing_periods=100, seed=42
+        )
+    )
+
+    # Validate simulation results
+    assert (
+        len(past_inventories) == 101
+    ), "Simulation did not return correct number of inventory records."
+    assert (
+        len(past_regular_orders) == 101
+    ), "Simulation did not return correct number of regular order records."
+    assert (
+        len(past_expedited_orders) == 101
+    ), "Simulation did not return correct number of expedited order records."

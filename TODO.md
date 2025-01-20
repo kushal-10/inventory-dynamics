@@ -10,7 +10,7 @@
 - [x] Save and load the controllers
 - [x] Documentation for new controllers
 - [x] Documentation for utilities
-- [ ] Improve unit tests
+- [x] Improve unit tests
 - [ ] Improve code reduntancy
 - [ ] Add doc tests
 - [ ] Type annotation

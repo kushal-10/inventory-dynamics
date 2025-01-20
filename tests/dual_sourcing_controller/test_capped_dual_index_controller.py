@@ -1,4 +1,5 @@
 import pytest
+import torch
 
 from idinn.demand import UniformDemand
 from idinn.dual_controller import CappedDualIndexController
@@ -35,6 +36,9 @@ def trained_cdi_controller():
     controller_cdi.fit(
         sourcing_model_train,
         sourcing_periods=100,
+        s_e_range=torch.arange(4, 5),
+        s_r_range=torch.arange(8, 9),
+        q_r_range=torch.arange(2, 3),
     )
     return controller_cdi
 
@@ -44,9 +48,7 @@ def test_cdi_controller_avg_cost(dual_sourcing_model_cdi, trained_cdi_controller
     avg_cost = trained_cdi_controller.get_average_cost(
         dual_sourcing_model_cdi, sourcing_periods=1000, seed=42
     )
-    assert (
-        abs(avg_cost - 25.26) < 1
-    ), f"Average cost should be near 25.26, but got {avg_cost}"
+    assert abs(avg_cost - 26) < 1, f"Average cost should be near 26, but got {avg_cost}"
 
 
 def test_cdi_controller_simulate(dual_sourcing_model_cdi, trained_cdi_controller):

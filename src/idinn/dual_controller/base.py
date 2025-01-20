@@ -123,7 +123,7 @@ class BaseDualController(metaclass=ABCMeta):
             past_regular_orders = sourcing_model.get_past_regular_orders()
             past_expedited_orders = sourcing_model.get_past_expedited_orders()
             regular_q, expedited_q = self.predict(
-                current_inventory, past_regular_orders, past_expedited_orders
+                current_inventory, past_regular_orders, past_expedited_orders, output_tensor=True
             )
             sourcing_model.order(regular_q, expedited_q)
             last_cost = self.get_last_cost(sourcing_model)

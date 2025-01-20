@@ -93,7 +93,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         ]
         self.model = torch.nn.Sequential(*architecture)
 
-    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None):
+    def predict(self, current_inventory, past_regular_orders=None, past_expedited_orders=None, output_tensor=False):
         """
         Forward pass of the neural network.
 
@@ -105,13 +105,13 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             Past regular orders. If the length of `past_regular_orders` is lower than `regular_lead_time`, it will be padded with zeros. If the length of `past_regular_orders` is higher than `regular_lead_time`, only the last `regular_lead_time` orders will be used during inference.
         past_expedited_orders : list, or torch.Tensor, optional
             Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
+        output_tensor : bool, default is False
+            If True, the replenishment order quantity will be returned as a torch.Tensor. Otherwise, it will be returned as an integer.
 
         Returns
         -------
-        regular_q : torch.Tensor
-            Regular order quantity.
-        expedited_q : torch.Tensor
-            Expedited order quantity.
+        tuple
+            A tuple containing the regular order quantity and expedited order quantity.
         """
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
@@ -147,7 +147,10 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]
         expedited_q = q[:, [1]]
-        return regular_q, expedited_q
+        if output_tensor:
+            return regular_q, expedited_q
+        else:
+            return int(regular_q), int(expedited_q)
 
     def fit(
         self,

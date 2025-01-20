@@ -59,7 +59,7 @@ class BaseStockController(BaseSingleController):
             Current inventory level.
         past_orders : list, or torch.Tensor, optional
             Array of past orders. If `past_orders` is None, or the length of `past_orders` is lower than `lead_time`, it will be padded with zeros. If the length of `past_orders` is higher than `lead_time`, only the last `lead_time` orders will be used during inference.
-        output_tensor : bool, optional
+        output_tensor : bool, default is False
             If True, the replenishment order quantity will be returned as a torch.Tensor. Otherwise, it will be returned as an integer.
 
         Returns
@@ -84,10 +84,12 @@ class BaseStockController(BaseSingleController):
         else:
             raise ValueError("`lead_time` cannot be less than 0")
 
+        result = torch.relu(self.z_star - inventory_position)
+
         if output_tensor:
-            return torch.relu(self.z_star - inventory_position)
+            return result
         else:
-            return max(0, self.z_star - inventory_position.int().item())
+            return result.int().item()
 
     def reset(self):
         self.z_star = None

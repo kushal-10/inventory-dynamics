@@ -76,6 +76,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         self,
         current_inventory,
         past_orders=None,
+        output_tensor=False,
     ):
         """
         Perform forward pass through the neural network.
@@ -86,6 +87,8 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             Current inventory levels.
         past_orders : list, or torch.Tensor, optional
             Past order quantities. If the length of `past_orders` is lower than `lead_time`, it will be padded with zeros. If the length of `past_orders` is higher than `lead_time`, only the last `lead_time` orders will be used during inference.
+        output_tensor : bool, default is False
+            If True, the replenishment order quantity will be returned as a torch.Tensor. Otherwise, it will be returned as an integer.
 
         Returns
         -------
@@ -109,7 +112,11 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
 
         h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
-        return q
+
+        if output_tensor:
+            return q
+        else:
+            return q.int().item()
 
     def fit(
         self,
