@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from tests.dual_sourcing_model.test_dual_sourcing_model import dual_sourcing_model
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
@@ -98,6 +99,43 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         ]
         self.model = torch.nn.Sequential(*architecture)
 
+
+
+    def prepare_inputs(self,
+                       current_inventory: torch.Tensor,
+                       past_regular_orders: torch.Tensor,
+                       past_expedited_orders: torch.Tensor,
+                       sourcing_model: DualSourcingModel
+                       ) -> torch.Tensor:
+        regular_lead_time = sourcing_model.get_regular_lead_time()
+        expedited_lead_time = sourcing_model.get_expedited_lead_time()
+
+        current_inventory = self._current_inventory_check(current_inventory)
+        past_regular_orders = self._past_orders_check(past_regular_orders, regular_lead_time)
+        past_expedited_orders = self._past_orders_check(past_expedited_orders, expedited_lead_time)
+
+        if regular_lead_time > 0:
+            if self.compressed:
+                inputs = past_regular_orders[:, -regular_lead_time:]
+                inputs[:, 0] += current_inventory
+            else:
+                inputs = torch.cat(
+                    [
+                        current_inventory,
+                        past_regular_orders[:, -regular_lead_time:],
+                    ],
+                    dim=1,
+                )
+        else:
+            inputs = current_inventory
+
+        if expedited_lead_time > 0:
+            inputs = torch.cat(
+                [inputs, past_expedited_orders[:, -expedited_lead_time:]], dim=1
+            )
+        return inputs
+
+
     def predict(
         self,
         current_inventory: Union[int, torch.Tensor],
@@ -127,33 +165,11 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
 
-        regular_lead_time = self.sourcing_model.get_regular_lead_time()
-        expedited_lead_time = self.sourcing_model.get_expedited_lead_time()
-        
-        current_inventory = self._current_inventory_check(current_inventory)
-        past_regular_orders = self._past_orders_check(past_regular_orders, regular_lead_time)
-        past_expedited_orders = self._past_orders_check(past_expedited_orders, expedited_lead_time)
-
-        if regular_lead_time > 0:
-            if self.compressed:
-                inputs = past_regular_orders[:, -regular_lead_time :]
-                inputs[:, 0] += current_inventory
-            else:
-                inputs = torch.cat(
-                    [
-                        current_inventory,
-                        past_regular_orders[:, -regular_lead_time :],
-                    ],
-                    dim=1,
-                )
-        else:
-            inputs = current_inventory
-
-        if expedited_lead_time > 0:
-            inputs = torch.cat(
-                [inputs, past_expedited_orders[:, -expedited_lead_time :]], dim=1
-            )
-
+        inputs = self.prepare_inputs(current_inventory,
+                                     past_regular_orders,
+                                     past_expedited_orders,
+                                     self.sourcing_model
+                                     )
         h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]

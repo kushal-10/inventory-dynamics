@@ -1,4 +1,5 @@
 import inspect
+import logging
 import os
 import shutil
 
@@ -10,11 +11,13 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from torchview import draw_graph
 
-from idinn.controller import DualSourcingNeuralController
+from idinn.dual_controller import DualSourcingNeuralController
 from idinn.demand import CustomDemand, UniformDemand
 from idinn.sourcing_model import DualSourcingModel
 
 from utils import tflog2pandas
+
+torch.set_default_device('cpu')
 
 st.set_page_config(layout="wide")
 
@@ -162,8 +165,13 @@ with tab3:
         if st.session_state["demand_controller"] and st.session_state["dual_sourcing_model"]:
             st.info("Graph plot for minibatch size of 4 (for illustration purposes). Click top right corner to enlarge!")
             st.session_state["demand_controller"].init_layers(regular_lead_time=regular_lead_time, expedited_lead_time=expedited_lead_time)
-            input_sizes = [torch.Size([4, 1]), torch.Size([4, max(regular_lead_time, 1)]), torch.Size([4, max(regular_lead_time, 1)])]
-            model_graph = draw_graph(st.session_state["demand_controller"], input_size=input_sizes)
+            pre_input_tensors = torch.rand([4,1]), torch.rand([4, max(regular_lead_time, 1)]), torch.rand([4, max(regular_lead_time, 1)])
+
+            input_tensor = st.session_state["demand_controller"].prepare_inputs(*pre_input_tensors, st.session_state["dual_sourcing_model"])
+
+            # input_sizes = [torch.Size([4, 1]), torch.Size([4, max(regular_lead_time, 1)]), torch.Size([4, max(regular_lead_time, 1)])]
+            input_sizes = [input_tensor.shape]
+            model_graph = draw_graph(st.session_state["demand_controller"].model, input_size=input_sizes)
             model_graph.visual_graph.attr("graph", rankdir="LR")
             st.graphviz_chart(model_graph.visual_graph)
         elif not st.session_state["dual_sourcing_model"]:
@@ -200,6 +208,7 @@ with tab4:
                 t4c1, t4c2 = st.columns(2)
                 with t4c1:
                     tsb_df = tflog2pandas("runs/dual_sourcing_model")
+                    print(tsb_df)
                     fig = px.line(tsb_df, x="step", y="value", color="metric", line_shape="hv", title="Learning Curves").update_layout(yaxis_title="Avg. Cost per Period", xaxis_title="Epoch")
                     st.plotly_chart(fig)
                 with t4c2:
