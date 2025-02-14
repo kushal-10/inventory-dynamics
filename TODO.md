@@ -20,3 +20,6 @@
 - [ ] Produce Docker image 
 - [ ] Produce Streamlit app with Docker
 - [ ] CI
+- [ ] Logging
+- [ ] Gradient Flow checks in unit tests
+- [ ] Check single unit test warning
