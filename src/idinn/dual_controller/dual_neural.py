@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from tests.dual_sourcing_model.test_dual_sourcing_model import dual_sourcing_model
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
@@ -99,20 +98,23 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         ]
         self.model = torch.nn.Sequential(*architecture)
 
-
-
-    def prepare_inputs(self,
-                       current_inventory: torch.Tensor,
-                       past_regular_orders: torch.Tensor,
-                       past_expedited_orders: torch.Tensor,
-                       sourcing_model: DualSourcingModel
-                       ) -> torch.Tensor:
+    def prepare_inputs(
+        self,
+        current_inventory: torch.Tensor,
+        past_regular_orders: torch.Tensor,
+        past_expedited_orders: torch.Tensor,
+        sourcing_model: DualSourcingModel,
+    ) -> torch.Tensor:
         regular_lead_time = sourcing_model.get_regular_lead_time()
         expedited_lead_time = sourcing_model.get_expedited_lead_time()
 
         current_inventory = self._current_inventory_check(current_inventory)
-        past_regular_orders = self._past_orders_check(past_regular_orders, regular_lead_time)
-        past_expedited_orders = self._past_orders_check(past_expedited_orders, expedited_lead_time)
+        past_regular_orders = self._past_orders_check(
+            past_regular_orders, regular_lead_time
+        )
+        past_expedited_orders = self._past_orders_check(
+            past_expedited_orders, expedited_lead_time
+        )
 
         if regular_lead_time > 0:
             if self.compressed:
@@ -134,6 +136,13 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 [inputs, past_expedited_orders[:, -expedited_lead_time:]], dim=1
             )
         return inputs
+    
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        h = self.model(inputs)
+        q = h - torch.frac(h).clone().detach()
+        regular_q = q[:, [0]]
+        expedited_q = q[:, [1]]
+        return regular_q, expedited_q
 
 
     def predict(
@@ -165,15 +174,14 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
 
-        inputs = self.prepare_inputs(current_inventory,
-                                     past_regular_orders,
-                                     past_expedited_orders,
-                                     self.sourcing_model
-                                     )
-        h = self.model(inputs)
-        q = h - torch.frac(h).clone().detach()
-        regular_q = q[:, [0]]
-        expedited_q = q[:, [1]]
+        inputs = self.prepare_inputs(
+            current_inventory,
+            past_regular_orders,
+            past_expedited_orders,
+            self.sourcing_model,
+        )
+        regular_q, expedited_q = self.forward(inputs)
+        
         if output_tensor:
             return regular_q, expedited_q
         else:
@@ -276,16 +284,16 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 tensorboard_writer.flush()
 
         self.load_state_dict(best_state)
-    
+
     def reset(self) -> None:
         """
         Reset the controller to the initial state.
         """
         self.model = None
         self.sourcing_model = None
-    
+
     def save(self, path: str) -> None:
         torch.save(self.model, path)
 
     def load(self, path: str) -> None:
-        self.model=torch.load(path, weights_only=False)
+        self.model = torch.load(path, weights_only=False)
