@@ -5,6 +5,11 @@ import torch
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
+import logging
+from datetime import datetime
+
+# Add logger setup at class level
+logger = logging.getLogger(__name__)
 
 class CappedDualIndexController(BaseDualController):
     """
@@ -30,10 +35,11 @@ class CappedDualIndexController(BaseDualController):
     """
 
     def __init__(self, s_e: int = 0, s_r: int = 0, q_r: int = 0) -> None:
+        self.sourcing_model = None
         self.s_e = s_e
         self.s_r = s_r
         self.q_r = q_r
-        self.sourcing_model: Optional[DualSourcingModel] = None
+        logger.info("Initialized CappedDualIndexController")
 
     def capped_dual_index_sum(
         self,
@@ -130,6 +136,13 @@ class CappedDualIndexController(BaseDualController):
 
         if seed is not None:
             torch.manual_seed(seed)
+        
+        start_time = datetime.now()
+        logger.info(f"Starting capped dual index grid search at {start_time}")
+        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
+        logger.info(f"Training parameters: s_e_range={s_e_range.tolist()}, s_r_range={s_r_range.tolist()}, q_r_range={q_r_range.tolist()}")
 
         min_cost = torch.inf
         for s_e in s_e_range:
@@ -140,14 +153,24 @@ class CappedDualIndexController(BaseDualController):
                     self.s_r = s_r
                     self.q_r = q_r
                     total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
+                    logger.info(f"s_e={s_e}, s_r={s_r}, q_r={q_r} - Training cost: {total_cost/sourcing_periods:.4f}")
+                    
                     if total_cost < min_cost:
                         min_cost = total_cost
                         s_e_optimal = s_e
                         s_r_optimal = s_r
                         q_r_optimal = q_r
+
         self.s_e = s_e_optimal
         self.s_r = s_r_optimal
         self.q_r = q_r_optimal
+
+        end_time = datetime.now()
+        duration = end_time - start_time
+        logger.info(f"Grid search completed at {end_time}")
+        logger.info(f"Total training duration: {duration}")
+        logger.info(f"Final best cost: {min_cost/sourcing_periods:.4f}")
+        logger.info(f"Final best parameters: s_e={s_e_optimal}, s_r={s_r_optimal}, q_r={q_r_optimal}")
 
     def predict(
         self,

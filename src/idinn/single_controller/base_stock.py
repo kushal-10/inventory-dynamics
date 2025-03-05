@@ -4,6 +4,12 @@ from typing import Optional, Union
 from ..sourcing_model import SingleSourcingModel
 from .base import BaseSingleController
 
+import logging
+from datetime import datetime
+
+# Add logger setup at class level
+logger = logging.getLogger(__name__)
+
 
 class BaseStockController(BaseSingleController):
     """
@@ -13,6 +19,7 @@ class BaseStockController(BaseSingleController):
     def __init__(self) -> None:
         self.sourcing_model: Optional[SingleSourcingModel] = None
         self.z_star: Optional[int] = None
+        logger.info("Initialized BaseStockController")
 
     def fit(
         self,
@@ -23,14 +30,27 @@ class BaseStockController(BaseSingleController):
         """
         Calculate the optimal target inventory level z* and store it in self.z_star.
 
-        Returns
-        -------
-        None
+        Parameters
+        ----------
+        sourcing_model : SourcingModel
+            The sourcing model for training.
+        num_samples : int
+            The number of samples used for calculating empirical percentile.
+        seed : int, optional
+            Random seed for reproducibility.
         """
+        # Store sourcing model in self.sourcing_model
+        self.sourcing_model = sourcing_model
+
         if seed is not None:
             torch.manual_seed(seed)
 
-        self.sourcing_model = sourcing_model
+        start_time = datetime.now()
+        logger.info(f"Starting base stock policy calculation at {start_time}")
+        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
+        logger.info(f"Training parameters: num_samples={num_samples}")
 
         # Generate samples for l + 1 periods
         samples = sourcing_model.demand_generator.sample(
@@ -50,11 +70,18 @@ class BaseStockController(BaseSingleController):
             torch.quantile(total_demand_samples.float(), service_level).int().item()
         )
 
+        end_time = datetime.now()
+        duration = end_time - start_time
+        logger.info(f"Policy calculation completed at {end_time}")
+        logger.info(f"Total calculation duration: {duration}")
+        logger.info(f"Optimal base stock level (z*): {self.z_star}")
+        logger.info(f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}")
+
     def predict(
         self,
         current_inventory: Union[int, torch.Tensor],
         past_orders: Optional[Union[list, torch.Tensor]] = None,
-        output_tensor: bool = False
+        output_tensor: bool = False,
     ) -> Union[torch.Tensor, int]:
         """
         Calculate the replenishment order quantity.

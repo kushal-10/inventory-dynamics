@@ -10,12 +10,18 @@ from ..sourcing_model import DualSourcingModel
 from ..demand import UniformDemand
 from .base import BaseDualController
 
+import logging
+from datetime import datetime
+
+# Add logger setup at class level
+logger = logging.getLogger(__name__)
 
 class DynamicProgrammingController(BaseDualController):
     def __init__(self) -> None:
-        self.qf: Optional[TypingDict[Tuple[int, ...], Tuple[int, int]]] = None
-        self.vf: Optional[float] = None
-        self.sourcing_model: Optional[DualSourcingModel] = None
+        self.sourcing_model= None
+        self.qf = None
+        self.vf = None
+        logger.info("Initialized DynamicProgrammingController")
 
     @staticmethod
     @njit
@@ -79,6 +85,7 @@ class DynamicProgrammingController(BaseDualController):
         max_iterations: int = 1000000,
         tolerance: float = 10e-8,
         validation_freq: int = 100,
+        log_freq: int = 100,
     ) -> None:
         """
         Fit the controller to the given sourcing model.
@@ -93,7 +100,11 @@ class DynamicProgrammingController(BaseDualController):
             Specifies the tolerance to check if the value function has converged.
         validation_freq : int, default is 100
             Specifies how many iteration to run before checking the tolerance is reached, e.g. `validation_freq=10` runs validation every 10 epochs.
+        log_freq : int, default is 10
+            Specifies how many training epochs to run before logging the training loss.
         """
+        self.sourcing_model = sourcing_model
+
         # Check demand is uniform distributed
         if not isinstance(sourcing_model.demand_generator, UniformDemand):
             raise ValueError(
@@ -104,7 +115,13 @@ class DynamicProgrammingController(BaseDualController):
             raise ValueError(
                 "DynamicProgrammingController only supports expedited_lead_time = 0."
             )
-        self.sourcing_model = sourcing_model
+        
+        start_time = datetime.now()
+        logger.info(f"Starting dynamic programming at {start_time}")
+        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
+        logger.info(f"Training parameters: max_iterations={max_iterations}, tolerance={tolerance}")
 
         min_demand = int(sourcing_model.demand_generator.get_min_demand())
         max_demand = int(sourcing_model.demand_generator.get_max_demand())
@@ -179,6 +196,9 @@ class DynamicProgrammingController(BaseDualController):
 
             val = this_average / (iteration + 1)
             all_values[iteration] = val
+            
+            if iteration > 1 and iteration % log_freq == 0:
+                logger.info(f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]:.4f}")
 
             if iteration > 1 and iteration % validation_freq == 0:
                 iteration_arr.append(iteration)
@@ -203,6 +223,12 @@ class DynamicProgrammingController(BaseDualController):
 
         self.qf = qf
         self.vf = val
+
+        end_time = datetime.now()
+        duration = end_time - start_time
+        logger.info(f"Dynamic programming completed at {end_time}")
+        logger.info(f"Total training duration: {duration}")
+        logger.info(f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}")
 
     def predict(
         self,

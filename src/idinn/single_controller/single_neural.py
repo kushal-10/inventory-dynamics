@@ -7,6 +7,11 @@ from torch.utils.tensorboard import SummaryWriter
 from ..sourcing_model import SingleSourcingModel
 from .base import BaseSingleController
 
+import logging
+from datetime import datetime
+
+# Add logger setup at class level
+logger = logging.getLogger(__name__)
 
 class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
     """
@@ -50,6 +55,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.model = None
+        logger.info(f"Initialized SingleSourcingNeuralController with hidden_layers={hidden_layers}")
 
     def init_layers(self) -> None:
         """
@@ -140,7 +146,8 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         sourcing_periods: int,
         epochs: int,
         validation_sourcing_periods: Optional[int] = None,
-        validation_freq: int = 10,
+        validation_freq: int = 50,
+        log_freq: int = 50,
         init_inventory_lr: float = 1e-1,
         init_inventory_freq: int = 4,
         parameters_lr: float = 3e-3,
@@ -162,6 +169,8 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             The number of sourcing periods for validation.
         validation_freq : int, default is 10
             Only relevant if `validation_sourcing_periods` is provided. Specifies how many training epochs to run before a new validation run is performed, e.g. `validation_freq=10` runs validation every 10 epochs.
+        log_freq : int, default is 10
+            Specifies how many training epochs to run before logging the training loss.
         init_inventory_freq : int, default is 4
             Specifies how many parameter updating epochs to run before initial inventory is updated. e.g. `init_inventory_freq=4` updates initial inventory after updating parameters for 4 epochs.
         init_inventory_lr : float, default is 1e-1
@@ -182,6 +191,14 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         if self.model is None:
             self.init_layers()
 
+        start_time = datetime.now()
+        logger.info(f"Starting single sourcing neural network training at {start_time}")
+        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
+        logger.info(f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
+                    f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}")
+
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
@@ -194,6 +211,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             optimizer_init_inventory.zero_grad()
             # Reset the sourcing model with the learned init inventory
             sourcing_model.reset()
+            logger.debug(f"Reset the sourcing model with the learned init inventory at epoch {epoch}")
             total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
             total_cost.backward()
             # Gradient descend
@@ -215,6 +233,7 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
                     best_state = self.model.state_dict()
             # Log train loss
             if tensorboard_writer is not None:
+                
                 tensorboard_writer.add_scalar(
                     "Avg. cost per period/train", total_cost / sourcing_periods, epoch
                 )
@@ -231,9 +250,23 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
                         eval_cost / validation_sourcing_periods,
                         epoch,
                     )
+                logger.debug(f"Wrote to tensorboard at epoch {epoch}")
                 tensorboard_writer.flush()
+
+            if epoch % log_freq == 0:
+                logger.info(f"Epoch {epoch}/{epochs} - Training cost: {total_cost/sourcing_periods:.4f}")
+                
+            if validation_sourcing_periods is not None and epoch % validation_freq == 0:
+                logger.info(f"Epoch {epoch}/{epochs} - Validation cost: {eval_cost/validation_sourcing_periods:.4f}")
+
         # Load the best model
         self.model.load_state_dict(best_state)
+
+        end_time = datetime.now()
+        duration = end_time - start_time
+        logger.info(f"Training completed at {end_time}")
+        logger.info(f"Total training duration: {duration}")
+        logger.info(f"Final best cost: {min_cost/sourcing_periods:.4f}")
 
     def reset(self) -> None:
         self.sourcing_model = None

@@ -7,6 +7,11 @@ from torch.utils.tensorboard import SummaryWriter
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
+import logging
+from datetime import datetime
+
+# Add logger setup at class level
+logger = logging.getLogger(__name__)
 
 class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
     """
@@ -64,6 +69,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         self.activation = activation
         self.compressed = compressed
         self.model = None
+        logger.info(f"Initialized DualSourcingNeuralController with hidden_layers={hidden_layers}, compressed={compressed}")
 
     def init_layers(self, regular_lead_time: int, expedited_lead_time: int) -> None:
         """
@@ -97,6 +103,8 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             torch.nn.ReLU(),
         ]
         self.model = torch.nn.Sequential(*architecture)
+        logger.info(f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
+                   f"expedited_lead_time={expedited_lead_time}")
 
     def prepare_inputs(
         self,
@@ -192,6 +200,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         epochs: int,
         validation_sourcing_periods: Optional[int] = None,
         validation_freq: int = 50,
+        log_freq: int = 100,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
         parameters_lr: float = 3e-3,
@@ -213,6 +222,8 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             Number of sourcing periods for validation.
         validation_freq : int, default is 10
             Only relevant if `validation_sourcing_periods` is provided. Specifies how many training epochs to run before a new validation run is performed, e.g. `validation_freq=10` runs validation every 10 epochs.
+        log_freq : int, default is 10
+            Specifies how many training epochs to run before logging the training cost.
         init_inventory_freq : int, default is 4
             Specifies how many parameter updating epochs to run before initial inventory is updated. e.g. `init_inventory_freq=4` updates initial inventory after updating parameters for 4 epochs.
         init_inventory_lr : float, default is 1e-1
@@ -235,6 +246,14 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
             )
+        
+        start_time = datetime.now()
+        logger.info(f"Starting dual sourcing neural network training at {start_time}")
+        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
+        logger.info(f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
+                    f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}")
 
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
@@ -281,7 +300,19 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                     )
                 tensorboard_writer.flush()
 
+            if epoch % log_freq == 0:
+                logger.info(f"Epoch {epoch}/{epochs} - Training cost: {train_loss/sourcing_periods:.4f}")
+                
+            if validation_sourcing_periods is not None and epoch % validation_freq == 0:
+                logger.info(f"Epoch {epoch}/{epochs} - Validation cost: {eval_loss/validation_sourcing_periods:.4f}")
+
         self.load_state_dict(best_state)
+
+        end_time = datetime.now()
+        duration = end_time - start_time
+        logger.info(f"Training completed at {end_time}")
+        logger.info(f"Total training duration: {duration}")
+        logger.info(f"Final best cost: {min_loss/sourcing_periods:.4f}")
 
     def reset(self) -> None:
         """
