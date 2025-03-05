@@ -75,6 +75,29 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             torch.nn.ReLU(),
         ]
         self.model = torch.nn.Sequential(*architecture)
+    
+    def prepare_inputs(
+        self,
+        current_inventory: torch.Tensor,
+        past_orders: torch.Tensor
+    ) -> torch.Tensor:
+        lead_time = self.sourcing_model.get_lead_time()
+        current_inventory = self._current_inventory_check(current_inventory)
+        past_orders = self._past_orders_check(past_orders, lead_time)
+        
+        if lead_time == 0:
+            inputs = current_inventory
+        elif lead_time > 0:
+            inputs = torch.cat([current_inventory, past_orders[:, -lead_time:]], dim=1)
+        else:
+            raise ValueError("`lead_time` cannot be less than 0")
+        
+        return inputs
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        h = self.model(inputs)
+        q = h - torch.frac(h).clone().detach()
+        return q
 
     def predict(
         self,
@@ -102,20 +125,9 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
 
-        lead_time = self.sourcing_model.get_lead_time()
-
-        current_inventory = self._current_inventory_check(current_inventory)
-        past_orders = self._past_orders_check(past_orders, lead_time)
-
-        if lead_time == 0:
-            inputs = current_inventory
-        elif lead_time > 0:
-            inputs = torch.cat([current_inventory, past_orders[:, -lead_time:]], dim=1)
-        else:
-            raise ValueError("`lead_time` cannot be less than 0")
-
-        h = self.model(inputs)
-        q = h - torch.frac(h).clone().detach()
+        
+        inputs = self.prepare_inputs(current_inventory, past_orders)
+        q = self.forward(inputs)
 
         if output_tensor:
             return q

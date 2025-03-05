@@ -102,11 +102,10 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         self,
         current_inventory: torch.Tensor,
         past_regular_orders: torch.Tensor,
-        past_expedited_orders: torch.Tensor,
-        sourcing_model: DualSourcingModel,
+        past_expedited_orders: torch.Tensor
     ) -> torch.Tensor:
-        regular_lead_time = sourcing_model.get_regular_lead_time()
-        expedited_lead_time = sourcing_model.get_expedited_lead_time()
+        regular_lead_time = self.sourcing_model.get_regular_lead_time()
+        expedited_lead_time = self.sourcing_model.get_expedited_lead_time()
 
         current_inventory = self._current_inventory_check(current_inventory)
         past_regular_orders = self._past_orders_check(
@@ -178,7 +177,6 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
-            self.sourcing_model,
         )
         regular_q, expedited_q = self.forward(inputs)
         
