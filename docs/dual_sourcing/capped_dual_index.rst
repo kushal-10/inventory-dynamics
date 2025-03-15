@@ -15,19 +15,19 @@ Key Concepts
 Mathematical Structure
 ----------------------
 
-The capped dual index policy (Sun & Van Mieghem, 2019) determines the regular and expedited orders in period :math:`t` as follows:
+The capped dual index policy (Sun & Van Mieghem, 2019) determines the regular and expedited orders in period :math:`t` as follows.
 
-For regular orders:
-
-.. math::
-
-   q_t^{\rm r} = \min \left\{ \left[ S_t^{\rm r *} - I_t^{t+l-1} \right]^+, \bar{q}_t^{\rm r *} \right\}
-
-For expedited orders:
+For regular orders, we use
 
 .. math::
 
-   q_t^{\rm e} = \left[ S_t^{\rm e *} - I_t^t \right]^+
+   q_t^{\rm r} = \min \left\{ \left[ S_t^{\rm r *} - I_t^{t+l-1} \right]^+, \bar{q}_t^{\rm r *} \right\}\,.
+
+For expedited orders, we use
+
+.. math::
+
+   q_t^{\rm e} = \left[ S_t^{\rm e *} - I_t^t \right]^+\,.
 
 Here, :math:`l_{\rm e} = 0` is assumed. The term :math:`I_t^{t+k}` represents the net inventory at the start of period :math:`t` plus all in-transit orders arriving by period :math:`t+k`:
 
