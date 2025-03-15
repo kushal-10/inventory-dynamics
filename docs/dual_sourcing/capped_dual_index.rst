@@ -29,11 +29,11 @@ For expedited orders, we use
 
    q_t^{\rm e} = \left[ S_t^{\rm e *} - I_t^t \right]^+\,.
 
-Here, :math:`l_{\rm e} = 0` is assumed. The term :math:`I_t^{t+k}` represents the net inventory at the start of period :math:`t` plus all in-transit orders arriving by period :math:`t+k`:
+Here, :math:`l_{\rm e} = 0` is assumed. The term :math:`I_t^{t+k}` represents the net inventory at the start of period :math:`t` plus all in-transit orders arriving by period :math:`t+k`. That is,
 
 .. math::
 
-   I_t^{t+k} = I_{t-1} + \sum_{i=t}^{\min(t+k, t-1)} q_i^{\rm e} + \sum_{i=t-l_{\rm r}}^{t-l_{\rm r}+k} q_i^{\rm r}
+   I_t^{t+k} = I_{t-1} + \sum_{i=t}^{\min(t+k, t-1)} q_i^{\rm e} + \sum_{i=t-l_{\rm r}}^{t-l_{\rm r}+k} q_i^{\rm r}\,,
 
 where :math:`k` ranges from 0 to :math:`l_{\rm r} - 1`. According to Sun & Van Mieghem (2019), if :math:`a > b`, then :math:`\sum_{i=a}^b = 0`. The parameters :math:`(S_t^{\rm r *}, S_t^{\rm e *}, \bar{q}_t^{\rm r *})` are determined through a search procedure. If the demand distribution is constant over time, the CDI parameters simplify to :math:`S_t^{\rm r *} = S^{\rm r *}`, :math:`S_t^{\rm e *} = S^{\rm e *}`, and :math:`\bar{q}_t^{\rm r *} = \bar{q}^{\rm r *}`.
 
