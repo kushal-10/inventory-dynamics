@@ -23,7 +23,7 @@ To mathematically describe the optimal order policy of single-sourcing problems 
 
 where :math:`I_t` and :math:`q_t` denote the net inventory at time :math:`t` and the replenishment order placed at time :math:`t`, respectively. 
 
-We can then denote the optimal order quantity as :math:`q_t=\max\{0, z^*-\tilde{I}_t\}`, where the target level :math:`z^*` is the parameter to be determined.
+The optimal order quantity is :math:`q_t=\max\{0, z^*-\tilde{I}_t\}`, where the target level :math:`z^*` is the parameter to be determined.
 
 Example Usage
 -------------
