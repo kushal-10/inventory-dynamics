@@ -54,7 +54,8 @@ Available Controllers
 
 - **CappedDualIndexController:** The Capped Dual Index controller uses a capped dual index policy to determine order quantities, balancing the trade-off between holding and shortage costs.
 - **DynamicProgrammingController:** The Dynamic Programming controller applies dynamic programming techniques to solve the dual-sourcing problem optimally by considering all possible future states and decisions.
-- **DualSourcingNeuralController:** The neural controller trains a neural network to determine the order quantities by minimizing the total cost over time of a simulated sourcing model.
+- **DualSourcingNeuralController:** The neural controller ia based on a neural network that outputs orders given the current system state. The neural network is trained by minimizing the total cost over time.
+
 
 This documentation provides a introduction for understanding dual-sourcing problems and their solutions. For more details on using these controllers, refer to the following sections.
 
