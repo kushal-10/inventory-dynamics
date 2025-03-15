@@ -21,7 +21,7 @@ The current implementation assumes :math:`l_{\rm e}=c_{\rm r}=0`. Note that :mat
 
 In order to introduce the Bellman equation, we further define the following quantities:
 
-- **Expedited inventory position:** :math:`I_t^{\rm e}=I_t+q_{t-l}`
+- **Expedited inventory position:** :math:`I_t^{\rm e}=I_t+q_{t-l}`.
 - **States:** :math:`\mathbf{s}_t=(I_t^{\rm e}, q^r_{t-l+1}, \dots, q^r_{t-1})`. The state space is denoted as the set of feasible states, :math:`\mathcal{S}=\{\mathbf{s}\}`.
 - **Actions:** :math:`\mathbf{Q}=(q^{\rm r},q^{\rm e})`. We define the action space as :math:`\mathcal{D}_\mathbf{Q}:=\{\mathbf{Q}\}`.
 - **Cost:** The cost function is :math:`f(x)=b[-x]^++h[x]^+`, where :math:`[x]^+=\max\{x,0\}`.
