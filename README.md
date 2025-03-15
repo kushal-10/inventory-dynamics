@@ -6,11 +6,11 @@
 
 [<img src="https://gitlab.com/ComputationalScience/idinn/-/raw/main/docs/_static/youtube.png" align="center" width="60%" size="auto" alt="youtube">](https://www.youtube.com/watch?v=hUBfTWV6tWQ)
 
-`idinn` implements **i**nventory **d**ynamics–**i**nformed **n**eural and **n**umeric controllers for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects using PyTorch as backend to enable users to find the optimal controllers for the user-specified inventory systems.
+`idinn` implements **i**nventory **d**ynamics–**i**nformed **n**eural **n**etwork (and related) controllers for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects using PyTorch as backend to enable users to find the optimal controllers for the user-specified inventory systems.
 
 ## Demo
 
-For a quick demo, you can run the [Streamlit app](https://idinn-demo.streamlit.app/) using `idinn`. The app allows you to interactively train and evaluate neural controllers for user-specified dual-sourcing systems. Or refer to our notebook in [Colab](https://colab.research.google.com/drive/1BAMiveGXmErIp10MK3V_SUJlDAXHAyaI).
+For a quick demo, you can run our [Streamlit app](https://idinn-demo.streamlit.app/). The app allows you to interactively train and evaluate neural controllers for user-specified dual-sourcing systems. Alternatively, you may use our notebook in [Colab](https://colab.research.google.com/drive/1BAMiveGXmErIp10MK3V_SUJlDAXHAyaI).
 
 ## Installation
 
