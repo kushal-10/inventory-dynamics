@@ -5,14 +5,14 @@ idinn: Inventory-Dynamics Control with Neural Networks
 ..  youtube:: hUBfTWV6tWQ
    :width: 100%
 
-`idinn` implements inventory dynamics–informed neural and numeric controllers for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects using PyTorch as backend to enable users to find the optimal controllers for the user-specified inventory systems.
+`idinn` implements inventory dynamics–informed neural network (and related) controllers for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects using PyTorch as backend to enable users to find the optimal controllers for the user-specified inventory systems.
 
 Demo
 ====
 
-For a quick demo, you can run the `Streamlit app`_ using `idinn`. The app allows you to interactively train and evaluate neural controllers for user-specified dual-sourcing systems. 
+For a quick demo, you can run our `Streamlit app`_. The app allows you to interactively train and evaluate neural controllers for user-specified dual-sourcing systems. 
 
-Alternatively, refer to our notebook in `Colab`_ for a hands-on experience in Jupyter Notebooks.
+Alternatively, refer to our Jupyter notebook in `Colab`_.
 
 .. _Streamlit app: https://idinn-demo.streamlit.app/
 .. _Colab: https://colab.research.google.com/drive/1BAMiveGXmErIp10MK3V_SUJlDAXHAyaI
