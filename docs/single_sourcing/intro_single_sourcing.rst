@@ -51,7 +51,7 @@ Available Controllers
 ---------------------
 
 - **BaseStockController:** The base-stock policy is a widely used approach in inventory management that aims to maintain a consistent inventory level by ordering enough stock to replenish the expected demand, which is calculated based on simulated historical demands in ``idinn``. 
-- **SingleSourcingNeuralController:** The neural controller ia based on a neural network that outputs an order given the current system state. The neural network is trained by minimizing the total cost over time of a simulated sourcing model.
+- **SingleSourcingNeuralController:** The neural controller ia based on a neural network that outputs an order given the current system state. The neural network is trained by minimizing the total cost over time.
 
 This introduction provides a foundation for understanding single-sourcing problems and their solutions. For more details on using the described controllers, refer to the following sections.
 
