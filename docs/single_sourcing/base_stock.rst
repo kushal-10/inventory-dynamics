@@ -18,7 +18,7 @@ To mathematically describe the optimal order policy of single-sourcing problems 
    \tilde{I}_t =
    \begin{cases}
       I_t & \text{if} \,\, l=0 \\
-      I_t + \sum_{i=1}^l q_{t-i} & \text{if} \,\, l>0 \\
+      I_t + \sum_{i=1}^l q_{t-i} & \text{if} \,\, l>0 \,,
    \end{cases}
 
 where :math:`I_t` and :math:`q_t` denote the net inventory at time :math:`t` and the replenishment order placed at time :math:`t`, respectively. 
