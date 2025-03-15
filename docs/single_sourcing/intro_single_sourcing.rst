@@ -43,9 +43,9 @@ The cost incurred at period :math:`t` is
 
 .. math::
 
-   c_t = h \max(0, I_{t+1}) + b \max(0, -I_{t+1}) \,.
+   c_t = h \max\{0, I_{t+1}\} + b \max\{0, -I_{t+1}\} \,.
 
-Here, :math:`\max(0, I_{t+1})` quantifies the potential excess inventory, and :math:`\max(0, -I_{t+1})` quantifies the potential inventory shortage. The goal is to minimize these costs summed over time.
+Here, :math:`\max\{0, I_{t+1}\}` quantifies the potential excess inventory, and :math:`\max\{0, -I_{t+1}\}` quantifies the potential inventory shortage. The goal is to minimize these costs summed over time.
 
 Available Controllers
 ---------------------
