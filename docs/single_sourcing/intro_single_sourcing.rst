@@ -33,17 +33,17 @@ The sequence of events in each period is as follows:
 4. Inventory cost is registered.
 5. Inventory state is updated.
 
-The net inventory evolves according to the formula:
+The net inventory evolves according to
 
 .. math::
 
-   I_{t+1} = I_{t} + q_{t-l} - D_t
+   I_{t+1} = I_{t} + q_{t-l} - D_t \,.
 
-The cost incurred at period :math:`t` is given by:
+The cost incurred at period :math:`t` is
 
 .. math::
 
-   c_t = h \max(0, I_{t+1}) + b \max(0, -I_{t+1})
+   c_t = h \max(0, I_{t+1}) + b \max(0, -I_{t+1}) \,.
 
 Here, :math:`\max(0, I_{t+1})` represents the positive inventory, and :math:`\max(0, -I_{t+1})` represents the shortage. The goal is to minimize these costs summed over time.
 
