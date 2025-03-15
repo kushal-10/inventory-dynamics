@@ -189,12 +189,12 @@ class BaseDualController(metaclass=ABCMeta):
                 current_inventory, past_regular_orders, past_expedited_orders
             )
             sourcing_model.order(regular_q, expedited_q)
-        past_inventories = sourcing_model.get_past_inventories()[0, :].detach().numpy()
+        past_inventories = sourcing_model.get_past_inventories()[0, :].detach().cpu().numpy()
         past_regular_orders = (
-            sourcing_model.get_past_regular_orders()[0, :].detach().numpy()
+            sourcing_model.get_past_regular_orders()[0, :].detach().cpu().numpy()
         )
         past_expedited_orders = (
-            sourcing_model.get_past_expedited_orders()[0, :].detach().numpy()
+            sourcing_model.get_past_expedited_orders()[0, :].detach().cpu().numpy()
         )
         return past_inventories, past_regular_orders, past_expedited_orders
 

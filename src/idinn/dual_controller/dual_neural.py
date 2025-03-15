@@ -10,8 +10,8 @@ from .base import BaseDualController
 import logging
 from datetime import datetime
 
-# Add logger setup at class level
-logger = logging.getLogger(__name__)
+# Get root logger
+logger = logging.getLogger()
 
 class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
     """
@@ -110,10 +110,11 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         self,
         current_inventory: torch.Tensor,
         past_regular_orders: torch.Tensor,
-        past_expedited_orders: torch.Tensor
+        past_expedited_orders: torch.Tensor,
+        sourcing_model: DualSourcingModel,
     ) -> torch.Tensor:
-        regular_lead_time = self.sourcing_model.get_regular_lead_time()
-        expedited_lead_time = self.sourcing_model.get_expedited_lead_time()
+        regular_lead_time = sourcing_model.get_regular_lead_time()
+        expedited_lead_time = sourcing_model.get_expedited_lead_time()
 
         current_inventory = self._current_inventory_check(current_inventory)
         past_regular_orders = self._past_orders_check(
@@ -185,6 +186,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
+            sourcing_model=self.sourcing_model
         )
         regular_q, expedited_q = self.forward(inputs)
         
@@ -300,11 +302,23 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                     )
                 tensorboard_writer.flush()
 
+            end_time = datetime.now()
+            duration = end_time - start_time
+            per_epoch_time = duration.total_seconds()/(epoch + 1) # seconds per epoch
+            remaining_time = (epochs-epoch)*per_epoch_time
             if epoch % log_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs} - Training cost: {train_loss/sourcing_periods:.4f}")
-                
+                logger.info(f"Epoch {epoch}/{epochs}"
+                            f" - Training cost: {train_loss/sourcing_periods:.4f}"
+                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                            f" - Est. Remaining time: {int(remaining_time)} seconds."
+                            )
+
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs} - Validation cost: {eval_loss/validation_sourcing_periods:.4f}")
+                logger.info(f"Epoch {epoch}/{epochs}"
+                            f" - Validation cost: {eval_loss/validation_sourcing_periods:.4f}"
+                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                            f" - Est. Remaining time: {int(remaining_time)} seconds."
+                )
 
         self.load_state_dict(best_state)
 

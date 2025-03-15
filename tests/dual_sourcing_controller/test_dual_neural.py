@@ -5,6 +5,10 @@ from idinn.demand import UniformDemand
 from idinn.dual_controller import DualSourcingNeuralController
 from idinn.sourcing_model import DualSourcingModel
 
+torch.set_default_device('cpu')
+# TODO: CUDA is numerically unstable,
+#  may need new tests!
+
 
 @pytest.fixture
 def dual_sourcing_model_neural():

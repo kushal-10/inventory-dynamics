@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-runtime as base
+FROM pytorch/pytorch:2.5.1-cuda11.8-cudnn9-runtime as base
 RUN mkdir -p /opt/project/
 WORKDIR /opt/project/
 COPY requirements.txt requirements.txt

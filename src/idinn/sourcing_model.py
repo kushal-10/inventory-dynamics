@@ -261,19 +261,24 @@ class DualSourcingModel(BaseSourcingModel):
         )
         # Past regular orders arrived,
         # if past regular orders are not available, then arrived order is 0
-        try:
+        # try:
+        #TODO: Check if this correct. Never handle index errors.
+        if self.past_regular_orders.shape[1] >= abs(-1 - self.regular_lead_time):
             arrived_regular_orders = self.past_regular_orders[
                 :, [-1 - self.regular_lead_time]
             ]
-        except IndexError:
+        # except IndexError:
+        else:
             arrived_regular_orders = torch.zeros(self.batch_size, 1)
         # Past expedited orders arrived,
         # if past expedited orders are not available, then arrived order is 0
-        try:
+        # try:
+        if self.past_expedited_orders.shape[1] >= abs(-1 - self.expedited_lead_time):
             arrived_expedited_orders = self.past_expedited_orders[
                 :, [-1 - self.expedited_lead_time]
             ]
-        except IndexError:
+        # except IndexError:
+        else:
             arrived_expedited_orders = torch.zeros(self.batch_size, 1)
         # Generate current demand
         current_demand = self.demand_generator.sample(self.batch_size)

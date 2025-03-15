@@ -8,8 +8,8 @@ from .base import BaseDualController
 import logging
 from datetime import datetime
 
-# Add logger setup at class level
-logger = logging.getLogger(__name__)
+# Get root logger
+logger = logging.getLogger()
 
 class CappedDualIndexController(BaseDualController):
     """
@@ -153,8 +153,9 @@ class CappedDualIndexController(BaseDualController):
                     self.s_r = s_r
                     self.q_r = q_r
                     total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
-                    logger.info(f"s_e={s_e}, s_r={s_r}, q_r={q_r} - Training cost: {total_cost/sourcing_periods:.4f}")
-                    
+                    logger.info(f"s_e={s_e}, s_r={s_r}, q_r={q_r}"
+                                f" - Training cost: {total_cost/sourcing_periods:.4f}")
+
                     if total_cost < min_cost:
                         min_cost = total_cost
                         s_e_optimal = s_e

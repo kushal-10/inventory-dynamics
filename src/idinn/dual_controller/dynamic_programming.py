@@ -13,8 +13,8 @@ from .base import BaseDualController
 import logging
 from datetime import datetime
 
-# Add logger setup at class level
-logger = logging.getLogger(__name__)
+# Get root logger
+logger = logging.getLogger()
 
 class DynamicProgrammingController(BaseDualController):
     def __init__(self) -> None:

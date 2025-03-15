@@ -253,11 +253,24 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
                 logger.debug(f"Wrote to tensorboard at epoch {epoch}")
                 tensorboard_writer.flush()
 
+            end_time = datetime.now()
+            duration = end_time - start_time
+            per_epoch_time = duration.total_seconds() / (epoch + 1)  # seconds per epoch
+            remaining_time = (epochs - epoch) * per_epoch_time
+
             if epoch % log_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs} - Training cost: {total_cost/sourcing_periods:.4f}")
+                logger.info(f"Epoch {epoch}/{epochs}"
+                            f" - Training cost: {total_cost/sourcing_periods:.4f}"
+                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                            f" - Est. Remaining time: {int(remaining_time)} seconds."
+                       )
                 
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs} - Validation cost: {eval_cost/validation_sourcing_periods:.4f}")
+                logger.info(f"Epoch {epoch}/{epochs}"
+                            f" - Validation cost: {eval_cost/validation_sourcing_periods:.4f}"
+                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                            f" - Est. Remaining time: {int(remaining_time)} seconds."
+                            )
 
         # Load the best model
         self.model.load_state_dict(best_state)
