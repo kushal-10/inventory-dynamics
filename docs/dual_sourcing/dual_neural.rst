@@ -12,7 +12,7 @@ For further details, see Böttcher, Asikis, and Fragkos (2023).
 Key Concepts
 ------------
 
-- **Neural Network**: Instead of relying on fixed rules like the capped dual index, actions are parameterized through a neural network that adapts based on training data.
+- **Neural Network**: Instead of relying on fixed rules like the capped dual index, actions are parameterized through a neural network that learns effective order policies based on training data.
 
 - **Discrete-Time Dynamics**: The system evolves over discrete time intervals, and the controller must optimize actions at each step to reduce long-term costs.
 
