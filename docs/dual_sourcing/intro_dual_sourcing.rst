@@ -32,7 +32,7 @@ The sequence of events in a single period :math:`t` is as follows:
 1. Order quantities :math:`q^{\rm r}_{t-l_{\rm r}}` and :math:`q^{\rm e}_{t-l_{\rm e}}`, ordered in periods :math:`t-l_{\rm r}` and :math:`t-l_{\rm e}`, arrive.
 2. Order quantities :math:`q^{\rm r}_t` and :math:`q^{\rm e}_t` are placed.
 3. Demand :math:`D_t` is realized.
-4. Inventory cost for the period is registered as :math:`c_{\rm r} q^{\rm r}_t + c_{\rm e} q^{\rm e}_t + h[I_{t} + q^{\rm r}_{t-l_{\rm r}} + q^{\rm e}_{t-l_{\rm e}} - D_t]^+ + b[I_{t} + q^{\rm r}_{t-l_{\rm r}} + q^{\rm e}_{t-l_{\rm e}} - D_t]^+`, where :math:`[x]^+ = \max\{0, x\}`.
+4. Inventory cost for the period is registered as :math:`c_{\rm r} q^{\rm r}_t + c_{\rm e} q^{\rm e}_t + h[I_{t} + q^{\rm r}_{t-l_{\rm r}} + q^{\rm e}_{t-l_{\rm e}} - D_t]^+ + b[I_{t} + q^{\rm r}_{t-l_{\rm r}} + q^{\rm e}_{t-l_{\rm e}} - D_t]^+`, where :math:`[x]^+ = \max(0, x)`.
 5. New state is updated as :math:`(I_{t} + q^{\rm r}_{t-l_{\rm r}} + q^{\rm e}_{t-l_{\rm e}} - D_t, q^{\rm r}_{t-l_{\rm r}+1}, \dots, q^{\rm r}_{t}, q^{\rm e}_{t-l_{\rm e}+1}, \dots, q^{\rm e}_{t})`.
 
 The net inventory evolves according to
