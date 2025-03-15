@@ -3,7 +3,7 @@ Sourcing Models and Custom Demand
 
 In `idinn`, we use :class:`SingleSourcingModel` and :class:`DualSourcingModel` to simulate demands, manage orders and inventory, and train controllers.
 
-The code below shows how one can implement a single-sourcing model with a (discrete) uniform demand distribution, ranging from 0 to 4. The methods `get_past_inventories()` and `get_past_orders()` can be used to inspect the inventory and order history, respectively.
+The code below shows how you can implement a single-sourcing model with a (discrete) uniform demand distribution, ranging from 0 to 4. The methods `get_past_inventories()` and `get_past_orders()` can be used to inspect the inventory and order history, respectively.
 
 .. doctest::
     
