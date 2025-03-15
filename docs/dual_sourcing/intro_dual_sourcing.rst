@@ -6,8 +6,8 @@ Dual-sourcing problems involve managing inventory with two suppliers, each havin
 Key Concepts
 ------------
 
-- **Holding Cost:** The cost incurred for keeping excess inventory. The more inventory you have, the higher the holding cost.
-- **Shortage Cost:** The penalty for not having enough inventory to meet demand. The higher the shortage cost, the more critical it is to avoid stockouts.
+- **Holding Cost:** The cost incurred for keeping excess inventory. The more inventory you have, the higher the total holding cost.
+- **Shortage Cost:** The penalty for not having enough inventory to meet demand. The higher the unit shortage cost, the more critical it is to avoid stockouts.
 - **Demand:** Demand is a stochastic variable, requiring careful planning.
 - **Regular and Expedited Suppliers:** Two types of suppliers with different lead times and order costs. The regular supplier typically has a longer lead time but lower cost, while the expedited supplier has a shorter lead time but higher cost.
 
