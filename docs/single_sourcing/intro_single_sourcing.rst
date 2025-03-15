@@ -6,10 +6,9 @@ Single-sourcing problems are common in inventory management and involve finding 
 Key Concepts
 ------------
 
-- **Holding Cost:** The cost incurred for keeping excess inventory. The more inventory you have, the higher the holding cost.
-- **Shortage Cost:** The penalty for not having enough inventory to meet demand. The higher the shortage cost, the more critical it is to avoid stockouts.
-- **Stochastic Demand:** Demand varies over time and is unpredictable, requiring careful planning.
-- **Shortage and Holding Costs (:math:`b`, :math:`h`):** Costs associated with not having enough inventory to meet demand (shortage cost) and the costs of holding excess inventory (holding cost).
+- **Holding Cost:** The cost incurred for keeping excess inventory. The more inventory you have, the higher the total holding cost.
+- **Shortage Cost:** The penalty for not having enough inventory to meet demand. The higher the unit shortage cost, the more critical it is to avoid stockouts.
+- **Demand:** Demand is a stochastic variable, requiring careful planning.
 
 Notation
 --------
