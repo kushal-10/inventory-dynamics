@@ -21,7 +21,7 @@ This project can be deployed using :code:`docker compose`. Please run the follow
 
     docker compose up app
 
-In case changes are introduced in the code or the build pipeline, one can run the above commands by adding the :code:`--build` option, e.g. :code:`docker run tests --build`.
+In case changes are introduced in the code or the build pipeline, you can run the above commands by adding the :code:`--build` option, e.g. :code:`docker run tests --build`.
 
 Web Application
 -----------
