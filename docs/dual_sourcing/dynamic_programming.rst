@@ -39,7 +39,7 @@ Once we have selected the actions :math:`(q^{\rm r}_t,q^{\rm e}_t)`, random dema
    q^{\rm r}_{t-2} &\leftarrow q^{\rm r}_{t-1}\\
    q^{\rm r}_{t-1}&\leftarrow q^{\rm r}_t
 
-The Bellman equation is as follows:
+The corresponding Bellman equation is
 
 .. math::
    J_{t+1}(\mathbf{s})=\min_{\mathbf{a}_t\in \mathcal{A}_t}\left\{c_t(\mathbf{s}_t,\mathbf{a}_t)+\gamma \sum_{\mathbf{s}'\in\mathcal{S}_{t}} \Pr(\mathbf{s}_{t+1}=\mathbf{s'}|\mathbf{s}_t,\mathbf{a}_t)J_{t}(\mathbf{s}')\right\},\,  \mathbf{s}\in\mathcal{S}.
