@@ -25,8 +25,8 @@ We use the following notation to describe the problem:
 - :math:`c_{\rm r}, c_{\rm e}`: Ordering costs from the regular and expedited suppliers, respectively.
 - :math:`l_{\rm r}, l_{\rm e}`: Lead times of the regular and expedited suppliers, respectively.
 
-Formulation
------------
+Dual-Sourcing Dynamics
+----------------------
 
 The sequence of events in a single period :math:`t` is as follows:
 
