@@ -22,7 +22,7 @@ We use the following notation to describe the problem:
 - :math:`b`: Shortage cost per unit of inventory.
 - :math:`h`: Holding cost per unit of inventory.
 
-Formulation
+Single-Sourcing Dynamics
 -----------
 
 The sequence of events in each period is as follows:
