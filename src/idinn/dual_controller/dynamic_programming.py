@@ -256,8 +256,8 @@ class DynamicProgrammingController(BaseDualController):
 
         regular_lead_time = self.sourcing_model.get_regular_lead_time()
 
-        current_inventory = self._current_inventory_check(current_inventory)
-        past_regular_orders = self._past_orders_check(
+        current_inventory = self._check_current_inventory(current_inventory)
+        past_regular_orders = self._check_past_orders(
             past_regular_orders, regular_lead_time
         )
 

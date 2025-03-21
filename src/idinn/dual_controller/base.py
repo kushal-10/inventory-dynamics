@@ -35,7 +35,7 @@ class BaseDualController(metaclass=ABCMeta):
         """
         pass
 
-    def _current_inventory_check(self, current_inventory):
+    def _check_current_inventory(self, current_inventory):
         """
         Check and convert types of `current_inventory` for `predict()`.
         """
@@ -48,7 +48,7 @@ class BaseDualController(metaclass=ABCMeta):
 
         return current_inventory
     
-    def _past_orders_check(self, past_orders, lead_time):
+    def _check_past_orders(self, past_orders, lead_time):
         """
         Check and convert types of `past_regular_orders` for `predict()`.
         Pad `past_orders` with zeros if either is too short.
@@ -81,7 +81,6 @@ class BaseDualController(metaclass=ABCMeta):
         -------
         float
             The last cost.
-
         """
         last_regular_q = sourcing_model.get_last_regular_order()
         last_expedited_q = sourcing_model.get_last_expedited_order()
@@ -134,7 +133,7 @@ class BaseDualController(metaclass=ABCMeta):
 
     def get_average_cost(self, sourcing_model, sourcing_periods, seed=None):
         """
-        Calculate the average cost for Dual-sourcing optimization.
+        Calculate the average cost for dual-sourcing controllers.
 
         Parameters
         ----------
