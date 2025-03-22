@@ -1,6 +1,7 @@
 from typing import Union
 
 import torch
+
 from .demand import CustomDemand, UniformDemand
 
 
@@ -137,9 +138,9 @@ class SingleSourcingModel(BaseSourcingModel):
         # Current orders are added to past_orders
         self.past_orders = torch.cat([self.past_orders, q], dim=1)
         # Past orders arrived, if past orders are not available, then arrived order is 0
-        try:
+        if self.past_orders.shape[1] >= 1 + self.lead_time:
             arrived_order = self.past_orders[:, [-1 - self.lead_time]]
-        except IndexError:
+        else:
             arrived_order = torch.zeros(self.batch_size, 1)
         # Generate current demand
         current_demand = self.demand_generator.sample(self.batch_size)
@@ -232,7 +233,9 @@ class DualSourcingModel(BaseSourcingModel):
     def get_expedited_order_cost(self) -> float:
         return self.expedited_order_cost
 
-    def order(self, regular_q: torch.Tensor, expedited_q: torch.Tensor, seed: int = None) -> None:
+    def order(
+        self, regular_q: torch.Tensor, expedited_q: torch.Tensor, seed: int = None
+    ) -> None:
         """
         Orders items to the inventory and update the inventory with generated demands.
 
@@ -261,23 +264,18 @@ class DualSourcingModel(BaseSourcingModel):
         )
         # Past regular orders arrived,
         # if past regular orders are not available, then arrived order is 0
-        # try:
-        #TODO: Check if this correct. Never handle index errors.
-        if self.past_regular_orders.shape[1] >= abs(-1 - self.regular_lead_time):
+        if self.past_regular_orders.shape[1] >= 1 + self.regular_lead_time:
             arrived_regular_orders = self.past_regular_orders[
                 :, [-1 - self.regular_lead_time]
             ]
-        # except IndexError:
         else:
             arrived_regular_orders = torch.zeros(self.batch_size, 1)
         # Past expedited orders arrived,
         # if past expedited orders are not available, then arrived order is 0
-        # try:
-        if self.past_expedited_orders.shape[1] >= abs(-1 - self.expedited_lead_time):
+        if self.past_expedited_orders.shape[1] >= 1 + self.expedited_lead_time:
             arrived_expedited_orders = self.past_expedited_orders[
                 :, [-1 - self.expedited_lead_time]
             ]
-        # except IndexError:
         else:
             arrived_expedited_orders = torch.zeros(self.batch_size, 1)
         # Generate current demand
