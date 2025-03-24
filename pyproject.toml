@@ -45,4 +45,5 @@ dev = [
     "sphinx>=7.1.2",
     "sphinxcontrib-youtube>=1.4.1",
     "esbonio>=0.16.5",
+    "mypy>=1.14.1",
 ]

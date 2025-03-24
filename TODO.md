@@ -13,13 +13,16 @@
 - [x] Improve unit tests
 - [x] Improve doc tests
 - [x] Improve code reduntancy
-- [ ] Type annotation: check again some methods seem to have no type and docs.
-- [ ] Style check and mypy check: black, isort, flake8, mypy
 - [x] Coverage reports: 100% files, 87% lines
 - [x] Test CUDA compatibility and performance
 - [x] Produce Docker image 
 - [x] Produce Streamlit app with Docker
-- [x] Streamlit Cuda
-- [ ] CI
+- [x] Streamlit xuda
 - [x] Logging
-- [ ] Streamlit Logs
+- [x] Logs
+- [x] Remove exceptions handling for CUDA compatibility
+- [ ] Streamlit app
+- [ ] Documentation refinements
+- [ ] Type annotation: check again some methods seem to have no type and docs.
+- [ ] Style check and mypy check: black, isort, flake8, mypy
+- [ ] CI
