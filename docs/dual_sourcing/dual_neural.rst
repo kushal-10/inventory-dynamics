@@ -24,7 +24,6 @@ Example Usage
 --------------
 
 We now present one example to demonstrate how the :class:`DualSourcingNeuralController` can be called, trained, and evaluated in `idinn`.
-To convert the provided code into a `doctest` format, we need to ensure that the code is executable and that the expected outputs are included. The `doctest` format is used to test code snippets embedded in documentation by running them and comparing the actual output to the expected output.
 
 .. doctest::
     
