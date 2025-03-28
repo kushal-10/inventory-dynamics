@@ -1,6 +1,6 @@
 [project]
 name = "idinn"
-description = "Inventory dynamics–informed neural networks for solving single-sourcing and dual-sourcing problems."
+description = "Inventory dynamics–informed neural networks and other related controllers for solving single-sourcing and dual-sourcing problems."
 readme = "README.md"
 requires-python = ">=3.8, <3.13"
 license = { file = "LICENSE" }

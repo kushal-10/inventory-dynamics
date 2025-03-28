@@ -6,7 +6,7 @@
 
 [<img src="https://gitlab.com/ComputationalScience/idinn/-/raw/main/docs/_static/youtube.png" align="center" width="60%" size="auto" alt="youtube">](https://www.youtube.com/watch?v=hUBfTWV6tWQ)
 
-`idinn` implements **i**nventory **d**ynamics–**i**nformed **n**eural **n**etwork (and related) controllers for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects using PyTorch as backend to enable users to find the optimal controllers for the user-specified inventory systems.
+`idinn` implements **i**nventory **d**ynamics–**i**nformed **n**eural **n**etwork and other related controllers for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects using PyTorch as backend to enable users to find the optimal controllers for the user-specified inventory systems.
 
 ## Demo
 
