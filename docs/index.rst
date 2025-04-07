@@ -68,19 +68,19 @@ Example Usage
    :maxdepth: 1
    :caption: Single-Sourcing Problems
 
-   single_sourcing/intro_single_sourcing
-   single_sourcing/base_stock
-   single_sourcing/single_neural
+   single_controller/intro_single_sourcing
+   single_controller/base_stock
+   single_controller/single_neural
 
 .. toctree::
    :hidden:
    :maxdepth: 1
    :caption: Dual-Sourcing Problems
 
-   dual_sourcing/intro_dual_sourcing
-   dual_sourcing/capped_dual_index
-   dual_sourcing/dynamic_programming
-   dual_sourcing/dual_neural
+   dual_controller/intro_dual_sourcing
+   dual_controller/capped_dual_index
+   dual_controller/dynamic_programming
+   dual_controller/dual_neural
 
 .. toctree::
    :hidden:
@@ -97,4 +97,4 @@ Example Usage
    :maxdepth: 1
    :caption: References
 
-   tutorials/api
+   utilities/api
