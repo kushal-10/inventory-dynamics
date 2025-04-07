@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import torch
 
@@ -13,11 +13,11 @@ class BaseSourcingModel:
         init_inventory: float,
         demand_generator: Union[UniformDemand, CustomDemand],
         batch_size: int,
-        lead_time: int = None,
-        regular_lead_time: int = None,
-        expedited_lead_time: int = None,
-        regular_order_cost: float = None,
-        expedited_order_cost: float = None,
+        lead_time: Optional[int] = None,
+        regular_lead_time: Optional[int] = None,
+        expedited_lead_time: Optional[int] = None,
+        regular_order_cost: Optional[float] = None,
+        expedited_order_cost: Optional[float] = None,
     ):
         self.holding_cost = holding_cost
         self.shortage_cost = shortage_cost
@@ -33,7 +33,7 @@ class BaseSourcingModel:
         self.demand_generator = demand_generator
         self.reset()
 
-    def reset(self, batch_size: int = None) -> None:
+    def reset(self, batch_size: Optional[int] = None) -> None:
         if batch_size is not None and self.batch_size != batch_size:
             self.batch_size = batch_size
 
@@ -117,12 +117,15 @@ class SingleSourcingModel(BaseSourcingModel):
         )
 
     def get_lead_time(self) -> int:
+        if self.lead_time is None:
+            raise ValueError("`lead_time` is not set")
+
         return self.lead_time
 
     def get_past_orders(self) -> torch.Tensor:
         return self.past_orders
 
-    def order(self, q: torch.Tensor, seed: int = None) -> None:
+    def order(self, q: torch.Tensor, seed: Optional[int] = None) -> None:
         """
         Orders items to the inventory and update the inventory with generated demands.
 
@@ -135,6 +138,10 @@ class SingleSourcingModel(BaseSourcingModel):
         """
         if seed is not None:
             torch.manual_seed(seed)
+
+        if self.lead_time is None:
+            raise ValueError("`lead_time` is not set")
+
         # Current orders are added to past_orders
         self.past_orders = torch.cat([self.past_orders, q], dim=1)
         # Past orders arrived, if past orders are not available, then arrived order is 0
@@ -222,19 +229,34 @@ class DualSourcingModel(BaseSourcingModel):
         return self.past_expedited_orders[:, [-1]]
 
     def get_regular_lead_time(self) -> int:
+        if self.regular_lead_time is None:
+            raise ValueError("`regular_lead_time` is not set")
+
         return self.regular_lead_time
 
     def get_expedited_lead_time(self) -> int:
+        if self.expedited_lead_time is None:
+            raise ValueError("`expedited_lead_time` is not set")
+
         return self.expedited_lead_time
 
     def get_regular_order_cost(self) -> float:
+        if self.regular_order_cost is None:
+            raise ValueError("Regular order cost is not set")
+
         return self.regular_order_cost
 
     def get_expedited_order_cost(self) -> float:
+        if self.expedited_order_cost is None:
+            raise ValueError("Expedited order cost is not set")
+
         return self.expedited_order_cost
 
     def order(
-        self, regular_q: torch.Tensor, expedited_q: torch.Tensor, seed: int = None
+        self,
+        regular_q: torch.Tensor,
+        expedited_q: torch.Tensor,
+        seed: Optional[int] = None,
     ) -> None:
         """
         Orders items to the inventory and update the inventory with generated demands.
@@ -250,10 +272,17 @@ class DualSourcingModel(BaseSourcingModel):
         """
         if seed is not None:
             torch.manual_seed(seed)
+
+        if self.regular_lead_time is None:
+            raise ValueError("`regular_lead_time` is not set")
+        if self.expedited_lead_time is None:
+            raise ValueError("`expedited_lead_time` is not set")
+
         if not isinstance(regular_q, torch.Tensor):
             regular_q = torch.tensor([[regular_q]])
         if not isinstance(expedited_q, torch.Tensor):
             expedited_q = torch.tensor([[expedited_q]])
+
         # Current regular order are added to past_regular_orders
         self.past_regular_orders = torch.cat(
             [self.past_regular_orders, regular_q], dim=1

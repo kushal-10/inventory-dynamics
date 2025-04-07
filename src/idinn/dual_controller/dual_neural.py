@@ -1,4 +1,6 @@
-from typing import List, Optional, Tuple, Union
+import logging
+from datetime import datetime
+from typing import List, Optional, Tuple, Union, no_type_check
 
 import numpy as np
 import torch
@@ -7,11 +9,9 @@ from torch.utils.tensorboard import SummaryWriter
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
-import logging
-from datetime import datetime
-
 # Get root logger
 logger = logging.getLogger()
+
 
 class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
     """
@@ -68,8 +68,10 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.compressed = compressed
-        self.model = None
-        logger.info(f"Initialized DualSourcingNeuralController with hidden_layers={hidden_layers}, compressed={compressed}")
+        self.model: Optional[torch.nn.Sequential] = None
+        logger.info(
+            f"Initialized DualSourcingNeuralController with hidden_layers={hidden_layers}, compressed={compressed}"
+        )
 
     def init_layers(self, regular_lead_time: int, expedited_lead_time: int) -> None:
         """
@@ -103,8 +105,10 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             torch.nn.ReLU(),
         ]
         self.model = torch.nn.Sequential(*architecture)
-        logger.info(f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
-                   f"expedited_lead_time={expedited_lead_time}")
+        logger.info(
+            f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
+            f"expedited_lead_time={expedited_lead_time}"
+        )
 
     def prepare_inputs(
         self,
@@ -144,14 +148,16 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 [inputs, past_expedited_orders[:, -expedited_lead_time:]], dim=1
             )
         return inputs
-    
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+
+    def forward(self, inputs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        if self.model is None:
+            raise AttributeError("Model not initialized. Call `init_layers()` first.")
+
         h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]
         expedited_q = q[:, [1]]
         return regular_q, expedited_q
-
 
     def predict(
         self,
@@ -186,15 +192,16 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
-            sourcing_model=self.sourcing_model
+            sourcing_model=self.sourcing_model,
         )
         regular_q, expedited_q = self.forward(inputs)
-        
+
         if output_tensor:
             return regular_q, expedited_q
         else:
             return int(regular_q), int(expedited_q)
 
+    @no_type_check
     def fit(
         self,
         sourcing_model: DualSourcingModel,
@@ -248,14 +255,18 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
             )
-        
+
         start_time = datetime.now()
         logger.info(f"Starting dual sourcing neural network training at {start_time}")
-        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
-                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
-                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
-        logger.info(f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
-                    f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}")
+        logger.info(
+            f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+            f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+            f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}"
+        )
+        logger.info(
+            f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
+            f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}"
+        )
 
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
@@ -304,20 +315,22 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
 
             end_time = datetime.now()
             duration = end_time - start_time
-            per_epoch_time = duration.total_seconds()/(epoch + 1) # seconds per epoch
-            remaining_time = (epochs-epoch)*per_epoch_time
+            per_epoch_time = duration.total_seconds() / (epoch + 1)  # seconds per epoch
+            remaining_time = (epochs - epoch) * per_epoch_time
             if epoch % log_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs}"
-                            f" - Training cost: {train_loss/sourcing_periods:.4f}"
-                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                            f" - Est. Remaining time: {int(remaining_time)} seconds."
-                            )
+                logger.info(
+                    f"Epoch {epoch}/{epochs}"
+                    f" - Training cost: {train_loss / sourcing_periods:.4f}"
+                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                    f" - Est. Remaining time: {int(remaining_time)} seconds."
+                )
 
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs}"
-                            f" - Validation cost: {eval_loss/validation_sourcing_periods:.4f}"
-                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                            f" - Est. Remaining time: {int(remaining_time)} seconds."
+                logger.info(
+                    f"Epoch {epoch}/{epochs}"
+                    f" - Validation cost: {eval_loss / validation_sourcing_periods:.4f}"
+                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                    f" - Est. Remaining time: {int(remaining_time)} seconds."
                 )
 
         self.load_state_dict(best_state)
@@ -326,7 +339,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         duration = end_time - start_time
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
-        logger.info(f"Final best cost: {min_loss/sourcing_periods:.4f}")
+        logger.info(f"Final best cost: {min_loss / sourcing_periods:.4f}")
 
     def reset(self) -> None:
         """

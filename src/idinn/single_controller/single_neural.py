@@ -1,17 +1,16 @@
-from typing import List, Optional, Union
+import logging
+from datetime import datetime
+from typing import List, Optional, Union, no_type_check
 
-import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from ..sourcing_model import SingleSourcingModel
 from .base import BaseSingleController
 
-import logging
-from datetime import datetime
-
 # Add logger setup at class level
 logger = logging.getLogger(__name__)
+
 
 class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
     """
@@ -49,13 +48,19 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         Plot the inventory and order quantities over a given number of sourcing periods.
     """
 
-    def __init__(self, hidden_layers: List[int] = [2], activation: torch.nn.Module = torch.nn.CELU(alpha=1)):
+    def __init__(
+        self,
+        hidden_layers: List[int] = [2],
+        activation: torch.nn.Module = torch.nn.CELU(alpha=1),
+    ):
         super().__init__()
-        self.sourcing_model = None
+        self.sourcing_model: Optional[SingleSourcingModel] = None
         self.hidden_layers = hidden_layers
         self.activation = activation
-        self.model = None
-        logger.info(f"Initialized SingleSourcingNeuralController with hidden_layers={hidden_layers}")
+        self.model: Optional[torch.nn.Sequential] = None
+        logger.info(
+            f"Initialized SingleSourcingNeuralController with hidden_layers={hidden_layers}"
+        )
 
     def init_layers(self) -> None:
         """
@@ -65,6 +70,9 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         -------
         None
         """
+        if self.sourcing_model is None:
+            raise AttributeError("The controller is not trained.")
+
         lead_time = self.sourcing_model.get_lead_time()
         architecture = [
             torch.nn.Linear(lead_time + 1, self.hidden_layers[0]),
@@ -81,26 +89,33 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             torch.nn.ReLU(),
         ]
         self.model = torch.nn.Sequential(*architecture)
-    
+
     def prepare_inputs(
         self,
-        current_inventory: torch.Tensor,
-        past_orders: torch.Tensor
+        current_inventory: Union[int, torch.Tensor],
+        past_orders: Optional[Union[List[int], torch.Tensor]] = None,
     ) -> torch.Tensor:
+        if self.sourcing_model is None:
+            raise AttributeError("The controller is not trained.")
+
         lead_time = self.sourcing_model.get_lead_time()
         current_inventory = self._current_inventory_check(current_inventory)
-        past_orders = self._past_orders_check(past_orders, lead_time)
-        
+        past_orders = self._past_orders_check(lead_time, past_orders)
+
         if lead_time == 0:
-            inputs = current_inventory
+            return current_inventory
         elif lead_time > 0:
+            if past_orders is None:
+                past_orders = torch.zeros(current_inventory.shape[0], lead_time)
             inputs = torch.cat([current_inventory, past_orders[:, -lead_time:]], dim=1)
         else:
             raise ValueError("`lead_time` cannot be less than 0")
-        
+
         return inputs
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        if self.model is None:
+            raise AttributeError("Model not initialized. Call `init_layers()` first.")
         h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
         return q
@@ -131,15 +146,14 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
 
-        
         inputs = self.prepare_inputs(current_inventory, past_orders)
         q = self.forward(inputs)
 
         if output_tensor:
             return q
-        else:
-            return q.int().item()
+        return int(q.item())
 
+    @no_type_check
     def fit(
         self,
         sourcing_model: SingleSourcingModel,
@@ -193,17 +207,22 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
 
         start_time = datetime.now()
         logger.info(f"Starting single sourcing neural network training at {start_time}")
-        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
-                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
-                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
-        logger.info(f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
-                    f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}")
+        logger.info(
+            f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+            f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+            f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}"
+        )
+        logger.info(
+            f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
+            f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}"
+        )
 
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
         optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
-        min_cost = np.inf
+        min_cost: torch.Tensor = torch.inf
+        best_state: Optional[dict] = None
 
         for epoch in range(epochs):
             # Clear grad cache
@@ -211,7 +230,9 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             optimizer_init_inventory.zero_grad()
             # Reset the sourcing model with the learned init inventory
             sourcing_model.reset()
-            logger.debug(f"Reset the sourcing model with the learned init inventory at epoch {epoch}")
+            logger.debug(
+                f"Reset the sourcing model with the learned init inventory at epoch {epoch}"
+            )
             total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
             total_cost.backward()
             # Gradient descend
@@ -226,14 +247,14 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
                 )
                 if eval_cost < min_cost:
                     min_cost = eval_cost
-                    best_state = self.model.state_dict()
+                    if self.model is not None:
+                        best_state = self.model.state_dict()
             else:
                 if total_cost < min_cost:
                     min_cost = total_cost
                     best_state = self.model.state_dict()
             # Log train loss
             if tensorboard_writer is not None:
-                
                 tensorboard_writer.add_scalar(
                     "Avg. cost per period/train", total_cost / sourcing_periods, epoch
                 )
@@ -259,27 +280,30 @@ class SingleSourcingNeuralController(torch.nn.Module, BaseSingleController):
             remaining_time = (epochs - epoch) * per_epoch_time
 
             if epoch % log_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs}"
-                            f" - Training cost: {total_cost/sourcing_periods:.4f}"
-                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                            f" - Est. Remaining time: {int(remaining_time)} seconds."
-                       )
-                
+                logger.info(
+                    f"Epoch {epoch}/{epochs}"
+                    f" - Training cost: {total_cost / sourcing_periods:.4f}"
+                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                    f" - Est. Remaining time: {int(remaining_time)} seconds."
+                )
+
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                logger.info(f"Epoch {epoch}/{epochs}"
-                            f" - Validation cost: {eval_cost/validation_sourcing_periods:.4f}"
-                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                            f" - Est. Remaining time: {int(remaining_time)} seconds."
-                            )
+                logger.info(
+                    f"Epoch {epoch}/{epochs}"
+                    f" - Validation cost: {eval_cost / validation_sourcing_periods:.4f}"
+                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                    f" - Est. Remaining time: {int(remaining_time)} seconds."
+                )
 
         # Load the best model
-        self.model.load_state_dict(best_state)
+        if best_state is not None and self.model is not None:
+            self.model.load_state_dict(best_state)
 
         end_time = datetime.now()
         duration = end_time - start_time
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
-        logger.info(f"Final best cost: {min_cost/sourcing_periods:.4f}")
+        logger.info(f"Final best cost: {min_cost / sourcing_periods:.4f}")
 
     def reset(self) -> None:
         self.sourcing_model = None

@@ -1,31 +1,33 @@
+import logging
+from datetime import datetime
 from itertools import product
-from typing import Dict as TypingDict, List as TypingList, Optional, Tuple, Union
+from typing import Dict as TypingDict
+from typing import List as TypingList
+from typing import Optional, Tuple, Union, no_type_check
 
 import numpy as np
 import torch
-from numba import njit, types
+from numba import njit, types  # type: ignore
 from numba.typed import Dict, List
 
-from ..sourcing_model import DualSourcingModel
 from ..demand import UniformDemand
+from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
-
-import logging
-from datetime import datetime
 
 # Get root logger
 logger = logging.getLogger()
 
+
 class DynamicProgrammingController(BaseDualController):
     def __init__(self) -> None:
-        self.sourcing_model= None
+        self.sourcing_model = None
         self.qf = None
         self.vf = None
         logger.info("Initialized DynamicProgrammingController")
 
     @staticmethod
     @njit
-    def __vf_update(
+    def _vf_update(
         demand_prob: TypingDict[int, float],
         min_demand: int,
         max_demand: int,
@@ -68,7 +70,7 @@ class DynamicProgrammingController(BaseDualController):
         return best_cost, best_action
 
     @staticmethod
-    def __get_basestock_ub(
+    def _get_basestock_ub(
         exp_demand: float, lead_time: int, support: float, h: float, b: float
     ) -> float:
         """
@@ -79,6 +81,7 @@ class DynamicProgrammingController(BaseDualController):
         base_stock_ub = n * exp_demand + support * np.sqrt(n * np.log(1 + b / h) / 2)
         return np.ceil(base_stock_ub)
 
+    @no_type_check
     def fit(
         self,
         sourcing_model: DualSourcingModel,
@@ -115,13 +118,17 @@ class DynamicProgrammingController(BaseDualController):
             raise ValueError(
                 "DynamicProgrammingController only supports expedited_lead_time = 0."
             )
-        
+
         start_time = datetime.now()
         logger.info(f"Starting dynamic programming at {start_time}")
-        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
-                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
-                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
-        logger.info(f"Training parameters: max_iterations={max_iterations}, tolerance={tolerance}")
+        logger.info(
+            f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+            f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+            f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}"
+        )
+        logger.info(
+            f"Training parameters: max_iterations={max_iterations}, tolerance={tolerance}"
+        )
 
         min_demand = int(sourcing_model.demand_generator.get_min_demand())
         max_demand = int(sourcing_model.demand_generator.get_max_demand())
@@ -133,10 +140,10 @@ class DynamicProgrammingController(BaseDualController):
         le = sourcing_model.get_expedited_lead_time()
         lr = sourcing_model.get_regular_lead_time()
 
-        base_e = DynamicProgrammingController.__get_basestock_ub(
+        base_e = DynamicProgrammingController._get_basestock_ub(
             exp_demand=exp_demand, lead_time=le, support=support, h=h, b=b
         )
-        base_r = DynamicProgrammingController.__get_basestock_ub(
+        base_r = DynamicProgrammingController._get_basestock_ub(
             exp_demand=exp_demand, lead_time=lr, support=support, h=h, b=b
         )
         min_ip = int(min(base_r, base_e) - max_demand)
@@ -183,7 +190,7 @@ class DynamicProgrammingController(BaseDualController):
         for iteration in range(max_iterations):
             # We first store each newly updated state
             for idx, state in enumerate(states):
-                these_values[idx] = DynamicProgrammingController.__vf_update(
+                these_values[idx] = DynamicProgrammingController._vf_update(
                     demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions
                 )[0]
             # After the minimum for each state has been calculated, we update the states
@@ -196,9 +203,11 @@ class DynamicProgrammingController(BaseDualController):
 
             val = this_average / (iteration + 1)
             all_values[iteration] = val
-            
+
             if iteration > 1 and iteration % log_freq == 0:
-                logger.info(f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]:.4f}")
+                logger.info(
+                    f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]:.4f}"
+                )
 
             if iteration > 1 and iteration % validation_freq == 0:
                 iteration_arr.append(iteration)
@@ -206,7 +215,7 @@ class DynamicProgrammingController(BaseDualController):
                 delta = all_values[iteration - 1] - all_values[iteration]
                 if delta <= tolerance:
                     for state in states:
-                        qa = DynamicProgrammingController.__vf_update(
+                        qa = DynamicProgrammingController._vf_update(
                             demand_prob,
                             min_demand,
                             max_demand,
@@ -228,7 +237,9 @@ class DynamicProgrammingController(BaseDualController):
         duration = end_time - start_time
         logger.info(f"Dynamic programming completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
-        logger.info(f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}")
+        logger.info(
+            f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}"
+        )
 
     def predict(
         self,

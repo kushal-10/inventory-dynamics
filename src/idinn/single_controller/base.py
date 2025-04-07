@@ -1,18 +1,28 @@
 from abc import ABCMeta, abstractmethod
+from typing import List, Optional, Union, no_type_check
 
 import torch
+from matplotlib import pyplot as plt
+from numpy.typing import NDArray
+
+from ..sourcing_model import SingleSourcingModel
 
 
 class BaseSingleController(metaclass=ABCMeta):
     @abstractmethod
-    def fit(self, sourcing_model):
+    def fit(self, sourcing_model: SingleSourcingModel) -> None:
         """
         Fit the controller to the sourcing model.
         """
         pass
 
     @abstractmethod
-    def predict(self, current_inventory, past_orders, output_tensor):
+    def predict(
+        self,
+        current_inventory: Union[int, torch.Tensor],
+        past_orders: Union[List[int], torch.Tensor],
+        output_tensor: bool,
+    ) -> Union[torch.Tensor, int]:
         """
         Predict the replenishment order quantity.
         """
@@ -25,7 +35,9 @@ class BaseSingleController(metaclass=ABCMeta):
         """
         pass
 
-    def _current_inventory_check(self, current_inventory):
+    def _current_inventory_check(
+        self, current_inventory: Union[int, torch.Tensor]
+    ) -> torch.Tensor:
         """
         Check and convert types of `current_inventory` for `predict()`.
         """
@@ -38,7 +50,11 @@ class BaseSingleController(metaclass=ABCMeta):
 
         return current_inventory
 
-    def _past_orders_check(self, past_orders, lead_time):
+    def _past_orders_check(
+        self,
+        lead_time: int,
+        past_orders: Optional[Union[List[int], torch.Tensor]] = None,
+    ) -> torch.Tensor:
         """
         Check and convert types of `past_orders` for `predict()`. Pad `past_orders` with zeros if it is too short.
         """
@@ -57,18 +73,18 @@ class BaseSingleController(metaclass=ABCMeta):
         else:
             return past_orders
 
-    def get_last_cost(self, sourcing_model):
+    def get_last_cost(self, sourcing_model: SingleSourcingModel) -> torch.Tensor:
         """
         Calculate the cost for the latest period of the sourcing model.
 
         Parameters
         ----------
-        sourcing_model : SourcingModel
+        sourcing_model : SingleSourcingModel
             The sourcing model.
 
         Returns
         -------
-        float
+        torch.Tensor
             The last cost.
 
         """
@@ -80,13 +96,18 @@ class BaseSingleController(metaclass=ABCMeta):
         ) + shortage_cost * torch.relu(-current_inventory)
         return last_cost
 
-    def get_total_cost(self, sourcing_model, sourcing_periods, seed=None):
+    def get_total_cost(
+        self,
+        sourcing_model: SingleSourcingModel,
+        sourcing_periods: int,
+        seed: Optional[int] = None,
+    ) -> torch.Tensor:
         """
         Calculate the total cost for single-sourcing optimization.
 
         Parameters
         ----------
-        sourcing_model : SourcingModel
+        sourcing_model : SingleSourcingModel
             The sourcing model.
         sourcing_periods : int
             Number of sourcing periods.
@@ -95,23 +116,30 @@ class BaseSingleController(metaclass=ABCMeta):
 
         Returns
         -------
-        float
+        torch.Tensor
             The total cost.
         """
         if seed is not None:
             torch.manual_seed(seed)
 
-        total_cost = 0
-        for i in range(sourcing_periods):
+        total_cost = torch.tensor(0.0)
+        for _ in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
             past_orders = sourcing_model.get_past_orders()
-            q_t = self.predict(current_inventory, past_orders, output_tensor=True)
-            sourcing_model.order(q_t)
+            q = torch.as_tensor(
+                self.predict(current_inventory, past_orders, output_tensor=True)
+            )
+            sourcing_model.order(q)
             last_cost = self.get_last_cost(sourcing_model)
             total_cost += last_cost.mean()
         return total_cost
 
-    def get_average_cost(self, sourcing_model, sourcing_periods, seed=None):
+    def get_average_cost(
+        self,
+        sourcing_model: SingleSourcingModel,
+        sourcing_periods: int,
+        seed: Optional[int] = None,
+    ) -> torch.Tensor:
         """
         Calculate the average cost for single-sourcing optimization.
 
@@ -126,7 +154,7 @@ class BaseSingleController(metaclass=ABCMeta):
 
         Returns
         -------
-        float
+        torch.Tensor
             The average cost.
         """
         return (
@@ -134,7 +162,13 @@ class BaseSingleController(metaclass=ABCMeta):
             / sourcing_periods
         )
 
-    def simulate(self, sourcing_model, sourcing_periods, seed=None):
+    @no_type_check
+    def simulate(
+        self,
+        sourcing_model: SingleSourcingModel,
+        sourcing_periods: int,
+        seed: Optional[int] = None,
+    ) -> tuple[NDArray, NDArray]:
         """
         Simulate the sourcing model's output using the given controller.
 
@@ -149,25 +183,33 @@ class BaseSingleController(metaclass=ABCMeta):
 
         Returns
         -------
-        past_inventories : list
-            List of past inventories.
-        past_orders : list
-            List of past orders.
+        past_inventories : np.array
+            Array of past inventories.
+        past_orders : np.array
+            Array of past orders.
 
         """
         if seed is not None:
             torch.manual_seed(seed)
         sourcing_model.reset(batch_size=1)
-        for i in range(sourcing_periods):
+        for _ in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
             past_orders = sourcing_model.get_past_orders()
-            q = self.predict(current_inventory, past_orders, output_tensor=True)
+            q = torch.as_tensor(
+                self.predict(current_inventory, past_orders, output_tensor=True)
+            )
             sourcing_model.order(q)
         past_inventories = sourcing_model.get_past_inventories()[0, :].detach().numpy()
         past_orders = sourcing_model.get_past_orders()[0, :].detach().numpy()
         return past_inventories, past_orders
 
-    def plot(self, sourcing_model, sourcing_periods, linewidth=1, seed=None):
+    def plot(
+        self,
+        sourcing_model: SingleSourcingModel,
+        sourcing_periods: int,
+        linewidth: int = 1,
+        seed: Optional[int] = None,
+    ) -> tuple[plt.Figure, plt.Axes]:
         """
         Plot the inventory and order quantities over a given number of sourcing periods.
 
@@ -181,9 +223,14 @@ class BaseSingleController(metaclass=ABCMeta):
             The width of the line in the step plots.
         seed : int, optional
             Random seed for reproducibility.
-        """
-        from matplotlib import pyplot as plt
 
+        Returns
+        -------
+        plt.Figure
+            The matplotlib Figure object containing the plots.
+        plt.Axes
+            The matplotlib Axes objects containing the plots.
+        """
         past_inventories, past_orders = self.simulate(
             sourcing_model=sourcing_model, sourcing_periods=sourcing_periods, seed=seed
         )

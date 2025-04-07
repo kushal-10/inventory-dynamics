@@ -1,11 +1,11 @@
+import logging
+from datetime import datetime
+from typing import List, Optional, Union
+
 import torch
-from typing import Optional, Union
 
 from ..sourcing_model import SingleSourcingModel
 from .base import BaseSingleController
-
-import logging
-from datetime import datetime
 
 # Add logger setup at class level
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class BaseStockController(BaseSingleController):
     def __init__(self) -> None:
         self.sourcing_model: Optional[SingleSourcingModel] = None
         self.z_star: Optional[int] = None
-        logger.info("Initialized BaseStockController")
+        logger.info("Initialized `BaseStockController`")
 
     def fit(
         self,
@@ -47,9 +47,11 @@ class BaseStockController(BaseSingleController):
 
         start_time = datetime.now()
         logger.info(f"Starting base stock policy calculation at {start_time}")
-        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
-                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
-                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
+        logger.info(
+            f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+            f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+            f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}"
+        )
         logger.info(f"Training parameters: num_samples={num_samples}")
 
         # Generate samples for l + 1 periods
@@ -66,8 +68,8 @@ class BaseStockController(BaseSingleController):
 
         # Calculate z* using the empirical percentile (inverse CDF)
         service_level = b / (b + h)
-        self.z_star = (
-            torch.quantile(total_demand_samples.float(), service_level).int().item()
+        self.z_star = int(
+            torch.quantile(total_demand_samples.float(), service_level).item()
         )
 
         end_time = datetime.now()
@@ -75,12 +77,14 @@ class BaseStockController(BaseSingleController):
         logger.info(f"Policy calculation completed at {end_time}")
         logger.info(f"Total calculation duration: {duration}")
         logger.info(f"Optimal base stock level (z*): {self.z_star}")
-        logger.info(f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}")
+        logger.info(
+            f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}"
+        )
 
     def predict(
         self,
         current_inventory: Union[int, torch.Tensor],
-        past_orders: Optional[Union[list, torch.Tensor]] = None,
+        past_orders: Optional[Union[List[int], torch.Tensor]] = None,
         output_tensor: bool = False,
     ) -> Union[torch.Tensor, int]:
         """
@@ -100,13 +104,12 @@ class BaseStockController(BaseSingleController):
         float
             The replenishment order quantity.
         """
-        if self.sourcing_model is None:
+        if self.sourcing_model is None or self.z_star is None:
             raise AttributeError("The controller is not trained.")
 
         lead_time = self.sourcing_model.get_lead_time()
-
         current_inventory = self._current_inventory_check(current_inventory)
-        past_orders = self._past_orders_check(past_orders, lead_time)
+        past_orders = self._past_orders_check(lead_time, past_orders)
 
         if lead_time == 0:
             inventory_position = current_inventory
@@ -122,7 +125,7 @@ class BaseStockController(BaseSingleController):
         if output_tensor:
             return result
         else:
-            return result.int().item()
+            return int(result.item())
 
     def reset(self) -> None:
         self.z_star = None

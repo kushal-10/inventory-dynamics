@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 import torch
 
+
 class BaseDemand(metaclass=ABCMeta):
     @abstractmethod
     def sample(self, batch_size: int) -> torch.Tensor:
@@ -15,12 +16,15 @@ class BaseDemand(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
     def enumerate_support(self) -> dict:
         pass
 
+    @abstractmethod
     def get_min_demand(self) -> int:
         pass
 
+    @abstractmethod
     def get_max_demand(self) -> int:
         pass
 
@@ -49,7 +53,7 @@ class UniformDemand(BaseDemand):
 
 
 class CustomDemand(BaseDemand):
-    def __init__(self, demand_prob: dict = None):
+    def __init__(self, demand_prob: dict[int, float]):
         from math import isclose
 
         # All demand values should be int

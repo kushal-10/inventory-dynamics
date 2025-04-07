@@ -2,7 +2,7 @@
 name = "idinn"
 description = "Inventory dynamics–informed neural networks and other related controllers for solving single-sourcing and dual-sourcing problems."
 readme = "README.md"
-requires-python = ">=3.8, <3.13"
+requires-python = ">=3.8"
 license = { file = "LICENSE" }
 authors = [
   { name = "Jiawei Li", email = "sud.concept0x@icloud.com" },
