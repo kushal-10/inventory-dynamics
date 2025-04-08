@@ -52,12 +52,19 @@ class BaseDualController(metaclass=ABCMeta):
     ) -> torch.Tensor:
         """Check and convert types of past orders."""
         if past_orders is None:
-            return torch.zeros(1, lead_time)
+            past_orders = torch.zeros(1, lead_time)
         elif isinstance(past_orders, list):
-            return torch.tensor([past_orders], dtype=torch.float32)
+            past_orders = torch.tensor([past_orders], dtype=torch.float32)
         elif isinstance(past_orders, torch.Tensor):
+            pass
+        else:
+            raise TypeError("`past_orders`'s type is not supported.")
+
+        order_len = past_orders.shape[1]
+        if order_len < lead_time:
+            return torch.nn.functional.pad(past_orders, (lead_time - order_len, 0))
+        else:
             return past_orders
-        raise TypeError("`past_orders`'s type is not supported.")
 
     def get_last_cost(self, sourcing_model: DualSourcingModel) -> torch.Tensor:
         """Calculate the cost for the latest period."""
@@ -76,6 +83,7 @@ class BaseDualController(metaclass=ABCMeta):
         )
         return last_cost
 
+    @no_type_check
     def get_total_cost(
         self,
         sourcing_model: DualSourcingModel,
@@ -91,19 +99,18 @@ class BaseDualController(metaclass=ABCMeta):
             current_inventory = sourcing_model.get_current_inventory()
             past_regular_orders = sourcing_model.get_past_regular_orders()
             past_expedited_orders = sourcing_model.get_past_expedited_orders()
-            regular_q, expedited_q = torch.as_tensor(
-                self.predict(
-                    current_inventory,
-                    past_regular_orders,
-                    past_expedited_orders,
-                    output_tensor=True,
-                )
+            regular_q, expedited_q = self.predict(
+                current_inventory,
+                past_regular_orders,
+                past_expedited_orders,
+                output_tensor=True,
             )
             sourcing_model.order(regular_q, expedited_q)
             last_cost = self.get_last_cost(sourcing_model)
             total_cost += last_cost.mean()
         return total_cost
 
+    @no_type_check
     def get_average_cost(
         self,
         sourcing_model: DualSourcingModel,

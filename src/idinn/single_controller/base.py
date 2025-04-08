@@ -96,6 +96,7 @@ class BaseSingleController(metaclass=ABCMeta):
         ) + shortage_cost * torch.relu(-current_inventory)
         return last_cost
 
+    @no_type_check
     def get_total_cost(
         self,
         sourcing_model: SingleSourcingModel,
@@ -134,6 +135,7 @@ class BaseSingleController(metaclass=ABCMeta):
             total_cost += last_cost.mean()
         return total_cost
 
+    @no_type_check
     def get_average_cost(
         self,
         sourcing_model: SingleSourcingModel,
