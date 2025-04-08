@@ -76,28 +76,6 @@ single_sourcing_model = SingleSourcingModel(
 )
 ```
 
-The cost incurred at period $t$ is
-
-$$
-c_t = h \max(0, I_t) + b \max(0, - I_t)\,,
-$$
-
-where $I_t$ is the inventory level at the end of period $t$. The higher the holding cost, the more costly it is to keep inventory positive and high. The higher the out-of-stock cost, the more costly it is to run out of stock when the inventory level is negative. The joint holding and out-of-stock costs for a period can be calculated using the `get_cost()` method of the sourcing model.
-
-```python    
-single_sourcing_model.get_cost()
-```
-
-The expected output is as follows.
-
-```
-tensor([[50.],
-        ...,
-        [50.]], grad_fn=<AddBackward0>)
-```
-
-In this example, this function should return 50 for each sample because the initial inventory is 10 and the holding cost is 5. In this case, we have 32 samples because we specified a batch size of 32.
-
 For single-sourcing problems, we initialize the neural network controller using the `SingleSourcingNeuralController` class. For illustration purposes, we use a simple neural network with 1 hidden layer and 2 neurons. The activation function is `torch.nn.CELU(alpha=1)`.
 
 ```python
