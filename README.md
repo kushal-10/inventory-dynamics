@@ -71,6 +71,20 @@ For more in-depth documentation, please refer to the [documentation](https://inv
 
 * Böttcher, Lucas, Thomas Asikis, and Ioannis Fragkos. "Control of Dual-Sourcing Inventory Systems Using Recurrent Neural Networks." [INFORMS Journal on Computing](https://pubsonline.informs.org/doi/abs/10.1287/ijoc.2022.0136) 35.6 (2023): 1308-1328.
 
+```
+@article{bottcher2023control,
+  title={Control of dual-sourcing inventory systems using recurrent neural networks},
+  author={B{\"o}ttcher, Lucas and Asikis, Thomas and Fragkos, Ioannis},
+  journal={INFORMS journal on computing},
+  volume={35},
+  number={6},
+  pages={1308--1328},
+  year={2023},
+  publisher={INFORMS}
+}
+
+```
+
 ## Contributors
 
 * [Jiawei Li](https://github.com/iewaij)
