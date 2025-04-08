@@ -164,7 +164,7 @@ cython_debug/
 .DS_Store
 
 # Jupyter notebooks
-# *.ipynb
+*.ipynb
 
 # PyTorch checkpoints
 *.pt
@@ -174,3 +174,8 @@ runs/
 
 # JOSS
 jats/
+output/
+
+# uv
+.python-version
+uv.lock
