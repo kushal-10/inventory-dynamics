@@ -60,15 +60,15 @@ def test_cdi_controller_simulate(dual_sourcing_model_cdi, trained_cdi_controller
     )
 
     # Validate simulation results
-    assert (
-        len(past_inventories) == 101
-    ), "Simulation did not return correct number of inventory records."
-    assert (
-        len(past_regular_orders) == 101
-    ), "Simulation did not return correct number of regular order records."
-    assert (
-        len(past_expedited_orders) == 101
-    ), "Simulation did not return correct number of expedited order records."
+    assert len(past_inventories) == 101, (
+        "Simulation did not return correct number of inventory records."
+    )
+    assert len(past_regular_orders) == 101, (
+        "Simulation did not return correct number of regular order records."
+    )
+    assert len(past_expedited_orders) == 101, (
+        "Simulation did not return correct number of expedited order records."
+    )
 
 
 def test_cdi_controller_plot(dual_sourcing_model_cdi, trained_cdi_controller):
@@ -85,9 +85,9 @@ def test_cdi_controller_order_prediction(trained_cdi_controller):
     )
 
     # Validate predictions
-    assert (
-        regular_order == 2
-    ), f"Predicted regular order should be 2, but got {regular_order}."
-    assert (
-        expedited_order == 1
-    ), f"Predicted expedited order should be 1, but got {expedited_order}."
+    assert regular_order == 2, (
+        f"Predicted regular order should be 2, but got {regular_order}."
+    )
+    assert expedited_order == 1, (
+        f"Predicted expedited order should be 1, but got {expedited_order}."
+    )

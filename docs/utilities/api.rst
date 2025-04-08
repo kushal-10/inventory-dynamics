@@ -10,7 +10,7 @@ idinn.sourcing\_model
    :show-inheritance:
 
 idinn.single_controller
-----------------
+-----------------------
 
 .. automodule:: idinn.single_controller
    :members:
@@ -18,7 +18,7 @@ idinn.single_controller
    :show-inheritance:
 
 idinn.dual_controller
-----------------
+---------------------
 
 .. automodule:: idinn.dual_controller
    :members:
@@ -26,7 +26,7 @@ idinn.dual_controller
    :show-inheritance:
 
 idinn.demand
-----------------
+------------
 
 .. automodule:: idinn.demand
    :members:

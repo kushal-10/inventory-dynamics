@@ -23,7 +23,7 @@ We use the following notation to describe the problem:
 - :math:`h`: Holding cost per unit of inventory.
 
 Single-Sourcing Dynamics
------------
+------------------------
 
 The sequence of events in each period is as follows:
 

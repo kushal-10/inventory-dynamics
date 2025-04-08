@@ -21,9 +21,9 @@ def test_single_sourcing_model_initialization(
     single_sourcing_model: SingleSourcingModel,
 ):
     assert single_sourcing_model.get_lead_time() == 2, "Lead time should be 2."
-    assert (
-        single_sourcing_model.get_holding_cost() == 0.5
-    ), "Holding cost should be 0.5."
+    assert single_sourcing_model.get_holding_cost() == 0.5, (
+        "Holding cost should be 0.5."
+    )
     assert torch.all(
         torch.eq(single_sourcing_model.get_init_inventory(), torch.tensor([10.0]))
     ), "Inital inventory should be 10."
@@ -37,9 +37,9 @@ def test_single_sourcing_model_order(single_sourcing_model: SingleSourcingModel)
         3,
         2,
     ), f"Past orders tensor should have shape (3, 2), got {past_orders.shape}."
-    assert torch.all(
-        torch.eq(past_orders[:, -1], q.squeeze())
-    ), f"Last order should match {q.squeeze()}."
+    assert torch.all(torch.eq(past_orders[:, -1], q.squeeze())), (
+        f"Last order should match {q.squeeze()}."
+    )
 
 
 def test_single_sourcing_model_update_inventories(
@@ -48,13 +48,13 @@ def test_single_sourcing_model_update_inventories(
     q = torch.tensor([[5.0], [10.0], [15.0]])
     single_sourcing_model.order(q, seed=42)
     past_inventories = single_sourcing_model.get_past_inventories()
-    assert (
-        past_inventories.shape == (3, 2)
-    ), f"Past inventories tensor should have shape (3, 2), got {past_inventories.shape}."
+    assert past_inventories.shape == (3, 2), (
+        f"Past inventories tensor should have shape (3, 2), got {past_inventories.shape}."
+    )
     current_inventory = single_sourcing_model.get_current_inventory()
-    assert (
-        current_inventory.shape == (3, 1)
-    ), f"Current inventory tensor should have shape (3, 1), got {current_inventory.shape}."
+    assert current_inventory.shape == (3, 1), (
+        f"Current inventory tensor should have shape (3, 1), got {current_inventory.shape}."
+    )
 
 
 def test_single_sourcing_model_demands(single_sourcing_model: SingleSourcingModel):
@@ -71,9 +71,9 @@ def test_single_sourcing_model_demands(single_sourcing_model: SingleSourcingMode
 
 def test_single_sourcing_model_reset(single_sourcing_model: SingleSourcingModel):
     single_sourcing_model.reset(batch_size=5)
-    assert (
-        single_sourcing_model.batch_size == 5
-    ), "Batch size should be updated to 5 after reset."
+    assert single_sourcing_model.batch_size == 5, (
+        "Batch size should be updated to 5 after reset."
+    )
     assert single_sourcing_model.get_past_orders().shape == (
         5,
         1,
