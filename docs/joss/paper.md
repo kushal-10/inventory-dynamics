@@ -87,24 +87,7 @@ single_controller = SingleSourcingNeuralController(
 
 ### Training
 
-Although the neural network controller has not yet been trained, we can still compute the total cost associated with its ordering policy. To do this, we integrate it with our previously specified sourcing model and calculate the total cost for 100 periods using `get_total_cost()`.
-
-The `get_total_cost()` function calculates the sum of the costs over a given number of sourcing periods. Within each period, three events occur. First, the current inventory, $I_t$, and the history of past orders that have not yet arrived, i.e., the vector $(q_{t-1}, q_{t-2}, \dots, q_{t-l})$, are used as inputs for the controller to calculate the order quantity, $q_t$. Second, the previous order quantity $q_{t-l}$ arrives. Third, the demand for the current period, $d_t$, is realized, resulting in a new inventory level, $I_t+q_{t-l}-d_t$. Using the updated inventory, the cost for the individual period, $c_t$, is calculated according to the equation above, and the costs of each period are summed up as the total cost. The interested reader is referred to @bottcher2023control for further details.
-
-```python    
-single_controller.get_total_cost(
-    sourcing_model=single_sourcing_model,
-    sourcing_periods=100
-)
-```
-
-A sample output is as follows.
-
-```
-tensor(5775221.5000, grad_fn=<AddBackward0>)
-```
-
-Not surprisingly, the very high cost indicates that the model's performance is poor, since we are only using a untrained neural network, where the weights are just (pseudo) random numbers. We can train the neural network controller using the `fit()` method, where the training data is generated from the given sourcing model. To better monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
+We can train the neural network controller using the `fit()` method, where the training data is generated from the given sourcing model. To better monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
 
 ```python
 from torch.utils.tensorboard import SummaryWriter
