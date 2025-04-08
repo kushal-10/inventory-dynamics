@@ -1,6 +1,7 @@
 import pandas as pd
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
+
 def tflog2pandas(path):
     """
     Convert TensorFlow log files to pandas DataFrame.
@@ -25,7 +26,13 @@ def tflog2pandas(path):
             event_list = event_acc.Scalars(tag)
             values = [x.value for x in event_list]
             step = [x.step for x in event_list]
-            data = pd.DataFrame({"metric": [tag.replace("Avg. cost per period/", "")] * len(step), "value": values, "step": step})
+            data = pd.DataFrame(
+                {
+                    "metric": [tag.replace("Avg. cost per period/", "")] * len(step),
+                    "value": values,
+                    "step": step,
+                }
+            )
             data_.append(data)
         data = pd.concat(data_)
         data = data.loc[data["step"] >= 100]

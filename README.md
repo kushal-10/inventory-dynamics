@@ -6,10 +6,11 @@
 
 [<img src="https://gitlab.com/ComputationalScience/idinn/-/raw/main/docs/_static/youtube.png" align="center" width="60%" size="auto" alt="youtube">](https://www.youtube.com/watch?v=hUBfTWV6tWQ)
 
-`idinn` implements **i**nventory **d**ynamics–**i**nformed **n**eural **n**etworks for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects with PyTorch backend to enable users to find the optimal neural controllers for user-specified inventory systems.
+`idinn` implements **i**nventory **d**ynamics–**i**nformed **n**eural **n**etwork and other related controllers for solving single-sourcing and dual-sourcing problems. Neural network controllers and inventory dynamics are implemented into customizable objects using PyTorch as backend to enable users to find the optimal controllers for the user-specified inventory systems.
 
 ## Demo
-For a quick demo, you can run the [Streamlit app](https://idinn-demo.streamlit.app/) using `idinn`. The app allows you to interactively train and evaluate neural controllers for user-specified dual-sourcing systems.
+
+For a quick demo, you can run our [Streamlit app](https://idinn-demo.streamlit.app/). The app allows you to interactively train and evaluate neural controllers for user-specified dual-sourcing systems. Alternatively, you may use our notebook in [Colab](https://colab.research.google.com/drive/1BAMiveGXmErIp10MK3V_SUJlDAXHAyaI).
 
 ## Installation
 
@@ -22,7 +23,9 @@ pip install idinn
 Or, if you want to inspect the source code and edit locally, run
 
 ```
-pip install -e git+https://gitlab.com/ComputationalScience/idinn.git#egg=idinn
+git clone https://gitlab.com/ComputationalScience/idinn.git
+cd idinn
+pip install -e .
 ```
 
 ## Example Usage
@@ -57,12 +60,12 @@ controller.fit(
 # Simulate and plot the results
 controller.plot(sourcing_model=sourcing_model, sourcing_periods=100)
 # Calculate the optimal order quantity for applications
-controller.forward(current_inventory=10, past_orders=[1, 5])
+controller.predict(current_inventory=10, past_orders=[1, 5])
 ```
 
 ## Documentation
 
-For tutorials and documentation, please refer to our [documentation](https://inventory-optimization.readthedocs.io/en/latest/).
+For more in-depth documentation, please refer to the [documentation](https://inventory-optimization.readthedocs.io/en/latest/).
 
 ## Papers using `idinn`
 

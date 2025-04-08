@@ -7,6 +7,7 @@
 
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath("../src/idinn"))
 
 # -- Project information -----------------------------------------------------
@@ -15,7 +16,7 @@ sys.path.insert(0, os.path.abspath("../src/idinn"))
 project = "idinn"
 copyright = "2024, J. Li, T. Asikis, I. Fragkos, L. Böttcher"
 author = "J. Li, T. Asikis, I. Fragkos, L. Böttcher"
-release = "0.1.0"
+release = "0.2.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -28,6 +29,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinxcontrib.youtube",
+    "sphinxcontrib.video",
 ]
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
