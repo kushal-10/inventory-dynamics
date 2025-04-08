@@ -75,12 +75,11 @@ For more in-depth documentation, please refer to the [documentation](https://inv
 @article{bottcher2023control,
   title={Control of dual-sourcing inventory systems using recurrent neural networks},
   author={B{\"o}ttcher, Lucas and Asikis, Thomas and Fragkos, Ioannis},
-  journal={INFORMS journal on computing},
+  journal={INFORMS Journal on Computing},
   volume={35},
   number={6},
   pages={1308--1328},
-  year={2023},
-  publisher={INFORMS}
+  year={2023}
 }
 
 ```
