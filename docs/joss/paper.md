@@ -76,7 +76,7 @@ single_sourcing_model = SingleSourcingModel(
 )
 ```
 
-The cost at period $t$, $c_t$, is therefore
+The cost incurred at period $t$ is
 
 $$
 c_t = h \max(0, I_t) + b \max(0, - I_t)\,,
