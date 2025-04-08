@@ -22,7 +22,7 @@ authors:
     affiliation: "1,4"
     orcid: 0000-0003-1700-1897
 affiliations:
- - name: Department of Computational Science and Philosophy, Frankfurt School of Finance & Management
+ - name: Department of Computational Science and Philosophy, Frankfurt School of Finance and Management
    index: 1
  - name: Game Theory, University of Zurich
    index: 2
