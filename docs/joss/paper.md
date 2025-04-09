@@ -108,12 +108,6 @@ After training, we can use the trained neural network controller to calculate th
 single_controller.get_average_cost(single_sourcing_model, sourcing_periods=1000)
 ```
 
-A sample output is shown below.
-
-```
-tensor(820., grad_fn=<AddBackward0>)
-```
-
 ### Order calculation
 
 We can then calculate optimal orders using the trained model.
