@@ -102,7 +102,8 @@ single_controller.fit(
 )
 ```
 
-After training, we can use the trained neural network controller to calculate the total cost for 100 periods using our previously specified sourcing model. The total cost should be significantly lower than the cost associated with the untrained model.
+After training, the neural network controller can be used to compute the average cost over a specified number of periods, based on the previously defined sourcing model. In the following example, we calculate the average cost over 1,000 periods.
+
 
 ```python
 single_controller.get_average_cost(single_sourcing_model, sourcing_periods=1000)
