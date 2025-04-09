@@ -131,7 +131,7 @@ This function returns the order quantity under the `single_controller` policy, g
 
 ### Base-stock controller
 
-In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller. This approach provides a useful baseline for comparison and is often used in inventory management due to its simplicity and interpretability.
+In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller. This approach provides a useful baseline for comparison and is often employed in inventory management due to its simplicity and interpretability.
 
 The example below demonstrates how to initialize, fit, and evaluate a base-stock controller using the same single-sourcing model.
 
