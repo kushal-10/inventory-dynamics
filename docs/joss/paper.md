@@ -117,6 +117,27 @@ For a given inventory level and trained controller, we use the `predict` functio
 single_controller.predict(current_inventory=10)
 ```
 
+### Other controllers
+
+In addition to the neural network control method described earlier, single-sourcing dynamics can also be managed using a traditional base-stock controller. This approach serves as a useful baseline for comparison and is often used in inventory management due to its simplicity and interpretability.
+
+The example below demonstrates how to initialize, fit, and evaluate a base-stock controller using the same single-sourcing model:
+
+```python
+from idinn.single_controller import BaseStockController
+
+controller_base = BaseStockController()
+controller_base.fit(single_sourcing_model)
+controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
+```
+
+As with the neural network controller, order decisions can be made using the `predict` function.
+
+```python
+controller_base.predict(current_inventory=10)
+```
+
+This returns the optimal order quantity based on the current inventory level under the base-stock policy.
 
 ## Dual-sourcing problems
 
