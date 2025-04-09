@@ -111,21 +111,12 @@ single_controller.get_average_cost(single_sourcing_model, sourcing_periods=1000)
 
 ### Order calculation
 
-We can then calculate optimal orders using the trained model.
+For a given inventory level and trained controller, we use the `predict` function to compute the corresponding orders.
 
 ```python
-# Calculate the optimal order quantity for applications
-single_controller.forward(
-  current_inventory=10,
-  past_orders=[1, 5]
-)
+single_controller.predict(current_inventory=10)
 ```
 
-The expected output is as follows.
-
-```
-tensor([[0.]], grad_fn=<SubBackward0>)
-```
 
 ## Dual-sourcing problems
 
