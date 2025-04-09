@@ -87,7 +87,7 @@ single_controller = SingleSourcingNeuralController(
 
 ### Training
 
-We can train the neural network controller using the `fit()` method, where the training data is generated from the given sourcing model. To better monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
+We can train the neural network controller using the `fit()` method, with training data generated from the specified sourcing model. To better monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
 
 ```python
 from torch.utils.tensorboard import SummaryWriter
