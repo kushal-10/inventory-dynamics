@@ -76,7 +76,7 @@ single_sourcing_model = SingleSourcingModel(
 )
 ```
 
-In single-sourcing problems, three events occur within each period. First, the current inventory, $I_t$, and the history of past orders that have not yet arrived (i.e., the vector $(q_{t-1}, q_{t-2}, \dots, q_{t-l})$) are used as inputs for the controller to calculate the order quantity, $q_t$. Second, the previous order quantity $q_{t-l}$ arrives. Third, the demand for the current period, $d_t$, is realized, resulting in a new inventory level, $I_t+q_{t-l}-d_t$. Using the updated inventory, the cost for the individual period, $c_t$, is calculated according to
+In single-sourcing problems, three events occur within each period. First, the current inventory, $I_t$, and the history of past orders that have not yet arrived (i.e., the vector $(q_{t-1}, q_{t-2}, \dots, q_{t-l})$) are used as inputs for the controller to calculate the order quantity, $q_t$. Second, the previous order quantity $q_{t-l}$ arrives. Third, the demand for the current period, $D_t$, is realized, resulting in a new inventory level, $I_t+q_{t-l}-D_t$. Using the updated inventory, the cost for the individual period, $c_t$, is calculated according to
 
 $$
 c_t = h \max(0, I_t) + b \max(0, - I_t)\,,
