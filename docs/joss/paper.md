@@ -96,9 +96,9 @@ single_controller.fit(
     sourcing_model=single_sourcing_model,
     sourcing_periods=50,
     validation_sourcing_periods=1000,
-    epochs=5000,
-    seed=1,
-    tensorboard_writer=SummaryWriter(comment="_single_1")
+    epochs=2000,
+    tensorboard_writer=SummaryWriter(comment="_single_1"),
+    seed=1
 )
 ```
 
