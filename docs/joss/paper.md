@@ -129,7 +129,7 @@ single_controller.predict(current_inventory=10)
 
 This function returns the order quantity under the `single_controller` policy, given a current inventory level of 10.
 
-### Other controllers
+### Base-stock controller
 
 In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller. This approach provides a useful baseline for comparison and is often used in inventory management due to its simplicity and interpretability.
 
