@@ -76,7 +76,15 @@ single_sourcing_model = SingleSourcingModel(
 )
 ```
 
-For single-sourcing problems, we initialize the neural network controller using the `SingleSourcingNeuralController` class. For illustration purposes, we use a simple neural network with 1 hidden layer and 2 neurons. The activation function is `torch.nn.CELU(alpha=1)`.
+For single-sourcing problems, within each period, three events occur. First, the current inventory, $I_t$, and the history of past orders that have not yet arrived (i.e., the vector $(q_{t-1}, q_{t-2}, \dots, q_{t-l})$) are used as inputs for the controller to calculate the order quantity, $q_t$. Second, the previous order quantity $q_{t-l}$ arrives. Third, the demand for the current period, $d_t$, is realized, resulting in a new inventory level, $I_t+q_{t-l}-d_t$. Using the updated inventory, the cost for the individual period, $c_t$, is calculated according to
+
+$$
+c_t = h \max(0, I_t) + b \max(0, - I_t)\,,
+$$
+
+where $I_t$ is the inventory level at the end of period $t$. The higher the holding cost, the more costly it is to keep inventory positive and high. The higher the out-of-stock cost, the more costly it is to run out of stock when the inventory level is negative. The goal is to identify an order policy that minimizes aggregated costs over a given time hoziron. The interested reader is referred to @bottcher2023control for further details.
+
+To control single-sourcing dynamics, we initialize a neural network controller using the `SingleSourcingNeuralController` class. For illustration purposes, we use a simple neural network with 1 hidden layer and 2 neurons. The activation function is `torch.nn.CELU(alpha=1)`.
 
 ```python
 single_controller = SingleSourcingNeuralController(
@@ -87,7 +95,7 @@ single_controller = SingleSourcingNeuralController(
 
 ### Training
 
-We can train the neural network controller using the `fit()` method, with training data generated from the specified sourcing model. To better monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
+We train the neural network controller using the `fit()` method, with training data generated from the specified sourcing model. To monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
 
 ```python
 from torch.utils.tensorboard import SummaryWriter
@@ -102,7 +110,7 @@ single_controller.fit(
 )
 ```
 
-After training, the neural network controller can be used to compute the average cost over a specified number of periods, based on the previously defined sourcing model. In the following example, we calculate the average cost over 1,000 periods.
+To evaluate the neural network controller, we compute the average cost over a specified number of periods for the previously defined sourcing model. In the following example, we calculate the average cost over 1,000 periods.
 
 
 ```python
