@@ -117,6 +117,8 @@ To evaluate the neural network controller, we compute the average cost over a sp
 single_controller.get_average_cost(single_sourcing_model, sourcing_periods=1000)
 ```
 
+For the selected single-sourcing parameters, the optimal average cost is 10.
+
 ### Order calculation
 
 For a given inventory level and trained controller, we use the `predict` function to compute the corresponding orders. In the following example, we set the current inventory level to 10.
