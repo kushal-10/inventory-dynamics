@@ -62,6 +62,7 @@ The overarching goal in single-sourcing and related inventory management problem
 We use the `SingleSourcingModel' class to initialize a single-sourcing model. The single-sourcing model considered in this example has a lead time of 0 (i.e., the order arrives immediately after it is placed) and an initial inventory of 10. The holding cost, $h$, and the out-of-stock cost, $b$, are 5 and 495, respectively. Demand is drawn from a discrete uniform distribution over the integers $\{0,1,\dots,4\}$. We use a batch size of 32 to train the neural network, i.e., the sourcing model generates 32 samples simultaneously. The sourcing model is initialized in code as follows.
 
 ```python
+import torch
 from idinn.sourcing_model import SingleSourcingModel
 from idinn.single_controller import SingleSourcingNeuralController
 from idinn.demand import UniformDemand
@@ -157,12 +158,12 @@ Solving dual-sourcing problems with `idinn` is similar to the workflow for singl
 
 ### Initialization
 
-To solve dual-sourcing problems, we use `DualSourcingModel` and `DualSourcingNeuralController`, which are responsible for setting up the sourcing model and its corresponding controller. In this example, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, $c_r$, is 0; the expedited order cost, $c_e$, is 20; and the initial inventory is 6. In addition, the holding cost, $h$, and the out-of-stock cost, $b$, are 5 and 495, respectively. The demand is generated from a discrete uniform distribution bounded on $[1, 4]$. In this example, we use a batch size of 256.
+To solve dual-sourcing problems, we use `DualSourcingModel` and `DualSourcingNeuralController`, which are responsible for setting up the sourcing model and its corresponding controller. In this example, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, $c_r$, is 0; the expedited order cost, $c_e$, is 20; and the initial inventory is 6. In addition, the holding cost, $h$, and the out-of-stock cost, $b$, are 5 and 495, respectively. Demand is drawn from a discrete uniform distribution over the integers $\{0,1,\dots,4\}$. In this example, we use a batch size of 256.
 
 ```python    
 import torch
 from idinn.sourcing_model import DualSourcingModel
-from idinn.controller import DualSourcingNeuralController
+from idinn.dual_controller import DualSourcingNeuralController
 from idinn.demand import UniformDemand
 
 dual_sourcing_model = DualSourcingModel(
@@ -174,7 +175,7 @@ dual_sourcing_model = DualSourcingModel(
     shortage_cost=495,
     batch_size=256,
     init_inventory=6,
-    demand_generator=UniformDemand(low=1, high=4),
+    demand_generator=UniformDemand(low=0, high=4)
 )
 ```
 
