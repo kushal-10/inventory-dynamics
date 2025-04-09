@@ -81,7 +81,6 @@ In single-sourcing problems, three events occur within each period. First, the c
 $$
 c_t = h \max(0, I_t) + b \max(0, - I_t)\,,
 $$
-
 where $I_t$ is the inventory level at the end of period $t$. The higher the holding cost, the more costly it is to keep inventory positive and high. The higher the out-of-stock cost, the more costly it is to run out of stock when the inventory level is negative. The goal is to identify an ordering policy that minimizes total costs over a given time horizon. The interested reader is referred to @bottcher2023control for further details.
 
 To control single-sourcing dynamics, we initialize a neural network controller using the `SingleSourcingNeuralController` class. For illustration purposes, we use a simple neural network with 1 hidden layer and 2 neurons. The activation function is `torch.nn.CELU(alpha=1)`.
