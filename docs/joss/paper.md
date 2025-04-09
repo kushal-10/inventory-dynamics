@@ -158,7 +158,7 @@ Solving dual-sourcing problems with `idinn` follows a similar workflow to that o
 
 ### Initialization
 
-To solve dual-sourcing problems, we use the `DualSourcingModel` and `DualSourcingNeuralController` classes, which define the sourcing model and its associated controller.  In this example, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, $c_r$, is 0; the expedited order cost, $c_e$, is 20; and the initial inventory is 6. In addition, the holding cost, $h$, and the out-of-stock cost, $b$, are 5 and 495, respectively. Demand is drawn from a discrete uniform distribution over the integers $\{0,1,\dots,4\}$. In this example, we use a batch size of 256.
+To solve dual-sourcing problems, we use the `DualSourcingModel` and `DualSourcingNeuralController` classes, which define the sourcing model and its associated controller.  In the example below, we examine a dual-sourcing model characterized by the following parameters: the regular order lead time is 2; the expedited order lead time is 0; the regular order cost, $c_r$, is 0; the expedited order cost, $c_e$, is 20; and the initial inventory is 6. In addition, the holding cost, $h$, and the out-of-stock cost, $b$, are 5 and 495, respectively. Demand is drawn from a discrete uniform distribution over the integers $\{0,1,\dots,4\}$. In this example, we use a batch size of 256.
 
 ```python    
 import torch
