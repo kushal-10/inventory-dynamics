@@ -302,7 +302,7 @@ dual_controller_loaded.init_layers(
 dual_controller_loaded.load("optimal_dual_sourcing_controller.pt")
 ```
 
-For other (non-neural) controllers, Python’s pickle utility can be used instead.
+For controllers that are not based on neural networks, Python’s `pickle` module can be used for saving and loading. Further details are provided in the official `idinn` documentation.
 
 # Acknowledgements
 
