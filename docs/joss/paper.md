@@ -266,7 +266,7 @@ To further evaluate a controller's performance in a given sourcing environment, 
 single_controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100)
 ```
 
-In addition to the discrete uniform demand distributions used in the previous sections, custom demand distributions can also be defined using the `CustomDemand` class together with a `demand_generator`. The `CustomDemand` class accepts a dictionary specifying possible demand values and their associated probabilities. An example is shown below.
+In addition to the discrete uniform demand distributions used in the previous sections, custom demand distributions can also be defined using the `CustomDemand` class together with a `demand_generator`. The `CustomDemand` class accepts a dictionary specifying possible demand values and their associated probabilities. We show an example of a dual-sourcing model with custom demand distribution below.
 
 ```python
 from idinn.demand import CustomDemand
