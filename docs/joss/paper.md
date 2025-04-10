@@ -260,7 +260,9 @@ As with the dual-sourcing neural network controller, average costs and order qua
 
 The `idinn` package includes several utility functions for both the `SingleSourcingModel` and `DualSourcingModel` classes.
 
-To further evaluate a controller's performance in a given sourcing environment, users can visualize the inventory and order histories.
+![Figure 1: Evolution of inventory and orders for a neural network controller applied to single-sourcing dynamics.](single_sourcing_output.svg){: width="100%" }
+
+To further evaluate a controller's performance in a given sourcing environment, users can visualize the inventory and order histories (see Figure 1).
 
 ```python
 single_controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100)
