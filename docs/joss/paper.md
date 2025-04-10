@@ -256,7 +256,7 @@ dual_controller_dp.fit(
 )
 ```
 
-As with the previous neural network controller, average costs and orders can be computed with `.get_average_cost()` and `.predit()`, respectively.
+As with the dual-sourcing neural network controller, average costs and order quantities can be computed using the `.get_average_cost()` and `.predict()` methods, respectively.
 
 ## Other utility functions
 
