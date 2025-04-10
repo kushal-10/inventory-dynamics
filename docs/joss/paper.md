@@ -179,7 +179,7 @@ dual_sourcing_model = DualSourcingModel(
 )
 ```
 
-For dual-sourcing problems, we initialize the neural network controller using the `DualSourcingNeuralController` class. We use a simple neural network with 6 hidden layers. The number of neurons in each layer is 128, 64, 32, 16, 8, and 4, respectively. The activation function is `torch.nn.CELU(alpha=1)`.
+To control dual-sourcing dynamics, we first initialize a neural network controller using the `DualSourcingNeuralController` class. We use a simple neural network with six hidden layers. The number of neurons in each layer is 128, 64, 32, 16, 8, and 4, respectively. The activation function is `torch.nn.CELU(alpha=1)`.
 
 ```python
 dual_controller = DualSourcingNeuralController(
