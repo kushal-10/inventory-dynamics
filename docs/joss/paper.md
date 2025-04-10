@@ -111,7 +111,7 @@ single_controller.fit(
 )
 ```
 
-To evaluate the neural network controller, we compute the average cost over a specified number of periods for the previously defined sourcing model. In the following example, we calculate the average cost over 1,000 periods.
+To evaluate the neural network controller, we compute the average cost over a specified number of periods for the previously defined sourcing model. In the following example, the average cost is computed over 1,000 periods.
 
 
 ```python
@@ -215,14 +215,13 @@ dual_controller.fit(
 )
 ```
 
-After training, we can again use the trained neural network controller to calculate the total cost. The total cost should be significantly lower than the cost associated with the untrained model.
+To evaluate the neural network controller, we compute the average cost over a specified number of periods using the previously defined sourcing model. In the example below, the average cost is computed over 1,000 periods.
 
 ```python    
-dual_controller.get_total_cost(
-    sourcing_model=dual_sourcing_model,
-    sourcing_periods=100
-)
+dual_controller.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
 ```
+
+For the selected dual-sourcing parameters, the optimal average cost is 23.07.
 
 ### Order calculation
 
