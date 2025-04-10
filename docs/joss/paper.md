@@ -238,8 +238,7 @@ If the regular and expedited lead-time values are greater than 0, one has to spe
 In addition to the neural network control method, dual-sourcing dynamics can also be managed using capped dual index [@sun2019robust] and dynamic programming controllers. These methods offer valuable baselines for comparison. The example below illustrates how to initialize and train these controllers using the same dual-sourcing model.
 
 ```python
-from idinn.dual_controller import CappedDualIndexController
-from idinn.dual_controller import DynamicProgrammingController
+from idinn.dual_controller import CappedDualIndexController, DynamicProgrammingController
 
 dual_controller_cdi = CappedDualIndexController()
 dual_controller_cdi.fit(
