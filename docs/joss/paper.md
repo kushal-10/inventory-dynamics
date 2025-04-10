@@ -139,15 +139,15 @@ The example below demonstrates how to initialize, fit, and evaluate a base-stock
 ```python
 from idinn.single_controller import BaseStockController
 
-controller_base = BaseStockController()
-controller_base.fit(single_sourcing_model)
-controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
+single_controller_base = BaseStockController()
+single_controller_base.fit(single_sourcing_model)
+single_controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
 ```
 
 As with the neural network controller, order decisions can be made using the `predict` function.
 
 ```python
-controller_base.predict(current_inventory=10)
+single_controller_base.predict(current_inventory=10)
 ```
 
 This function returns the optimal order quantity under the base-stock policy, given a current inventory level of 10.
@@ -235,7 +235,28 @@ If the regular and expedited lead-time values are greater than 0, one has to spe
 
 ### Other dual-sourcing controllers
 
+```python
+from idinn.dual_controller import CappedDualIndexController
 
+dual_controller_cdi = CappedDualIndexController()
+dual_controller_cdi.fit(
+   dual_sourcing_model,
+   sourcing_periods=100
+)
+```
+
+```python
+from idinn.dual_controller import DynamicProgrammingController
+
+dual_controller_dp = DynamicProgrammingController()
+dual_controller_dp.fit(
+   dual_sourcing_model,
+   max_iterations=10000,
+   tolerance=1e-6
+)
+```
+
+As with the previous neural network controller, average costs and orders can be computed with `.get_average_cost()` and `.predit()`, respectively.
 
 ## Other utility functions
 
