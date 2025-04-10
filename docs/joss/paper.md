@@ -179,6 +179,14 @@ dual_sourcing_model = DualSourcingModel(
 )
 ```
 
+In dual-sourcing dynamics, the cost at period $t$, $c_t$, is
+
+$$
+c_t = c_r q^r_t + c_e q^e_t + h \max(0, I_t) + b \max(0, - I_t)\,,
+$$
+
+where $I_t$ is the inventory level at the end of period $t$, $q^r_t$ is the regular order placed in period $t$, and $q^e_t$ is the expedited order placed in period $t$. The higher the holding cost, the more expensive it is to keep inventory positive and high. The higher the out-of-stock cost, the more expensive it is to run out of stock when inventory is negative. The higher the regular and expedited order costs, the more expensive it is to place those orders.
+
 To control dual-sourcing dynamics, we first initialize a neural network controller using the `DualSourcingNeuralController` class. We use a simple neural network with six hidden layers. The number of neurons in each layer is 128, 64, 32, 16, 8, and 4, respectively. The activation function is `torch.nn.CELU(alpha=1)`.
 
 ```python
@@ -187,6 +195,8 @@ dual_controller = DualSourcingNeuralController(
     activation=torch.nn.CELU(alpha=1)
 )
 ```
+
+The inputs to the controller are the inventory level, $I_t$, and the history of past orders. Since there are now two suppliers in the system, we need to include the order history of both suppliers. Therefore, the inputs associated with the past orders are $(q^r_{t-1}, \dots, q^r_{t-l_r}, q^e_{t-1}, \dots, q^e_{t-l_e})$. The cost for each period is calculated in a similar way as in single-sourcing models: past orders arrive, new orders are placed, and demand is realized. Then the costs for each period are summed to calculate the total cost. The interested reader is referred to @bottcher2023control for more details. 
 
 ### Training
 
