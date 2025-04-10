@@ -293,14 +293,16 @@ dual_controller.save("optimal_dual_sourcing_controller.pt")
 # Load the model
 dual_controller_loaded = DualSourcingNeuralController(
     hidden_layers=[128, 64, 32, 16, 8, 4],
-    activation=torch.nn.CELU(alpha=1),
+    activation=torch.nn.CELU(alpha=1)
 )
 dual_controller_loaded.init_layers(
     regular_lead_time=2,
-    expedited_lead_time=0,
+    expedited_lead_time=0
 )
 dual_controller_loaded.load("optimal_dual_sourcing_controller.pt")
 ```
+
+For other (non-neural) controllers, Python’s pickle utility can be used instead.
 
 # Acknowledgements
 
