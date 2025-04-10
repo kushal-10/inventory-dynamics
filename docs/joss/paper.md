@@ -187,7 +187,7 @@ $$
 
 where $I_t$ is the inventory level at the end of period $t$, $q^r_t$ is the regular order placed in period $t$, and $q^e_t$ is the expedited order placed in period $t$. The higher the holding cost, the more expensive it is to keep inventory positive and high. The higher the out-of-stock cost, the more expensive it is to run out of stock when inventory is negative. The higher the regular and expedited order costs, the more expensive it is to place those orders.
 
-To control dual-sourcing dynamics, we first initialize a neural network controller using the `DualSourcingNeuralController` class. We use a simple neural network with six hidden layers. The number of neurons in each layer is 128, 64, 32, 16, 8, and 4, respectively. The activation function is `torch.nn.CELU(alpha=1)`.
+To control dual-sourcing dynamics, we initialize a neural network controller using the `DualSourcingNeuralController` class. We use a simple neural network with six hidden layers. The number of neurons in each layer is 128, 64, 32, 16, 8, and 4, respectively. The activation function is `torch.nn.CELU(alpha=1)`.
 
 ```python
 dual_controller = DualSourcingNeuralController(
