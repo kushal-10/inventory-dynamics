@@ -233,6 +233,10 @@ dual_controller.predict(current_inventory=10, past_regular_orders=[1, 1], past_e
 
 If the regular and expedited lead-time values are greater than 0, one has to specify the corresponding `past_regular_orders` and `past_expedited_orders`.
 
+### Other dual-sourcing controllers
+
+
+
 ## Other utility functions
 
 The `idinn` package provides several utility functions for both the `SingleSourcingModel` and `DualSourcingModel` class.
