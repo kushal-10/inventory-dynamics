@@ -73,7 +73,7 @@ single_sourcing_model = SingleSourcingModel(
     shortage_cost=495,
     batch_size=32,
     init_inventory=10,
-    demand_generator=UniformDemand(low=0, high=4),
+    demand_generator=UniformDemand(low=0, high=4)
 )
 ```
 
@@ -190,33 +190,18 @@ dual_controller = DualSourcingNeuralController(
 
 ### Training
 
-Similar to the single-sourcing case, the cost over all periods can be calculated using the controller's `get_total_cost()` method. The inputs to the controller are the inventory level, $I_t$, and the history of past orders. However, since there are now two suppliers in the system, we need to include the order history of both suppliers. Therefore, the inputs for the past orders should be written as $(q^r_{t-1}, \dots, q^r_{t-l_r}, q^e_{t-1}, \dots, q^e_{t-l_e})$. The cost for each period is calculated in a similar way as in single-sourcing models: past orders arrive, new orders are placed, and demand is realized. Then the costs for each period are summed to calculate the total cost. The interested reader is referred to @bottcher2023control for more details. 
-
-```python    
-dual_controller.get_total_cost(
-    sourcing_model=single_sourcing_model,
-    sourcing_periods=100
-)
-```
-
-A sample output is as follows.
-
-```
-tensor(5878623., grad_fn=<AddBackward0>)
-```
-
-In the same way as in the previous section, we can train the neural network controller using the `fit()` method.
+As in the previous section, we train the neural network controller using the `fit()` method.
 
 ```python
 from torch.utils.tensorboard import SummaryWriter
 
 dual_controller.fit(
     sourcing_model=dual_sourcing_model,
-    sourcing_periods=50,
+    sourcing_periods=100,
     validation_sourcing_periods=1000,
-    epochs=1000,
-    tensorboard_writer=SummaryWriter(comment="_dual_1234"),
-    seed=1234
+    epochs=2000,
+    tensorboard_writer=SummaryWriter(comment="dual"),
+    seed=123
 )
 ```
 
@@ -227,12 +212,6 @@ dual_controller.get_total_cost(
     sourcing_model=dual_sourcing_model,
     sourcing_periods=100
 )
-```
-
-The following is a sample output.
-
-```
-tensor(1940.0391, grad_fn=<AddBackward0>)
 ```
 
 ### Order calculation
