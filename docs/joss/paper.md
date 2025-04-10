@@ -134,7 +134,7 @@ This function returns the order quantity under the `single_controller` policy, g
 
 In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller [@arrow1951optimal; @scarf1958inventory]. This approach provides a useful baseline for comparison and is often employed in inventory management due to its simplicity and interpretability.
 
-The example below demonstrates how to initialize, fit, and evaluate a base-stock controller using the same single-sourcing model.
+The example below demonstrates how to initialize, train, and evaluate a base-stock controller using the same single-sourcing model.
 
 ```python
 from idinn.single_controller import BaseStockController
@@ -235,18 +235,17 @@ If the regular and expedited lead-time values are greater than 0, one has to spe
 
 ### Other dual-sourcing controllers
 
+In addition to the neural network control method, dual-sourcing dynamics can also be managed using capped dual index [@sun2019robust] and dynamic programming controllers. These methods offer valuable baselines for comparison. The example below illustrates how to initialize and train these controllers using the same dual-sourcing model.
+
 ```python
 from idinn.dual_controller import CappedDualIndexController
+from idinn.dual_controller import DynamicProgrammingController
 
 dual_controller_cdi = CappedDualIndexController()
 dual_controller_cdi.fit(
    dual_sourcing_model,
    sourcing_periods=100
 )
-```
-
-```python
-from idinn.dual_controller import DynamicProgrammingController
 
 dual_controller_dp = DynamicProgrammingController()
 dual_controller_dp.fit(
