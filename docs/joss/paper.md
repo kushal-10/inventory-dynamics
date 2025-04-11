@@ -141,7 +141,7 @@ from idinn.single_controller import BaseStockController
 
 single_controller_base = BaseStockController()
 single_controller_base.fit(single_sourcing_model)
-single_controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000).mean()
+single_controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000)
 ```
 
 As with the neural network controller, order decisions can be made using the `predict` function.
