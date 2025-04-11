@@ -51,7 +51,7 @@ We now present two examples to demonstrate how the :class:`BaseStockController` 
    >>> print(f"z_star: {controller_base.z_star}")
    z_star: 4
    >>> # Avg. cost near 10
-   >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42).mean()
+   >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
    >>> print(f"Average Cost: {avg_cost:.2f}")
    Average Cost: 10.39
 
@@ -69,7 +69,7 @@ We now present two examples to demonstrate how the :class:`BaseStockController` 
    >>> print(f"z_star: {controller_base.z_star}")
    z_star: 11
    >>> # Avg. cost near 29
-   >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42).mean()
+   >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
    >>> print(f"Average Cost: {avg_cost:.2f}")
    Average Cost: 29.53
 
