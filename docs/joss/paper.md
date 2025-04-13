@@ -196,7 +196,7 @@ dual_controller = DualSourcingNeuralController(
 )
 ```
 
-The inputs to the controller are the inventory level, $I_t$, and the history of past orders. Since there are now two suppliers in the system, we need to include the order history of both suppliers. Therefore, the inputs associated with the past orders are $(q^r_{t-1}, \dots, q^r_{t-l_r}, q^e_{t-1}, \dots, q^e_{t-l_e})$. The cost for each period is calculated similarly to the single-sourcing model: past orders arrive, new orders are placed, and demand is realized. The objective remains to identify an ordering policy that minimizes total costs over a given time horizon. The interested reader is referred to @bottcher2023control for more details. 
+The inputs to the controller are the inventory level, $I_t$, and the history of past orders. Since there are now two suppliers in the system, we need to include the order history of both suppliers. Therefore, the inputs associated with the past orders are $(q^r_{t-1}, \dots, q^r_{t-l_r}, q^e_{t-1}, \dots, q^e_{t-l_e})$. The sequence of events in dual-sourcing dynamics is similar to that in the single-sourcing model: past orders arrive, new orders are placed, and demand is realized. The objective remains to identify an ordering policy that minimizes total costs over a given time horizon. The interested reader is referred to @bottcher2023control for more details. 
 
 ### Training
 
