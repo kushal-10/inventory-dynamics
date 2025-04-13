@@ -228,7 +228,8 @@ For the selected dual-sourcing parameters, the optimal average cost is 23.07.
 For a given dual-sourcing controller, orders can be computed as follows.
 
 ```python
-dual_controller.predict(current_inventory=10, past_regular_orders=[1, 1], past_expedited_orders=None)
+dual_controller.predict(current_inventory=10, past_regular_orders=[1, 1], \
+                        past_expedited_orders=None)
 ```
 
 If the regular and expedited lead-time values are greater than 0, one has to specify the corresponding `past_regular_orders` and `past_expedited_orders`.
