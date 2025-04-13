@@ -179,7 +179,7 @@ dual_sourcing_model = DualSourcingModel(
 )
 ```
 
-In dual-sourcing dynamics, the cost in period $t$, $c_t$, is
+In dual-sourcing dynamics, the cost in period $t$ is
 
 $$
 c_t = c_r q^r_t + c_e q^e_t + h \max(0, I_t) + b \max(0, - I_t)\,,
