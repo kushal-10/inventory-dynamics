@@ -228,8 +228,11 @@ For the selected dual-sourcing parameters, the optimal average cost is 23.07.
 For a given dual-sourcing controller, orders can be computed as follows.
 
 ```python
-dual_controller.predict(current_inventory=10, past_regular_orders=[1, 1], \
-                        past_expedited_orders=None)
+dual_controller.predict(
+  current_inventory=10,
+  past_regular_orders=[1, 1],
+  past_expedited_orders=None
+)
 ```
 
 If the regular and expedited lead-time values are greater than 0, one has to specify the corresponding `past_regular_orders` and `past_expedited_orders`.
@@ -239,7 +242,10 @@ If the regular and expedited lead-time values are greater than 0, one has to spe
 In addition to the neural network control method, dual-sourcing dynamics can also be managed using capped dual index [@sun2019robust] and dynamic programming controllers. These methods offer valuable baselines for comparison. The example below illustrates how to initialize and train these controllers using the same dual-sourcing model.
 
 ```python
-from idinn.dual_controller import CappedDualIndexController, DynamicProgrammingController
+from idinn.dual_controller import (
+    CappedDualIndexController,
+    DynamicProgrammingController,
+)
 
 dual_controller_cdi = CappedDualIndexController()
 dual_controller_cdi.fit(
