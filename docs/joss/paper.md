@@ -288,7 +288,7 @@ dual_sourcing_model = DualSourcingModel(
     holding_cost=5,
     shortage_cost=495,
     init_inventory=0,
-    demand_generator=CustomDemand({5: 0.02, 6: 0.9, 7: 0.02, 8: 0.02, 9: 0.02, 10: 0.02})
+    demand_generator=CustomDemand({5:0.02, 6:0.9, 7:0.02, 8:0.02, 9:0.02, 10:0.02})
 )
 ```
 
