@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, no_type_check
 
 import torch
 
@@ -21,6 +21,7 @@ class BaseStockController(BaseSingleController):
         self.z_star: Optional[int] = None
         logger.info("Initialized `BaseStockController`")
 
+    @no_type_check
     def fit(
         self,
         sourcing_model: SingleSourcingModel,

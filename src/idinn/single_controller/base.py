@@ -10,7 +10,11 @@ from ..sourcing_model import SingleSourcingModel
 
 class BaseSingleController(metaclass=ABCMeta):
     @abstractmethod
-    def fit(self, sourcing_model: SingleSourcingModel) -> None:
+    def fit(
+        self,
+        sourcing_model: SingleSourcingModel,
+        **kwargs,
+    ) -> None:
         """
         Fit the controller to the sourcing model.
         """

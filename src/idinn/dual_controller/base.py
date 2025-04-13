@@ -11,7 +11,7 @@ from ..sourcing_model import DualSourcingModel
 
 class BaseDualController(metaclass=ABCMeta):
     @abstractmethod
-    def fit(self, sourcing_model: DualSourcingModel) -> None:
+    def fit(self, sourcing_model: DualSourcingModel, **kwargs) -> None:
         """
         Fit the controller to the sourcing model.
         """
