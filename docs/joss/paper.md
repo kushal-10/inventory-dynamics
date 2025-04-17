@@ -53,7 +53,7 @@ Training neural networks for inventory-dynamics control presents a unique challe
 
 # Example usage
 
-As an example, we describe how to solve single-sourcing problems using `idinn`, which helps determine optimal order quantities to minimize inventory costs under uncertain demand. Excess inventory incurs a holding cost $h$, while unmet demand results in an out-of-stock cost $b$. With `idinn`, we initialize the sourcing model and neural network controller, train the controller on cost data from the model, and use the trained controller to compute near-optimal, state-dependent order quantities.
+As an example, we describe how to solve single-sourcing problems using `idinn`. Excess inventory incurs a holding cost $h$, while unmet demand results in an out-of-stock cost $b$. With `idinn`, we initialize the sourcing model and neural network controller, train the controller on cost data from the model, and use the trained controller to compute near-optimal, state-dependent order quantities.
 
 ## Initialization
 
