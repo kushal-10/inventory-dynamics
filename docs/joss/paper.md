@@ -55,7 +55,7 @@ Training neural networks for inventory-dynamics control presents a unique challe
 
 As an example, we describe how to solve single-sourcing problems using `idinn`, which helps determine optimal order quantities to minimize inventory costs under uncertain demand. Excess inventory incurs a holding cost $h$, while unmet demand results in an out-of-stock cost $b$. With `idinn`, we initialize the sourcing model and neural network controller, train the controller on cost data from the model, and use the trained controller to compute near-optimal, state-dependent order quantities.
 
-### Initialization
+## Initialization
 
 We use the `SingleSourcingModel` class to initialize a single-sourcing model.
 
@@ -86,9 +86,9 @@ single_controller = SingleSourcingNeuralController(
 )
 ```
 
-### Training
+## Training
 
-We train the neural network controller using the `fit()` method, with training data generated from the considered sourcing model. To monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
+We train the neural network controller using the `fit()` method. To monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
 
 ```python
 from torch.utils.tensorboard import SummaryWriter
@@ -120,7 +120,7 @@ To further evaluate a controller's performance in a given sourcing environment, 
 single_controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100)
 ```
 
-### Order calculation
+## Order calculation
 
 For a given inventory level and trained controller, we use the `predict` function to compute the corresponding orders. In the following example, we set the current inventory level to 10.
 
@@ -130,30 +130,13 @@ single_controller.predict(current_inventory=10)
 
 This function returns the order quantity under the `single_controller` policy, given a current inventory level of 10.
 
-### Base-stock controller
+## Further controllers
 
-In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller [@arrow1951optimal; @scarf1958inventory]. This approach provides a useful baseline for comparison and is often employed in inventory management due to its simplicity and interpretability.
+In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller [@arrow1951optimal; @scarf1958inventory]. `idinn` provides such a controller in the `BaseStockController` class.
 
 The example below demonstrates how to initialize, train, and evaluate a base-stock controller using the same single-sourcing model.
 
-```python
-from idinn.single_controller import BaseStockController
-
-single_controller_base = BaseStockController()
-single_controller_base.fit(single_sourcing_model)
-single_controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000)
-```
-
-As with the neural network controller, order decisions can be made using the `predict` function.
-
-```python
-single_controller_base.predict(current_inventory=10)
-```
-
-This function returns the optimal order quantity under the base-stock policy, given a current inventory level of 10.
-
-To solve dual-sourcing problems, we use the `DualSourcingModel` and `DualSourcingNeuralController` classes, 
-In addition to the neural network control method, dual-sourcing dynamics can also be managed using capped dual index [@sun2019robust] and dynamic programming controllers. These methods offer valuable baselines for comparison. The example below illustrates how to initialize and train these controllers using the same dual-sourcing model.
+To solve dual-sourcing problems, we use the `DualSourcingModel` and `DualSourcingNeuralController` classes. Dual-sourcing dynamics can also be managed using capped dual index [@sun2019robust] and dynamic programming controllers. These methods offer valuable baselines for comparison. 
 
 # Acknowledgements
 
