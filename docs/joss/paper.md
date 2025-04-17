@@ -88,7 +88,7 @@ single_controller = SingleSourcingNeuralController(
 
 ## Training
 
-We train the neural network controller using the `fit()` method. To monitor the training process, we specify the `tensorboard_writer` parameter to log both the training loss and the validation loss. For reproducibility, we also specify the seed of the underlying random number generator using the `seed` parameter.
+We train the neural network controller using the `fit()` method. To monitor the training process, we specify the `tensorboard_writer` parameter.
 
 ```python
 from torch.utils.tensorboard import SummaryWriter
@@ -103,8 +103,7 @@ single_controller.fit(
 )
 ```
 
-To evaluate the neural network controller, we compute the average cost over a specified number of periods for the previously defined sourcing model. In the following example, the average cost is computed over 1,000 periods.
-
+To evaluate the neural network controller, we compute the average cost over a specified number of periods for the previously defined sourcing model. 
 
 ```python
 single_controller.get_average_cost(single_sourcing_model, sourcing_periods=1000)
@@ -122,13 +121,11 @@ single_controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=10
 
 ## Order calculation
 
-For a given inventory level and trained controller, we use the `predict` function to compute the corresponding orders. In the following example, we set the current inventory level to 10.
+For a given inventory level and trained controller, we use the `predict` function to compute the corresponding orders.
 
 ```python
 single_controller.predict(current_inventory=10)
 ```
-
-This function returns the order quantity under the `single_controller` policy, given a current inventory level of 10.
 
 ## Further controllers
 
