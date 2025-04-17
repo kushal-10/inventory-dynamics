@@ -75,6 +75,8 @@ single_sourcing_model = SingleSourcingModel(
 )
 ```
 
+This single-sourcing model has a lead time of 0 (i.e., an order arrives immediately after it is placed) and an initial inventory of 10. The holding cost, $h$, and the out-of-stock cost, $b$, are 5 and 495, respectively. Demand is drawn from a discrete uniform distribution over the integers $\{0,1,\dots,4\}$. We use a batch size of 32 to train the neural network, i.e., the sourcing model generates 32 samples simultaneously.
+
 To identify an ordering policy that minimizes total costs over a given time horizon, we initialize a neural network controller using the `SingleSourcingNeuralController` class. For illustration purposes, we use a simple neural network with 1 hidden layer and 2 neurons. The activation function is `torch.nn.CELU(alpha=1)`.
 
 ```python
