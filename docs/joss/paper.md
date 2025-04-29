@@ -129,7 +129,7 @@ single_controller.predict(current_inventory=10)
 
 ## Additional control methods
 
-In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller [@arrow1951optimal; @scarf1958inventory], available in idinn as the `BaseStockController` class.
+In addition to the neural network control method, single-sourcing dynamics can also be managed using a traditional base-stock controller [@arrow1951optimal; @scarf1958inventory], available in `idinn` as the `BaseStockController` class.
 
 For dual-sourcing problems, `idinn` supports both neural and classical control approaches. Neural control is provided through the `DualSourcingModel` and `DualSourcingNeuralController` classes. Classical methods include the capped dual index controller [@sun2019robust] and a dynamic programming-based controller, implemented in the `CappedDualIndexController` and `DynamicProgrammingController` classes, respectively.
 
