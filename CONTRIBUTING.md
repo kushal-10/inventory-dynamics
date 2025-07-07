@@ -23,7 +23,7 @@ Want to contribute a new feature or fix a bug? Follow these steps:
    ```bash
    git clone https://gitlab.com/<your-gitlab-username>/idinn
    cd idinn
-````
+   ```
 
 3. **Set up the environment** using [`uv`](https://github.com/astral-sh/uv):
 
@@ -50,14 +50,11 @@ Want to contribute a new feature or fix a bug? Follow these steps:
    ```
 8. **Open a Merge Request (MR)** to the `idinn` repository.
 
----
-
 ## Style Guide
 
 ### Code Formatting
 
-* Follow [PEP 8](https://peps.python.org/pep-0008/) guidelines.
-* Use [`ruff`](https://docs.astral.sh/ruff/) (with default settings) for linting and formatting:
+The code should follow [PEP 8](https://peps.python.org/pep-0008/) guidelines. Use [`ruff`](https://docs.astral.sh/ruff/) (with default settings) for linting and formatting:
 
   ```bash
   ruff check .
