@@ -84,6 +84,10 @@ For more in-depth documentation, please refer to the [documentation](https://inv
 
 ```
 
+## Contributing
+
+We welcome contributions of all kinds! To get started, please see our [contribution guide](CONTRIBUTING.md).
+
 ## Contributors
 
 * [Jiawei Li](https://github.com/iewaij)
