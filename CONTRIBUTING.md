@@ -66,8 +66,8 @@ Use [NumPy-style docstrings](https://numpydoc.readthedocs.io/en/latest/format.ht
 The code should follow [PEP 8](https://peps.python.org/pep-0008/) guidelines. Use [`ruff`](https://docs.astral.sh/ruff/) (with default settings) for linting and formatting:
 
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
 ```
 
 ## Documentation
