@@ -28,49 +28,46 @@ Want to contribute a new feature or fix a bug? Follow these steps:
 3. **Set up the environment** using [`uv`](https://github.com/astral-sh/uv):
 
    ```bash
-   uv add ???
+   uv sync --group dev --python 3.12
    ```
 4. **Create a new branch** for your changes:
 
    ```bash
-   git switch -c your-feature-branch
+   git switch -c your-branch
    ```
 5. **Implement your changes**, and write tests (if applicable) under the `tests/` directory.
 6. **Run tests** using `pytest`:
 
    ```bash
-   pytest
+   uv run pytest tests/
    ```
-7. **Commit and push** your changes:
+7. **Run type checks** using `mypy` under the `tests/` directory.:
+
+   ```bash
+   uv run mypy src/
+   ```
+8. **Commit and push** your changes:
 
    ```bash
    git add .
    git commit -m "Describe your changes"
-   git push origin your-feature-branch
+   git push
    ```
-8. **Open a Merge Request (MR)** to the `idinn` repository.
+9. **Open a Merge Request (MR)** to the `idinn` repository.
 
 ## Style Guide
-
-### Code Formatting
-
-The code should follow [PEP 8](https://peps.python.org/pep-0008/) guidelines. Use [`ruff`](https://docs.astral.sh/ruff/) (with default settings) for linting and formatting:
-
-  ```bash
-  ruff check .
-  ruff format .
-  ```
 
 ### Docstrings
 
 Use [NumPy-style docstrings](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) for documenting functions, classes, and modules.
 
-### Type Checking
+### Code Formatting
 
-Ensure type correctness using [`mypy`](https://mypy-lang.org/):
+The code should follow [PEP 8](https://peps.python.org/pep-0008/) guidelines. Use [`ruff`](https://docs.astral.sh/ruff/) (with default settings) for linting and formatting:
 
 ```bash
-mypy .
+ruff check .
+ruff format .
 ```
 
 ## Documentation
