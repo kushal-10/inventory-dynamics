@@ -67,6 +67,10 @@ controller.predict(current_inventory=10, past_orders=[1, 5])
 
 For more in-depth documentation, please refer to the [documentation](https://inventory-optimization.readthedocs.io/en/latest/).
 
+## Contribution
+
+We welcome contributions of all kinds! To get started, please see our [contribution guide](CONTRIBUTING.md).
+
 ## Papers using `idinn`
 
 * Böttcher, Lucas, Thomas Asikis, and Ioannis Fragkos. "Control of Dual-Sourcing Inventory Systems Using Recurrent Neural Networks." [INFORMS Journal on Computing](https://pubsonline.informs.org/doi/abs/10.1287/ijoc.2022.0136) 35.6 (2023): 1308-1328.
@@ -81,12 +85,7 @@ For more in-depth documentation, please refer to the [documentation](https://inv
   pages={1308--1328},
   year={2023}
 }
-
 ```
-
-## Contributing
-
-We welcome contributions of all kinds! To get started, please see our [contribution guide](CONTRIBUTING.md).
 
 ## Contributors
 
