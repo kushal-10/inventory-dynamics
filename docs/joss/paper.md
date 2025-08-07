@@ -51,6 +51,8 @@ Training neural networks for inventory-dynamics control presents a unique challe
 
 `idinn` has been developed for researchers, practitioners, and students working at the intersection of optimization, operations research, and machine learning. It has been made available to students in a machine learning course at the Frankfurt School of Finance & Management, as well as in a tutorial at the California State University, Northridge. In a previous publication [@bottcher2023control], a proof-of-concept codebase was used to compute near-optimal solutions of dozens of dual-sourcing instances.
 
+While general-purpose reinforcement learning libraries like ``Stable Baselines3`` [@stable-baselines3] support policy optimization, they do not offer inventory-specific modeling or enforce integer constraints required for replenishment decisions. A related, more specialized library, ``ddop`` [@Philippi2021], focuses on supervised learning for operations management, but does not address multi-period inventory dynamics. ``Abmarl`` [@Rusu2021] connects multi-agent reinforcement learning with agent-based simulations, primarily in grid-world environments. In contrast, ``idinn`` is tailored to single- and dual-sourcing problems, combining domain-specific inventory dynamics with neural networks and integer-constrained outputs.
+
 # Example usage
 
 As an example, we describe how to solve single-sourcing problems using `idinn`. Excess inventory incurs a holding cost $h$, while unmet demand results in an out-of-stock cost $b$. With `idinn`, we initialize the sourcing model and neural network controller, train the controller on cost data from the model, and use the trained controller to compute near-optimal, state-dependent order quantities.
