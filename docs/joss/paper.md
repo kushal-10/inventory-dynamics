@@ -17,6 +17,7 @@ authors:
     orcid: 0000-0003-0163-4622
     affiliation: 2
   - name: Ioannis Fragkos
+    orcid: 0000-0001-7654-2314
     affiliation: 3
   - name: Lucas Böttcher
     affiliation: "1,4"
