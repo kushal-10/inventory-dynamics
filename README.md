@@ -33,7 +33,7 @@ pip install -e .
 ```python
 import torch
 from idinn.sourcing_model import SingleSourcingModel
-from idinn.controller import SingleSourcingNeuralController
+from idinn.single_controller import SingleSourcingNeuralController
 from idinn.demand import UniformDemand
 
 # Initialize the sourcing model and the neural controller
@@ -60,7 +60,7 @@ controller.fit(
 # Simulate and plot the results
 controller.plot(sourcing_model=sourcing_model, sourcing_periods=100)
 # Calculate the optimal order quantity for applications
-controller.predict(current_inventory=10, past_orders=[1, 5])
+controller.predict(current_inventory=10)
 ```
 
 ## Documentation
