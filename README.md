@@ -65,7 +65,7 @@ controller.predict(current_inventory=10)
 
 ## Documentation
 
-For a more detailed documentation, please refer to our official [documentation](https://inventory-optimization.readthedocs.io/en/latest/).
+See the official [documentation](https://inventory-optimization.readthedocs.io/en/latest/) for more information.
 
 ## Contribution
 
