@@ -74,7 +74,9 @@ We welcome contributions of all kinds! To get started, please see our [contribut
 
 ## Papers using `idinn`
 
-* Böttcher, Lucas, Thomas Asikis, and Ioannis Fragkos. "Control of Dual-Sourcing Inventory Systems Using Recurrent Neural Networks." [INFORMS Journal on Computing](https://pubsonline.informs.org/doi/abs/10.1287/ijoc.2022.0136) 35.6 (2023): 1308-1328.
+* Böttcher, Lucas, Thomas Asikis, and Ioannis Fragkos. "Control of dual-sourcing inventory systems using recurrent neural networks." [INFORMS Journal on Computing](https://pubsonline.informs.org/doi/abs/10.1287/ijoc.2022.0136) 35.6 (2023): 1308-1328.
+* Li, Jiawei, Thomas Asikis, Ioannis Fragkos, and Böttcher, Lucas. "idinn: A Python package for inventory-dynamics control with neural networks." [Journal of Open Source Software](https://joss.theoj.org/papers/10.21105/joss.08508#) 10.112 (2025): 8508.
+
 
 ```
 @article{bottcher2023control,
@@ -85,6 +87,18 @@ We welcome contributions of all kinds! To get started, please see our [contribut
   number={6},
   pages={1308--1328},
   year={2023}
+}
+```
+
+```
+@article{li2025, 
+title = {idinn: A {P}ython package for inventory-dynamics control with neural networks}, 
+author = {Li, Jiawei and Asikis, Thomas and Fragkos, Ioannis and B{\"o}ttcher, Lucas}, 
+journal = {Journal of Open Source Software},
+volume = {10}, 
+number = {112}, 
+pages = {8508}, 
+year = {2025}
 }
 ```
 
