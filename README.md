@@ -3,6 +3,7 @@
 [![PyPI Latest Release](https://img.shields.io/pypi/v/idinn.svg)](https://pypi.org/project/idinn/)
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1BAMiveGXmErIp10MK3V_SUJlDAXHAyaI)
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://idinn-demo.streamlit.app)
+[![status](https://joss.theoj.org/papers/224380be40f3be0b741a4ec711eac83b/status.svg)](https://joss.theoj.org/papers/224380be40f3be0b741a4ec711eac83b)
 
 [<img src="https://gitlab.com/ComputationalScience/idinn/-/raw/main/docs/_static/youtube.png" align="center" width="60%" size="auto" alt="youtube">](https://www.youtube.com/watch?v=hUBfTWV6tWQ)
 
