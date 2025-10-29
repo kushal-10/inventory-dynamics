@@ -24,6 +24,106 @@ Example Usage
 .. doctest:: python
 
    >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # Initialize the sourcing model
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     batch_size=32,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=1, high=4),
+      ... )
+
+      >>> # Initialize a controller
+      >>> controller = BaseStockController()
+
+      >>> # Train the controller
+      >>> controller.fit(sourcing_model=single_sourcing_model,sourcing_periods=,epochs=,seed=42)
+
+      >>> # Simulate and plot the results
+      >>> controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100) # doctest: +SKIP
+
+      >>> # Calculate the optimal order quantity for applications
+      >>> controller.predict(current_inventory=10, past_orders=[1, 5])
+      0
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # Initialize the sourcing model
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     batch_size=32,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=1, high=4),
+      ... )
+
+      >>> # Initialize a controller
+      >>> controller = BaseStockController()
+
+      >>> # Train the controller
+      >>> controller.fit(sourcing_model=single_sourcing_model,sourcing_periods=,epochs=,seed=42)
+
+      >>> # Simulate and plot the results
+      >>> controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100) # doctest: +SKIP
+
+      >>> # Calculate the optimal order quantity for applications
+      >>> controller.predict(current_inventory=10, past_orders=[1, 5])
+      0
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # Initialize the sourcing model
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     batch_size=32,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=1, high=4),
+      ... )
+
+      >>> # Initialize a controller
+      >>> controller = BaseStockController()
+
+      >>> # Train the controller
+      >>> controller.fit(sourcing_model=single_sourcing_model,sourcing_periods=,epochs=,seed=42)
+
+      >>> # Simulate and plot the results
+      >>> controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100) # doctest: +SKIP
+
+      >>> # Calculate the optimal order quantity for applications
+      >>> controller.predict(current_inventory=10, past_orders=[1, 5])
+      0
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # Initialize the sourcing model
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     batch_size=32,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=1, high=4),
+      ... )
+
+      >>> # Initialize a controller
+      >>> controller = BaseStockController()
+
+      >>> # Train the controller
+      >>> controller.fit(sourcing_model=single_sourcing_model,sourcing_periods=,epochs=,seed=42)
+
+      >>> # Simulate and plot the results
+      >>> controller.plot(sourcing_model=single_sourcing_model, sourcing_periods=100) # doctest: +SKIP
+
+      >>> # Calculate the optimal order quantity for applications
+      >>> controller.predict(current_inventory=10, past_orders=[1, 5])
+      0
    >>> from idinn.single_controller import BaseStockController
    >>> from idinn.demand import UniformDemand
 

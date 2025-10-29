@@ -28,6 +28,114 @@ We now present one example to demonstrate how the :class:`DualSourcingNeuralCont
 .. doctest::
     
     >>> import torch
+        >>> from idinn.sourcing_model import DualSourcingModel
+        >>> from idinn.dual_controller import DualSourcingNeuralController
+        >>> from idinn.demand import UniformDemand
+        >>> from torch.utils.tensorboard import SummaryWriter
+
+        >>> dual_sourcing_model = DualSourcingModel(
+        ...     regular_lead_time=2,
+        ...     expedited_lead_time=0,
+        ...     regular_order_cost=0,
+        ...     expedited_order_cost=20,
+        ...     holding_cost=5,
+        ...     shortage_cost=495,
+        ...     batch_size=256,
+        ...     init_inventory=6,
+        ...     demand_generator=UniformDemand(low=0, high=4),
+        ... )
+        >>> controller_neural = DualSourcingNeuralController(
+        ...     hidden_layers=[128, 64, 32, 16, 8, 4],
+        ...     activation=torch.nn.CELU(alpha=1)
+        ... )
+        >>> controller_neural.fit(sourcing_model=dual_sourcing_model,sourcing_periods=100,epochs=2000,validation_sourcing_periods=1000,tensorboard_writer=SummaryWriter(comment="dual"),seed=123)
+        >>> # Avg. cost near 24
+        >>> avg_cost = controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+        >>> print(f"Average cost: {avg_cost:.2f}")
+        Average cost: 24.00
+
+    Adjusting parameters such as
+        >>> from idinn.sourcing_model import DualSourcingModel
+        >>> from idinn.dual_controller import DualSourcingNeuralController
+        >>> from idinn.demand import UniformDemand
+        >>> from torch.utils.tensorboard import SummaryWriter
+
+        >>> dual_sourcing_model = DualSourcingModel(
+        ...     regular_lead_time=2,
+        ...     expedited_lead_time=0,
+        ...     regular_order_cost=0,
+        ...     expedited_order_cost=20,
+        ...     holding_cost=5,
+        ...     shortage_cost=495,
+        ...     batch_size=256,
+        ...     init_inventory=6,
+        ...     demand_generator=UniformDemand(low=0, high=4),
+        ... )
+        >>> controller_neural = DualSourcingNeuralController(
+        ...     hidden_layers=[128, 64, 32, 16, 8, 4],
+        ...     activation=torch.nn.CELU(alpha=1)
+        ... )
+        >>> controller_neural.fit(sourcing_model=dual_sourcing_model,sourcing_periods=100,epochs=2000,validation_sourcing_periods=1000,tensorboard_writer=SummaryWriter(comment="dual"),seed=123)
+        >>> # Avg. cost near 24
+        >>> avg_cost = controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+        >>> print(f"Average cost: {avg_cost:.2f}")
+        Average cost: 24.00
+
+    Adjusting parameters such as
+        >>> from idinn.sourcing_model import DualSourcingModel
+        >>> from idinn.dual_controller import DualSourcingNeuralController
+        >>> from idinn.demand import UniformDemand
+        >>> from torch.utils.tensorboard import SummaryWriter
+
+        >>> dual_sourcing_model = DualSourcingModel(
+        ...     regular_lead_time=2,
+        ...     expedited_lead_time=0,
+        ...     regular_order_cost=0,
+        ...     expedited_order_cost=20,
+        ...     holding_cost=5,
+        ...     shortage_cost=495,
+        ...     batch_size=256,
+        ...     init_inventory=6,
+        ...     demand_generator=UniformDemand(low=0, high=4),
+        ... )
+        >>> controller_neural = DualSourcingNeuralController(
+        ...     hidden_layers=[128, 64, 32, 16, 8, 4],
+        ...     activation=torch.nn.CELU(alpha=1)
+        ... )
+        >>> controller_neural.fit(sourcing_model=dual_sourcing_model,sourcing_periods=100,epochs=2000,validation_sourcing_periods=1000,tensorboard_writer=SummaryWriter(comment="dual"),seed=123)
+        >>> # Avg. cost near 24
+        >>> avg_cost = controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+        >>> print(f"Average cost: {avg_cost:.2f}")
+        Average cost: 24.00
+
+    Adjusting parameters such as
+        >>> from idinn.sourcing_model import DualSourcingModel
+        >>> from idinn.dual_controller import DualSourcingNeuralController
+        >>> from idinn.demand import UniformDemand
+        >>> from torch.utils.tensorboard import SummaryWriter
+
+        >>> dual_sourcing_model = DualSourcingModel(
+        ...     regular_lead_time=2,
+        ...     expedited_lead_time=0,
+        ...     regular_order_cost=0,
+        ...     expedited_order_cost=20,
+        ...     holding_cost=5,
+        ...     shortage_cost=495,
+        ...     batch_size=256,
+        ...     init_inventory=6,
+        ...     demand_generator=UniformDemand(low=0, high=4),
+        ... )
+        >>> controller_neural = DualSourcingNeuralController(
+        ...     hidden_layers=[128, 64, 32, 16, 8, 4],
+        ...     activation=torch.nn.CELU(alpha=1)
+        ... )
+        >>> controller_neural.fit(sourcing_model=dual_sourcing_model,sourcing_periods=100,epochs=2000,validation_sourcing_periods=1000,tensorboard_writer=SummaryWriter(comment="dual"),seed=123)
+        >>> # Avg. cost near 24
+        >>> avg_cost = controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000)
+        >>> print(f"Average cost: {avg_cost:.2f}")
+        Average cost: 24.00
+
+    Adjusting parameters such as
     >>> from idinn.sourcing_model import DualSourcingModel
     >>> from idinn.dual_controller import DualSourcingNeuralController
     >>> from idinn.demand import UniformDemand

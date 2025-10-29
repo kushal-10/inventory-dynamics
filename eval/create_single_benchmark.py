@@ -9,8 +9,19 @@ from idinn.dual_controller import DualSourcingNeuralController
 from idinn.demand import UniformDemand
 import json
 
-json_file = "results.json"
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+    print("✅ Using Apple Silicon MPS backend.")
+# 2. Fallback to CUDA (for compatibility if you move the script later)
+elif torch.cuda.is_available():
+    device = torch.device("cuda")
+    print(f"✅ Using CUDA GPU: {torch.cuda.get_device_name(0)}")
+# 3. Fallback to CPU
+else:
+    device = torch.device("cpu")
+    print("⚠️ No MPS or CUDA available. Using CPU.")
 
+json_file = "results.json"
 if not os.path.exists(json_file):
     with open(json_file, 'w') as f:
         json.dump({}, f, indent=4)
@@ -37,7 +48,7 @@ dual_sourcing_model = DualSourcingModel(
 # But the SD is largely reduced with the fixes in Seed
 
 activations = [torch.nn.Softplus(), torch.nn.ReLU(), torch.nn.ReLU6(), # Max val is 5, Relu 6 should work?
-               "0.5", "1.0", "1.5", "2.0", "2.5", "3.0"] # custom LogReLU variants
+               "0.5", "1.0", "1.5"] # custom LogReLU variants
 
 N = 5 # Run 10 instances per
 
@@ -66,15 +77,10 @@ for i in range(N):
                 expedited_activation=torch.nn.ReLU(),
                 regular_activation=activation, # Change this
             )
+            controller_neural.to(device)
 
-            reg_q, exp_q = controller_neural.fit(
-                sourcing_model=dual_sourcing_model,
-                sourcing_periods=100, # 100 actual, in validation - 1k
-                validation_sourcing_periods=1000,
-                epochs=2000, #2k-3k actual
-                # tensorboard_writer=SummaryWriter(comment="dual"),
-                seed=123,
-            )
+            reg_q, exp_q = controller_neural.fit(sourcing_model=dual_sourcing_model, sourcing_periods=100, epochs=2000,
+                                                 validation_sourcing_periods=1000, seed=123)
 
             avg_cost = controller_neural.get_average_cost(dual_sourcing_model, sourcing_periods=1000, seed=123)
             print(f"Average cost: {avg_cost:.2f} for activation: {activation}")
@@ -90,3 +96,6 @@ for i in range(N):
 
             with open(json_file, 'w') as f:
                 json.dump(data, f, indent=4)
+
+        else:
+            print(f"{custom_id} already exists")

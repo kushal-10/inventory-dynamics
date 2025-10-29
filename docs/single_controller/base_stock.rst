@@ -33,6 +33,318 @@ We now present two examples to demonstrate how the :class:`BaseStockController` 
 .. doctest::
 
    >>> import torch
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model)
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model)
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model)
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model)
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model)
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model)
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model)
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
+      >>> from idinn.sourcing_model import SingleSourcingModel
+      >>> from idinn.single_controller import BaseStockController
+      >>> from idinn.demand import UniformDemand
+
+      >>> # First example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=0,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> # z_star should be 4
+      >>> controller_base.fit(single_sourcing_model)
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 4
+      >>> # Avg. cost near 10
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 10.39
+
+      >>> # Second example
+      >>> single_sourcing_model = SingleSourcingModel(
+      ...     lead_time=2,
+      ...     holding_cost=5,
+      ...     shortage_cost=495,
+      ...     init_inventory=10,
+      ...     demand_generator=UniformDemand(low=0, high=4),
+      ... )
+      >>> controller_base = BaseStockController()
+      >>> controller_base.fit(single_sourcing_model,,
+      >>> # z_star should be 11
+      >>> print(f"z_star: {controller_base.z_star}")
+      z_star: 11
+      >>> # Avg. cost near 29
+      >>> avg_cost = controller_base.get_average_cost(single_sourcing_model, sourcing_periods=1000, seed=42)
+      >>> print(f"Average Cost: {avg_cost:.2f}")
+      Average Cost: 29.53
    >>> from idinn.sourcing_model import SingleSourcingModel
    >>> from idinn.single_controller import BaseStockController
    >>> from idinn.demand import UniformDemand

@@ -201,6 +201,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         # 3. Split the output and apply custom activations
         h_reg_preact = h[:, 0].unsqueeze(1)  # [batch_size, 1] for regular order
         h_exp_preact = h[:, 1].unsqueeze(1)  # [batch_size, 1] for expedited order
+
         # 2-D matrix -
 
         # Apply the two *customizable* activation functions
@@ -283,6 +284,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             parameters_lr: float = 3e-3,
             tensorboard_writer: Optional[SummaryWriter] = None,
             seed: Optional[int] = None,
+            device: Optional[torch.device] = None,
     ):
         """
         Train the neural network controller using the sourcing model and specified parameters.
@@ -310,7 +312,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         tensorboard_writer : tensorboard.SummaryWriter, optional
         seed : int, optional
             Random seed for reproducibility.
-            Tensorboard writer for logging.
+        device: torch.device, optional
         """
         # Store sourcing model in self.sourcing_model
         self.sourcing_model = sourcing_model
@@ -323,6 +325,9 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
             )
+        if device is not None:
+            self.to(device)
+            sourcing_model.init_inventory = sourcing_model.init_inventory.to(device)
 
         start_time = datetime.now()
         logger.info(f"Starting dual sourcing neural network training at {start_time}")

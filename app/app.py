@@ -148,14 +148,9 @@ def fit_model(
             os.path.join(torch.__path__[0], torch.classes.__file__)
         ]
 
-    controller.fit(
-        sourcing_model=sourcing_model,
-        sourcing_periods=sourcing_periods,
-        validation_sourcing_periods=validation_sourcing_periods,
-        epochs=epochs,
-        tensorboard_writer=SummaryWriter("runs/dual_sourcing_model"),
-        seed=seed,
-    )
+    controller.fit(sourcing_model=sourcing_model, sourcing_periods=sourcing_periods, epochs=epochs,
+                   validation_sourcing_periods=validation_sourcing_periods,
+                   tensorboard_writer=SummaryWriter("runs/dual_sourcing_model"), seed=seed)
     return controller
 
 
