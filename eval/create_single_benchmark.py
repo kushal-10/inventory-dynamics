@@ -80,10 +80,10 @@ for i in range(N):
             print(f"Average cost: {avg_cost:.2f} for activation: {activation}")
 
             datapoint = {
-                "reg_q": reg_q,
-                "exp_q": exp_q,
-                "avg_cost": avg_cost,
-                "N": i
+                "reg_q": str(reg_q),
+                "exp_q": str(exp_q),
+                "avg_cost": str(avg_cost.item()),
+                "N": str(i)
             }
 
             data[custom_id] = datapoint
