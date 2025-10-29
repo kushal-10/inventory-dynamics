@@ -1,16 +1,39 @@
-import logging
-from datetime import datetime
-from typing import List, Optional, Tuple, Union, no_type_check
+from typing import List, Optional, Tuple, Union, Any
 
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from tqdm import tqdm
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
+import logging
+from datetime import datetime
+
 # Get root logger
 logger = logging.getLogger()
+
+# Custom class for LogReLU calculation from the paper - https://arxiv.org/pdf/1908.03682
+class LogReLU:
+
+    def __init__(self, beta_value: float = 0.5):
+        self.beta_value = beta_value
+        pass
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        beta_value = self.beta_value # Fixed. Ref - https://arxiv.org/pdf/1908.03682
+        new_vals = []
+        dimensions = input.shape
+        assert dimensions[1] == 1, f"The dimensions of input tensor do not match. Expected (n,1) got {dimensions}"
+
+        for item in input:
+            new_val = max(0, item[0].item()) # ReLU rule
+            new_val = np.log((new_val*beta_value) + 1)
+            new_vals.append([new_val])
+
+        new_tensor = torch.tensor(new_vals)
+        return new_tensor
 
 
 class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
@@ -58,20 +81,33 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
     """
 
     def __init__(
-        self,
-        hidden_layers: List[int] = [128, 64, 32, 16, 8, 4],
-        activation: torch.nn.Module = torch.nn.ReLU(),
-        compressed: bool = False,
+            self,
+            hidden_layers: List[int] = [128, 64, 32, 16, 8, 4],
+            activation: torch.nn.Module = torch.nn.ReLU(),  # Activations for hidden layers
+            compressed: bool = False,
+            regular_activation: [torch.nn.Module|str] = torch.nn.ReLU(),  # Activation for output layer
+            expedited_activation: torch.nn.Module = torch.nn.ReLU(),  # Activation for output layer
     ):
         super().__init__()
         self.sourcing_model = None
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.compressed = compressed
-        self.model: Optional[torch.nn.Sequential] = None
+
+        # Will be used for the hidden layers sequence
+        self.hidden_sequence = None
+        # Will be the final Linear layer
+        self.final_linear = None
+        # self.model is no longer used for the full sequence
+        self.model = None
+
+        self.expedited_q_set = set()
+        self.regular_q_set = set()
+
+        self.regular_activation = regular_activation
+        self.expedited_activation = expedited_activation
         logger.info(
-            f"Initialized DualSourcingNeuralController with hidden_layers={hidden_layers}, compressed={compressed}"
-        )
+            f"Initialized DualSourcingNeuralController with hidden_layers={hidden_layers}, compressed={compressed}")
 
     def init_layers(self, regular_lead_time: int, expedited_lead_time: int) -> None:
         """
@@ -99,23 +135,22 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
                     torch.nn.Linear(self.hidden_layers[i], self.hidden_layers[i + 1]),
                     self.activation,
                 ]
-        architecture += [
-            torch.nn.Linear(self.hidden_layers[-1], 2),
-            # TODO: Mention this ReLU layer in documentation
-            torch.nn.ReLU(),
-        ]
-        self.model = torch.nn.Sequential(*architecture)
-        logger.info(
-            f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
-            f"expedited_lead_time={expedited_lead_time}"
-        )
+
+        self.hidden_sequence = torch.nn.Sequential(*architecture)
+
+        # 2. Define the Final Linear Layer
+        # It still outputs 2 values, which will be split later
+        self.final_linear = torch.nn.Linear(self.hidden_layers[-1], 2)
+        # Do not use any activations here, change the activations in forward method
+        logger.info(f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
+                    f"expedited_lead_time={expedited_lead_time}")
 
     def prepare_inputs(
-        self,
-        current_inventory: torch.Tensor,
-        past_regular_orders: torch.Tensor,
-        past_expedited_orders: torch.Tensor,
-        sourcing_model: DualSourcingModel,
+            self,
+            current_inventory: torch.Tensor,
+            past_regular_orders: torch.Tensor,
+            past_expedited_orders: torch.Tensor,
+            sourcing_model: DualSourcingModel,
     ) -> torch.Tensor:
         regular_lead_time = sourcing_model.get_regular_lead_time()
         expedited_lead_time = sourcing_model.get_expedited_lead_time()
@@ -149,22 +184,56 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             )
         return inputs
 
-    def forward(self, inputs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        if self.model is None:
-            raise AttributeError("Model not initialized. Call `init_layers()` first.")
+    # def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    #     h = self.model(inputs)
+    #     q = h - torch.frac(h).clone().detach()
+    #     regular_q = q[:, [0]]
+    #     expedited_q = q[:, [1]]
+    #     return regular_q, expedited_q
 
-        h = self.model(inputs)
-        q = h - torch.frac(h).clone().detach()
-        regular_q = q[:, [0]]
-        expedited_q = q[:, [1]]
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        # 1. Pass through the hidden layers
+        h_hidden = self.hidden_sequence(inputs)
+
+        # 2. Pass through the final linear layer
+        h = self.final_linear(h_hidden)  # h is now [batch_size, 2]
+
+        # 3. Split the output and apply custom activations
+        h_reg_preact = h[:, 0].unsqueeze(1)  # [batch_size, 1] for regular order
+        h_exp_preact = h[:, 1].unsqueeze(1)  # [batch_size, 1] for expedited order
+        # 2-D matrix -
+
+        # Apply the two *customizable* activation functions
+        if type(self.regular_activation) == str:
+            beta_value = float(self.regular_activation)
+            log_relu = LogReLU(beta_value=beta_value)
+            regular_h = log_relu.forward(h_reg_preact)
+        else:
+            regular_h = self.regular_activation(h_reg_preact)
+
+        expedited_h = self.expedited_activation(h_exp_preact)
+
+        regular_h = regular_h.float()
+        expedited_h = expedited_h.float()
+
+        # 4. Perform the original quantization/floor operation
+        regular_q = regular_h - torch.frac(regular_h).clone().detach()
+        expedited_q = expedited_h - torch.frac(expedited_h).clone().detach()
+
+        int_reg_q = int(regular_q[0])
+        int_expedited_q = int(expedited_q[0])
+
+        self.expedited_q_set.add(int_expedited_q)
+        self.regular_q_set.add(int_reg_q)
+
         return regular_q, expedited_q
 
     def predict(
-        self,
-        current_inventory: Union[int, torch.Tensor],
-        past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
-        past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
-        output_tensor: bool = False,
+            self,
+            current_inventory: Union[int, torch.Tensor],
+            past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
+            past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
+            output_tensor: bool = False,
     ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
         """
         Forward pass of the neural network.
@@ -192,7 +261,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
-            sourcing_model=self.sourcing_model,
+            sourcing_model=self.sourcing_model
         )
         regular_q, expedited_q = self.forward(inputs)
 
@@ -201,21 +270,20 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         else:
             return int(regular_q), int(expedited_q)
 
-    @no_type_check
     def fit(
-        self,
-        sourcing_model: DualSourcingModel,
-        sourcing_periods: int,
-        epochs: int,
-        validation_sourcing_periods: Optional[int] = None,
-        validation_freq: int = 50,
-        log_freq: int = 100,
-        init_inventory_freq: int = 4,
-        init_inventory_lr: float = 1e-1,
-        parameters_lr: float = 3e-3,
-        tensorboard_writer: Optional[SummaryWriter] = None,
-        seed: Optional[int] = None,
-    ) -> None:
+            self,
+            sourcing_model: DualSourcingModel,
+            sourcing_periods: int,
+            epochs: int,
+            validation_sourcing_periods: Optional[int] = None,
+            validation_freq: int = 50,
+            log_freq: int = 100,
+            init_inventory_freq: int = 4,
+            init_inventory_lr: float = 1e-1,
+            parameters_lr: float = 3e-3,
+            tensorboard_writer: Optional[SummaryWriter] = None,
+            seed: Optional[int] = None,
+    ):
         """
         Train the neural network controller using the sourcing model and specified parameters.
 
@@ -258,15 +326,11 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
 
         start_time = datetime.now()
         logger.info(f"Starting dual sourcing neural network training at {start_time}")
-        logger.info(
-            f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
-            f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
-            f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}"
-        )
-        logger.info(
-            f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
-            f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}"
-        )
+        logger.info(f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
+                    f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
+                    f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}")
+        logger.info(f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
+                    f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}")
 
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
@@ -274,7 +338,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_loss = np.inf
 
-        for epoch in range(epochs):
+        for epoch in tqdm(range(epochs)):
             # Clear grad cache
             optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()
@@ -290,7 +354,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             # Save the best model
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
                 eval_loss = super().get_total_cost(
-                    sourcing_model, validation_sourcing_periods
+                    sourcing_model, validation_sourcing_periods, seed=seed
                 )
                 if eval_loss < min_loss:
                     min_loss = eval_loss
@@ -318,20 +382,18 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             per_epoch_time = duration.total_seconds() / (epoch + 1)  # seconds per epoch
             remaining_time = (epochs - epoch) * per_epoch_time
             if epoch % log_freq == 0:
-                logger.info(
-                    f"Epoch {epoch}/{epochs}"
-                    f" - Training cost: {train_loss / sourcing_periods:.4f}"
-                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                    f" - Est. Remaining time: {int(remaining_time)} seconds."
-                )
+                logger.info(f"Epoch {epoch}/{epochs}"
+                            f" - Training cost: {train_loss / sourcing_periods:.4f}"
+                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                            f" - Est. Remaining time: {int(remaining_time)} seconds."
+                            )
 
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                logger.info(
-                    f"Epoch {epoch}/{epochs}"
-                    f" - Validation cost: {eval_loss / validation_sourcing_periods:.4f}"
-                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                    f" - Est. Remaining time: {int(remaining_time)} seconds."
-                )
+                logger.info(f"Epoch {epoch}/{epochs}"
+                            f" - Validation cost: {eval_loss / validation_sourcing_periods:.4f}"
+                            f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                            f" - Est. Remaining time: {int(remaining_time)} seconds."
+                            )
 
         self.load_state_dict(best_state)
 
@@ -340,6 +402,9 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
         logger.info(f"Final best cost: {min_loss / sourcing_periods:.4f}")
+
+        return self.regular_q_set, self.expedited_q_set
+
 
     def reset(self) -> None:
         """
