@@ -140,7 +140,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
 
         # 2. Define the Final Linear Layer
         # It still outputs 2 values, which will be split later
-        self.final_linear = torch.nn.Linear(self.hidden_layers[-1], 2)
+        self.final_linear = torch.nn.Linear(self.hidden_layers[-1], 2) # rq and eq, 3 - rq1, rq2 and eq
         # Do not use any activations here, change the activations in forward method
         logger.info(f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
                     f"expedited_lead_time={expedited_lead_time}")
@@ -210,7 +210,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
             log_relu = LogReLU(beta_value=beta_value)
             regular_h = log_relu.forward(h_reg_preact)
         else:
-            regular_h = self.regular_activation(h_reg_preact)
+            regular_h = self.regular_activation(h_reg_preact) # rq and rq2
 
         expedited_h = self.expedited_activation(h_exp_preact)
 

@@ -287,6 +287,7 @@ class DualSourcingModel(BaseSourcingModel):
         self.past_regular_orders = torch.cat(
             [self.past_regular_orders, regular_q], dim=1
         )
+
         # Current expedited order are added to past_expedited_orders
         self.past_expedited_orders = torch.cat(
             [self.past_expedited_orders, expedited_q], dim=1
