@@ -140,10 +140,12 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
 
         # 2. Define the Final Linear Layer
         # It still outputs 2 values, which will be split later
-        self.final_linear = torch.nn.Linear(self.hidden_layers[-1], 2) # rq and eq, 3 - rq1, rq2 and eq
+        self.final_linear = torch.nn.Linear(self.hidden_layers[-1], 3) # rq1. rq2 and eq, take minima of first two
         # Do not use any activations here, change the activations in forward method
-        logger.info(f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
-                    f"expedited_lead_time={expedited_lead_time}")
+        # logger.info(f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
+        #             f"expedited_lead_time={expedited_lead_time}")
+        logger.info(f"Initialized NN with three output neurons, for rq1, rq2 and eq, with regular lead time: {regular_lead_time} and"
+                    f" expedited lead time: {expedited_lead_time}")
 
     def prepare_inputs(
             self,
@@ -196,36 +198,47 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         h_hidden = self.hidden_sequence(inputs)
 
         # 2. Pass through the final linear layer
-        h = self.final_linear(h_hidden)  # h is now [batch_size, 2]
+        h = self.final_linear(h_hidden)  # h is now [batch_size, 3] # 3 for rq1. rq2 and eq
 
         # 3. Split the output and apply custom activations
-        h_reg_preact = h[:, 0].unsqueeze(1)  # [batch_size, 1] for regular order
-        h_exp_preact = h[:, 1].unsqueeze(1)  # [batch_size, 1] for expedited order
+        h_reg_preact_1 = h[:, 0].unsqueeze(1)  # [batch_size, 1] for regular order 1
+        h_reg_preact_2 = h[:, 1].unsqueeze(1) # [batch_size, 1] for regular order 2
+        h_exp_preact = h[:, 2].unsqueeze(1)  # [batch_size, 1] for expedited order
 
-        # 2-D matrix -
 
         # Apply the two *customizable* activation functions
         if type(self.regular_activation) == str:
             beta_value = float(self.regular_activation)
             log_relu = LogReLU(beta_value=beta_value)
-            regular_h = log_relu.forward(h_reg_preact)
+            regular_h1 = log_relu.forward(h_reg_preact_1)
+            regular_h2 = log_relu.forward(h_reg_preact_2)
         else:
-            regular_h = self.regular_activation(h_reg_preact) # rq and rq2
+            regular_h1 = self.regular_activation(h_reg_preact_1) # rq1 and rq2
+            regular_h2 = self.regular_activation(h_reg_preact_2)
 
         expedited_h = self.expedited_activation(h_exp_preact)
 
-        regular_h = regular_h.float()
+        regular_h1 = regular_h1.float()
+        regular_h2 = regular_h2.float()
         expedited_h = expedited_h.float()
 
         # 4. Perform the original quantization/floor operation
-        regular_q = regular_h - torch.frac(regular_h).clone().detach()
+        regular_q1 = regular_h1 - torch.frac(regular_h1).clone().detach()
+        regular_q2 = regular_h2 - torch.frac(regular_h2).clone().detach()
+
+        regular_q = torch.min(regular_q1, regular_q2)
         expedited_q = expedited_h - torch.frac(expedited_h).clone().detach()
 
-        int_reg_q = int(regular_q[0])
-        int_expedited_q = int(expedited_q[0])
+        # int_reg_q1 = int(regular_q1[0])
+        # int_reg_q2 = int(regular_q2[0])
+        #
+        # int_reg_q = min(int_reg_q1, int_reg_q2)
+        # int_expedited_q = int(expedited_q[0])
+        #
+        # # Everything stays q1 and q2 till the end, we take the minima after grad, fwd
+        # self.expedited_q_set.add(int_expedited_q)
+        # self.regular_q_set.add(int_reg_q)
 
-        self.expedited_q_set.add(int_expedited_q)
-        self.regular_q_set.add(int_reg_q)
 
         return regular_q, expedited_q
 
