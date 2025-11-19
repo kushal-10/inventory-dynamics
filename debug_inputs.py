@@ -4,7 +4,7 @@ from src.idinn.three_day_sourcing_model import ThreeDayCycleModel
 from src.idinn.dual_controller.triple_neural import DualSourcingNeuralController
 from idinn.demand import UniformDemand  # assuming this path exists in your repo
 
-dual_sourcing_model = ThreeDaySourcingModel(
+dual_sourcing_model = ThreeDayCycleModel(
     regular_order_cost=0.0,            # cr
     expedited_order_cost=20.0,         # ce (cost per expedited unit)
     holding_cost=5.0,                  # h
@@ -15,7 +15,7 @@ dual_sourcing_model = ThreeDaySourcingModel(
 )
 
 controller_neural = DualSourcingNeuralController(
-    hidden_layers=[8, 4],
+    hidden_layers=[128, 64, 32, 16, 8, 4],
     activation=torch.nn.CELU(alpha=1),
     expedited_activation=torch.nn.ReLU(),
     regular_activation=torch.nn.ReLU(),

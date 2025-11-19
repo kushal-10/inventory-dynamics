@@ -79,6 +79,7 @@ class ThreeDayCycleModel:
         # We'll start with the initial inventory repeated for batch.
         I0 = (self.init_inventory - torch.frac(self.init_inventory).clone().detach()).to(self.device)
         self.past_inventories = I0.repeat(self.batch_size, 1)  # shape (batch, 1)
+        # print(f"Initial Inventory: {self.past_inventories}")
         # We'll keep per-cycle record lists too:
         self._history_I1 = []  # list of tensors (batch,1) for subperiod 1
         self._history_I2 = []
@@ -90,6 +91,9 @@ class ThreeDayCycleModel:
 
     def get_current_inventory(self) -> torch.Tensor:
         # return starting inventory for next cycle (shape (batch, 1))
+        # print(f"Current Inventory: {self.past_inventories[:, [-1]][0][0].item()}")
+        # if self.past_inventories[:, [-1]][0][0].item() == 6.0:
+        #     print(True)
         return self.past_inventories[:, [-1]]
 
     def sample_three_demands(self) -> torch.Tensor:
@@ -139,6 +143,7 @@ class ThreeDayCycleModel:
         qr  = qr.to(self.device).reshape(self.batch_size, 1)
 
         I_t = self.get_current_inventory()  # (batch,1)
+
         demands = self.sample_three_demands()  # (batch,3)
         d1 = demands[:, [0]]
         d2 = demands[:, [1]]
@@ -148,6 +153,9 @@ class ThreeDayCycleModel:
         I1 = I_t + qe1 - d1
         I2 = I1  + qe2 - d2
         I3 = I2  + qr  - d3  # this becomes I_{t+1}
+
+        if I3[0][0].item() > 0:
+            print(True)
 
         # store histories
         self._history_I1.append(I1)
@@ -166,6 +174,7 @@ class ThreeDayCycleModel:
         shortage = self.shortage_cost * (torch.relu(-I1) + torch.relu(-I2) + torch.relu(-I3))
         order_costs = self.regular_order_cost * qr + self.expedited_order_cost * (qe1 + qe2)
         cycle_cost = order_costs + holding + shortage  # (batch,1)
+        # print(f"I_t: {I_t}, D1 : {d1}")
 
         return cycle_cost  # (batch,1)
 

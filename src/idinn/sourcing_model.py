@@ -156,7 +156,7 @@ class SingleSourcingModel(BaseSourcingModel):
         # Update inventory
         current_inventory = (
             self.get_current_inventory() + arrived_order - current_demand
-        )
+        ) # I3
         # Current inventories are added to past_inventories
         self.past_inventories = torch.cat(
             [self.past_inventories, current_inventory], dim=1
