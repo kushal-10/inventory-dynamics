@@ -1,7 +1,7 @@
 # run_triple_example.py
 import torch
-from idinnthree_day_sourcing_model import ThreeDaySourcingModel
-from idinn.dual_neural.triple_neural import DualSourcingNeuralController
+from src.idinn.three_day_sourcing_model import ThreeDayCycleModel
+from src.idinn.dual_controller.triple_neural import DualSourcingNeuralController
 from idinn.demand import UniformDemand  # assuming this path exists in your repo
 
 dual_sourcing_model = ThreeDaySourcingModel(
