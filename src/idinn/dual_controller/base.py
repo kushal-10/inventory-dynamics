@@ -94,7 +94,7 @@ class BaseDualController(metaclass=ABCMeta):
         NOTE: Base cost function
         """
         last_cost = (
-                regular_order_cost * last_regular_q # Rc*LRc*
+                regular_order_cost * last_regular_q
                 + expedited_order_cost * last_expedited_q
                 + holding_cost * torch.relu(current_inventory)
                 + shortage_cost * torch.relu(-current_inventory)
