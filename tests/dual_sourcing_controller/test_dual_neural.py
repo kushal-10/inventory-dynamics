@@ -42,8 +42,13 @@ def trained_neural_controller():
         hidden_layers=[128, 64, 32, 16, 8, 4],
         activation=torch.nn.CELU(alpha=1),
     )
-    controller_neural.fit(sourcing_model=dual_sourcing_model_train, sourcing_periods=100, epochs=2,
-                          validation_sourcing_periods=1, seed=1234)
+    controller_neural.fit(
+        sourcing_model=dual_sourcing_model_train,
+        sourcing_periods=100,
+        validation_sourcing_periods=1,
+        epochs=2,
+        seed=1234,
+    )
     return controller_neural
 
 

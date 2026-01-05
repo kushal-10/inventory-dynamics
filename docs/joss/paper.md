@@ -96,8 +96,14 @@ We train the neural network controller using the `fit()` method. To monitor the 
 ```python
 from torch.utils.tensorboard import SummaryWriter
 
-single_controller.fit(sourcing_model=single_sourcing_model, sourcing_periods=50, epochs=2000,
-                      validation_sourcing_periods=1000, tensorboard_writer=SummaryWriter(comment="_single_1"), seed=1)
+single_controller.fit(
+    sourcing_model=single_sourcing_model,
+    sourcing_periods=50,
+    validation_sourcing_periods=1000,
+    epochs=2000,
+    tensorboard_writer=SummaryWriter(comment="_single_1"),
+    seed=1
+)
 ```
 
 To evaluate the neural network controller, we compute the average cost over a specified number of periods for the previously defined sourcing model: 

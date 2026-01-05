@@ -3,6 +3,7 @@ from typing import Optional, Union
 import torch
 
 from .demand import CustomDemand, UniformDemand
+from .demand_three_subperiods import DiscreteTruncatedGammaDemand
 
 
 class BaseSourcingModel:
@@ -11,7 +12,7 @@ class BaseSourcingModel:
         holding_cost: float,
         shortage_cost: float,
         init_inventory: float,
-        demand_generator: Union[UniformDemand, CustomDemand],
+        demand_generator: Union[UniformDemand, CustomDemand, DiscreteTruncatedGammaDemand],
         batch_size: int,
         lead_time: Optional[int] = None,
         regular_lead_time: Optional[int] = None,
@@ -89,7 +90,7 @@ class SingleSourcingModel(BaseSourcingModel):
         holding_cost: float,
         shortage_cost: float,
         init_inventory: float,
-        demand_generator: Union[UniformDemand, CustomDemand],
+        demand_generator: Union[UniformDemand, CustomDemand, DiscreteTruncatedGammaDemand],
         batch_size: int = 1,
     ):
         """
@@ -126,36 +127,33 @@ class SingleSourcingModel(BaseSourcingModel):
         return self.past_orders
 
     def order(self, q: torch.Tensor, seed: Optional[int] = None) -> None:
+        """
+        Orders items to the inventory and update the inventory with generated demands.
+
+        Parameters
+        ----------
+        q : torch.Tensor
+            The quantity of items to order.
+        seed : int, optional
+            Random seed for reproducibility.
+        """
         if seed is not None:
             torch.manual_seed(seed)
 
         if self.lead_time is None:
             raise ValueError("`lead_time` is not set")
 
-        # ensure q is a tensor and on same device/dtype as model tensors
-        device = self.get_init_inventory().device
-        dtype = self.get_init_inventory().dtype
-        if not isinstance(q, torch.Tensor):
-            q = torch.tensor([[q]], device=device, dtype=dtype)
-        else:
-            q = q.to(device=device, dtype=dtype)
-
-        # Current orders are added to past_orders (concatenate along time axis)
+        # Current orders are added to past_orders
         self.past_orders = torch.cat([self.past_orders, q], dim=1)
-
         # Past orders arrived, if past orders are not available, then arrived order is 0
         if self.past_orders.shape[1] >= 1 + self.lead_time:
             arrived_order = self.past_orders[:, [-1 - self.lead_time]]
         else:
-            arrived_order = torch.zeros(self.batch_size, 1, device=device, dtype=dtype)
-
-        # Generate current demand (note: demand_generator.sample should return a tensor on CPU by default;
-        # if it returns CPU tensor we must move it to device)
-        current_demand = self.demand_generator.sample(self.batch_size).to(device=device)
-
+            arrived_order = torch.zeros(self.batch_size, 1)
+        # Generate current demand
+        current_demand = self.demand_generator.sample(self.batch_size)
         # Current demand are added to past_demands
         self.past_demands = torch.cat([self.past_demands, current_demand], dim=1)
-
         # Update inventory
         current_inventory = (
             self.get_current_inventory() + arrived_order - current_demand
@@ -164,7 +162,6 @@ class SingleSourcingModel(BaseSourcingModel):
         self.past_inventories = torch.cat(
             [self.past_inventories, current_inventory], dim=1
         )
-
 
 
 class DualSourcingModel(BaseSourcingModel):
@@ -177,7 +174,7 @@ class DualSourcingModel(BaseSourcingModel):
         holding_cost: float,
         shortage_cost: float,
         init_inventory: float,
-        demand_generator: Union[UniformDemand, CustomDemand],
+        demand_generator: Union[UniformDemand, CustomDemand, DiscreteTruncatedGammaDemand],
         batch_size: int = 1,
     ):
         """
@@ -262,6 +259,18 @@ class DualSourcingModel(BaseSourcingModel):
         expedited_q: torch.Tensor,
         seed: Optional[int] = None,
     ) -> None:
+        """
+        Orders items to the inventory and update the inventory with generated demands.
+
+        Parameters
+        ----------
+        regular_q : torch.Tensor
+            The quantity of items to order from the regular supplier.
+        expedited_q : torch.Tensor
+            The quantity of items to order from the expedited supplier.
+        seed : int, optional
+            Random seed for reproducibility.
+        """
         if seed is not None:
             torch.manual_seed(seed)
 
@@ -270,25 +279,15 @@ class DualSourcingModel(BaseSourcingModel):
         if self.expedited_lead_time is None:
             raise ValueError("`expedited_lead_time` is not set")
 
-        device = self.get_init_inventory().device
-        dtype = self.get_init_inventory().dtype
-
-        # Convert scalars to tensors on correct device
         if not isinstance(regular_q, torch.Tensor):
-            regular_q = torch.tensor([[regular_q]], device=device, dtype=dtype)
-        else:
-            regular_q = regular_q.to(device=device, dtype=dtype)
-
+            regular_q = torch.tensor([[regular_q]])
         if not isinstance(expedited_q, torch.Tensor):
-            expedited_q = torch.tensor([[expedited_q]], device=device, dtype=dtype)
-        else:
-            expedited_q = expedited_q.to(device=device, dtype=dtype)
+            expedited_q = torch.tensor([[expedited_q]])
 
         # Current regular order are added to past_regular_orders
         self.past_regular_orders = torch.cat(
             [self.past_regular_orders, regular_q], dim=1
         )
-
         # Current expedited order are added to past_expedited_orders
         self.past_expedited_orders = torch.cat(
             [self.past_expedited_orders, expedited_q], dim=1
@@ -300,7 +299,7 @@ class DualSourcingModel(BaseSourcingModel):
                 :, [-1 - self.regular_lead_time]
             ]
         else:
-            arrived_regular_orders = torch.zeros(self.batch_size, 1, device=device, dtype=dtype)
+            arrived_regular_orders = torch.zeros(self.batch_size, 1)
         # Past expedited orders arrived,
         # if past expedited orders are not available, then arrived order is 0
         if self.past_expedited_orders.shape[1] >= 1 + self.expedited_lead_time:
@@ -308,11 +307,9 @@ class DualSourcingModel(BaseSourcingModel):
                 :, [-1 - self.expedited_lead_time]
             ]
         else:
-            arrived_expedited_orders = torch.zeros(self.batch_size, 1, device=device, dtype=dtype)
-
-        # Generate current demand and move to correct device
-        current_demand = self.demand_generator.sample(self.batch_size).to(device=device)
-
+            arrived_expedited_orders = torch.zeros(self.batch_size, 1)
+        # Generate current demand
+        current_demand = self.demand_generator.sample(self.batch_size)
         # Current demand are added to past_demands
         self.past_demands = torch.cat([self.past_demands, current_demand], dim=1)
         # Update inventory

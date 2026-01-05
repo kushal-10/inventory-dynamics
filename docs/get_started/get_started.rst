@@ -38,7 +38,6 @@ The selected controller needs to be trained to find suitable parameters.
 .. doctest:: python
 
     >>> # Train the controller
-        >>> controller.fit(sourcing_model=single_sourcing_model,sourcing_periods=,epochs=)
     >>> controller.fit(sourcing_model=single_sourcing_model)
 
 Plotting and Order Calculation
