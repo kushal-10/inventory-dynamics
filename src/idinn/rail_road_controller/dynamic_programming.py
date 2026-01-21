@@ -211,11 +211,18 @@ class RailRoadDPController:
     # ------------------------------------------------------------------
 
     def get_average_cost(
-        self,
-        model: RailRoadInventoryModel,
-        periods: int,
-        seed: Optional[int] = None,
+            self,
+            model: RailRoadInventoryModel,
+            periods: int,
+            seed: Optional[int] = None,
     ) -> float:
+        """
+        Evaluate average cost under the learned DP policy.
+        Costs are charged at time t using the action chosen at (I_t, tau_t).
+        """
+        if self.qf is None:
+            raise RuntimeError("Controller not trained.")
+
         if seed is not None:
             torch.manual_seed(seed)
 
@@ -223,19 +230,31 @@ class RailRoadDPController:
         total_cost = 0.0
 
         for _ in range(periods):
-            q = self.predict()
-            model.order(q)
-
+            # ----- observe state (I_t, tau_t) -----
             I = model.get_current_inventory().item()
-            holding = model.get_holding_cost() * max(I, 0)
-            shortage = model.get_shortage_cost() * max(-I, 0)
+            tau = model.get_current_cycle_day()
 
-            c = (
+            # ----- choose action -----
+            q = self.qf[(int(I), tau)]
+
+            # ----- cost is incurred NOW (before transition) -----
+            order_cost = (
                 model.get_regular_order_cost()
-                if model.is_regular_day()
+                if tau == 0
                 else model.get_expedited_order_cost()
             )
 
-            total_cost += c * q + holding + shortage
+            total_cost += order_cost * q
+
+            # ----- system transition -----
+            model.order(q)
+
+            # ----- holding / backlog cost after demand -----
+            I_next = model.get_current_inventory().item()
+            total_cost += (
+                    model.get_holding_cost() * max(I_next, 0)
+                    + model.get_shortage_cost() * max(-I_next, 0)
+            )
 
         return total_cost / periods
+
