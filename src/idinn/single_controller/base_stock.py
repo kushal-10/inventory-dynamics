@@ -108,9 +108,13 @@ class BaseStockController(BaseSingleController):
         if self.sourcing_model is None or self.z_star is None:
             raise AttributeError("The controller is not trained.")
 
+        logger.info("Starting Prediction")
         lead_time = self.sourcing_model.get_lead_time()
+        logger.info(f"Lead time: {lead_time}")
         current_inventory = self._current_inventory_check(current_inventory)
+        logger.info(f"Current inventory: {current_inventory}")
         past_orders = self._past_orders_check(lead_time, past_orders)
+        logger.info(f"Past orders: {past_orders}")
 
         if lead_time == 0:
             inventory_position = current_inventory
@@ -121,7 +125,10 @@ class BaseStockController(BaseSingleController):
         else:
             raise ValueError("`lead_time` cannot be less than 0")
 
+        logger.info(f"Inventory position: {inventory_position}")
+
         result = torch.relu(self.z_star - inventory_position)
+        logger.info(f"Prediction result: {result}")
 
         if output_tensor:
             return result

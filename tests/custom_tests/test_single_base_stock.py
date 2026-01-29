@@ -24,6 +24,8 @@ def test_base_stock():
     bs_controller = BaseStockController()
     bs_controller.fit(model)
 
+    result = bs_controller.predict(current_inventory=6)
+    logger.info("tests done!")
 
 
 if __name__ == "__main__":
