@@ -229,7 +229,14 @@ class CappedDualIndexController(BaseDualController):
             expedited_lead_time,
             limit=True,
         )
-        regular_q = int(min(max(0, self.s_r - inventory_position_lm1), self.q_r))
+        regular_q = int(
+            torch.clamp(
+                self.s_r - inventory_position_lm1,
+                min=0,
+                max=self.q_r
+            ).item()
+        ) # Works only with batch size = 1
+
         expedited_q = int(max(0, self.s_e - inventory_position))
 
         if output_tensor:

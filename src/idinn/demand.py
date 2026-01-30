@@ -51,6 +51,11 @@ class UniformDemand(BaseDemand):
     def get_max_demand(self) -> int:
         return self.max_demand
 
+    def support(self):
+        return range(self.min_demand, self.max_demand + 1)
+
+    def prob(self, d: int) -> float:
+        return 1.0 / (self.max_demand - self.min_demand + 1)
 
 class CustomDemand(BaseDemand):
     def __init__(self, demand_prob: dict[int, float]):
