@@ -3,7 +3,6 @@ from typing import Optional, Union
 import torch
 
 from .demand import CustomDemand, UniformDemand
-from .demand_three_subperiods import DiscreteTruncatedGammaDemand
 
 
 class BaseSourcingModel:
@@ -12,7 +11,7 @@ class BaseSourcingModel:
         holding_cost: float,
         shortage_cost: float,
         init_inventory: float,
-        demand_generator: Union[UniformDemand, CustomDemand, DiscreteTruncatedGammaDemand],
+        demand_generator: Union[UniformDemand, CustomDemand],
         batch_size: int,
         lead_time: Optional[int] = None,
         regular_lead_time: Optional[int] = None,
@@ -90,7 +89,7 @@ class SingleSourcingModel(BaseSourcingModel):
         holding_cost: float,
         shortage_cost: float,
         init_inventory: float,
-        demand_generator: Union[UniformDemand, CustomDemand, DiscreteTruncatedGammaDemand],
+        demand_generator: Union[UniformDemand, CustomDemand],
         batch_size: int = 1,
     ):
         """
@@ -174,7 +173,7 @@ class DualSourcingModel(BaseSourcingModel):
         holding_cost: float,
         shortage_cost: float,
         init_inventory: float,
-        demand_generator: Union[UniformDemand, CustomDemand, DiscreteTruncatedGammaDemand],
+        demand_generator: Union[UniformDemand, CustomDemand],
         batch_size: int = 1,
     ):
         """
