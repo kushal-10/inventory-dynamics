@@ -36,6 +36,12 @@ def test_dual():
                        sourcing_periods=100,
                        epochs=500,)
 
+    avg = dnn_controller.get_average_cost(
+        sourcing_model=model,
+        sourcing_periods=1000,
+    )
+
+    logger.info(f"Average cost: {avg}")
 
 
 if __name__ == "__main__":
