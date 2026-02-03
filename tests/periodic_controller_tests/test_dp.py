@@ -1,12 +1,12 @@
 import torch.nn
 from src.idinn.sourcing_model import DualSourcingModel
-from src.idinn.dual_controller.dynamic_programming import DynamicProgrammingController
+from src.idinn.periodic_controller.dynamic_programming import DynamicProgrammingController
 from src.idinn.demand import UniformDemand
 
 import logging
 
 logging.basicConfig(
-    filename="tests/custom_tests/dp.log",
+    filename="tests/periodic_controller_tests/dp.log",
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
 )
