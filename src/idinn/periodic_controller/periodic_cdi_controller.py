@@ -5,43 +5,41 @@ from typing import List, Optional, Tuple, Union, no_type_check
 import torch
 
 from ..sourcing_model import DualSourcingModel
-from .base import BaseDualController
+from ..dual_controller.base import BasePeriodicDualController
 
 # Get root logger
 logger = logging.getLogger()
 
 
-class CappedDualIndexController(BaseDualController):
+class PeriodicCDIController(BasePeriodicDualController):
     """
-    Controller class for capped dual index inventory optimization.
+    Controller class for a modified periodic capped dual index inventory optimization.
 
     Parameters
     ----------
-    s_e : int
+    s_e1 : int
         Capped dual index parameter 1
-    s_r : int
+    s_e2 : int
         Capped dual index parameter 2
-    q_r : int
+    s_r : int
         Capped dual index parameter 3
+    q_r : int
+        Capped dual index parameter 4
 
     Notes
     -----
-    The function follows the implementation of Sun, J., & Van Mieghem, J. A. (2019)([1]_).
-
-    References
-    ----------
-    .. [1] Robust dual sourcing inventory management: Optimality of capped dual index policies and smoothing.
-           Manufacturing & Service Operations Management, 21(4), 912-931.
+    Ref overleaf doc for more details
     """
 
-    def __init__(self, s_e: int = 0, s_r: int = 0, q_r: int = 0) -> None:
+    def __init__(self, s_e1: int = 0, s_e2: int = 0, s_r: int = 0, q_r: int = 0) -> None:
         self.sourcing_model = None
-        self.s_e = s_e
+        self.s_e1 = s_e1
+        self.s_e2 = s_e2
         self.s_r = s_r
         self.q_r = q_r
-        logger.info("Initialized CappedDualIndexController")
+        logger.info("Initialized PeriodicCDIController")
 
-    def capped_dual_index_sum(
+    def periodic_cdi_sum(
         self,
         current_inventory: int,
         past_regular_orders: torch.Tensor,
@@ -141,25 +139,30 @@ class CappedDualIndexController(BaseDualController):
         )
 
         min_cost = torch.inf
-        for s_e in s_e_range:
-            for s_r in s_r_range:
-                for q_r in q_r_range:
-                    sourcing_model.reset()
-                    self.s_e = s_e
-                    self.s_r = s_r
-                    self.q_r = q_r
-                    total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
-                    # logger.info(
-                    #     f"s_e={s_e}, s_r={s_r}, q_r={q_r}"
-                    #     f" - Training cost: {total_cost / sourcing_periods:.4f}"
-                    # )
-                    if total_cost < min_cost:
-                        min_cost = total_cost
-                        s_e_optimal = s_e
-                        s_r_optimal = s_r
-                        q_r_optimal = q_r
+        for s_e1 in s_e_range:
+            for s_e2 in s_e_range:
+                for s_r in s_r_range:
+                    for q_r in q_r_range:
+                        sourcing_model.reset()
+                        self.s_e1 = s_e1
+                        self.s_e2 = s_e2
+                        self.s_r = s_r
+                        self.q_r = q_r
 
-        self.s_e = s_e_optimal
+                        total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
+                        logger.info(
+                            f"s_e1={s_e1}, s_e2={s_e2}, s_r={s_r}, q_r={q_r}"
+                            f" - Training cost: {total_cost / sourcing_periods:.4f}"
+                        )
+                        if total_cost < min_cost:
+                            min_cost = total_cost
+                            s_e1_optimal = s_e1 
+                            s_e2_optimal = s_e2
+                            s_r_optimal = s_r
+                            q_r_optimal = q_r
+
+        self.s_e1 = s_e1_optimal
+        self.s_e2 = s_e2_optimal
         self.s_r = s_r_optimal
         self.q_r = q_r_optimal
 
@@ -172,13 +175,12 @@ class CappedDualIndexController(BaseDualController):
             f"Final best parameters: s_e={s_e_optimal}, s_r={s_r_optimal}, q_r={q_r_optimal}"
         )
 
-        return duration
-
     def predict(
         self,
         current_inventory: Union[int, torch.Tensor],
         past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
         past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        phase: int = 0,
         output_tensor: bool = False,
     ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
         """
@@ -214,7 +216,7 @@ class CappedDualIndexController(BaseDualController):
             past_expedited_orders, expedited_lead_time
         )
 
-        inventory_position = self.capped_dual_index_sum(
+        inventory_position = self.periodic_cdi_sum(
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
@@ -222,7 +224,7 @@ class CappedDualIndexController(BaseDualController):
             expedited_lead_time,
             limit=False,
         )
-        inventory_position_lm1 = self.capped_dual_index_sum(
+        inventory_position_lm1 = self.periodic_cdi_sum(
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
@@ -238,7 +240,8 @@ class CappedDualIndexController(BaseDualController):
             ).item()
         ) # Works only with batch size = 1
 
-        expedited_q = int(max(0, self.s_e - inventory_position))
+        se_value = self.s_e1 if phase == 1 else self.s_e2
+        expedited_q = int(max(0, se_value - inventory_position))
 
         if output_tensor:
             return torch.tensor([[regular_q]]), torch.tensor([[expedited_q]])
@@ -249,7 +252,8 @@ class CappedDualIndexController(BaseDualController):
         """
         Reset the controller to the initial state.
         """
-        self.s_e = 0
+        self.s_e1 = 0
+        self.s_e2 = 0
         self.s_r = 0
         self.q_r = 0
         self.sourcing_model = None

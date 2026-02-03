@@ -1,11 +1,11 @@
-from src.idinn.cyclic_controller.cyclic_cdi_controller import CyclicCDIController
+from src.idinn.periodic_controller.periodic_cdi_controller import PeriodicCDIController
 from src.idinn.sourcing_model import DualSourcingModel
 from src.idinn.demand import UniformDemand
 
 import logging
 
 logging.basicConfig(
-    filename="tests/cyclic_controller_tests/cyclic_cdi.log",
+    filename="tests/periodic_controller_tests/periodic_cdi.log",
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
 )
@@ -26,7 +26,7 @@ def test_cyc_cdi():
         batch_size=1
     )
 
-    cyc_cdi_controller = CyclicCDIController()
+    cyc_cdi_controller = PeriodicCDIController()
 
     cyc_cdi_controller.fit(sourcing_model=model, sourcing_periods=1000)
 
