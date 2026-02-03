@@ -172,7 +172,7 @@ class PeriodicCDIController(BasePeriodicDualController):
         logger.info(f"Total training duration: {duration}")
         logger.info(f"Final best cost: {min_cost / sourcing_periods:.4f}")
         logger.info(
-            f"Final best parameters: s_e={s_e_optimal}, s_r={s_r_optimal}, q_r={q_r_optimal}"
+            f"Final best parameters: s_e1={s_e1_optimal}, s_e2={s_e2_optimal}, s_r={s_r_optimal}, q_r={q_r_optimal}"
         )
 
     def predict(
@@ -239,6 +239,8 @@ class PeriodicCDIController(BasePeriodicDualController):
                 max=self.q_r
             ).item()
         ) # Works only with batch size = 1
+        if phase == 0:
+            regular_q = 0
 
         se_value = self.s_e1 if phase == 1 else self.s_e2
         expedited_q = int(max(0, se_value - inventory_position))
