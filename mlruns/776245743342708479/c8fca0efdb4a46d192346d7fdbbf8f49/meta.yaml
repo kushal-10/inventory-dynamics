@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/c8fca0efdb4a46d192346d7fdbbf8f49/artifacts
+end_time: 1770212999829
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: c8fca0efdb4a46d192346d7fdbbf8f49
+run_name: likeable-finch-587
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770212974093
+status: 3
+tags: []
+user_id: kushalkoshti

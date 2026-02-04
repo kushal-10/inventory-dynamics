@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/4d812c804b6e4a4ca103ede2d80e2399/artifacts
+end_time: 1770212714672
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: 4d812c804b6e4a4ca103ede2d80e2399
+run_name: spiffy-shark-405
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770212687706
+status: 3
+tags: []
+user_id: kushalkoshti

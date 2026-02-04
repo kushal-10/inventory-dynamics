@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/7a3c5a661c73473096106b56af0d42e2/artifacts
+end_time: 1770212769455
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: 7a3c5a661c73473096106b56af0d42e2
+run_name: persistent-wasp-188
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770212742871
+status: 3
+tags: []
+user_id: kushalkoshti

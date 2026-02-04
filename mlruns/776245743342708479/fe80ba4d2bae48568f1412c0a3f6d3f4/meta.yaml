@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/fe80ba4d2bae48568f1412c0a3f6d3f4/artifacts
+end_time: 1770213102278
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: fe80ba4d2bae48568f1412c0a3f6d3f4
+run_name: bouncy-deer-498
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770213073438
+status: 3
+tags: []
+user_id: kushalkoshti

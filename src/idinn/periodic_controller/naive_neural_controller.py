@@ -8,16 +8,18 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ..sourcing_model import DualSourcingModel
-from ..dual_controller.base import BaseDualController
-from ..dual_controller.base import BasePeriodicDualController
+from .base import BasePeriodicDualController
 
 # Get root logger
 logger = logging.getLogger()
 
+MAX_Q = 20 # Hard cap on order quantities
+#TODO: calculate the same way used in DP
 
-class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
+
+class PeriodicNaiveNeuralController(torch.nn.Module, BasePeriodicDualController):
     """
-    DualSourcingNeuralController is a neural network controller for dual sourcing inventory optimization.
+    PeriodicNaiveNeuralController is a neural network controller for dual sourcing inventory optimization with periodic restrictions.
 
     Parameters
     ----------
@@ -62,7 +64,7 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
     def __init__(
         self,
         hidden_layers: List[int] = [128, 64, 32, 16, 8, 4],
-        activation: torch.nn.Module = torch.nn.ReLU(),
+        activation: torch.nn.Module = torch.nn.CELU(alpha=1.0),
         compressed: bool = False,
     ):
         super().__init__()
@@ -72,7 +74,7 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
         self.compressed = compressed
         self.model: Optional[torch.nn.Sequential] = None
         logger.info(
-            f"Initialized DualSourcingNeuralController with hidden_layers={hidden_layers}, compressed={compressed}"
+            f"Initialized PeriodicNaiveNeuralController with hidden_layers={hidden_layers}, compressed={compressed}"
         )
 
     def init_layers(self, regular_lead_time: int, expedited_lead_time: int) -> None:
@@ -86,10 +88,13 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
         expedited_lead_time : int
             Expedited lead time.
         """
+
+        
         if self.compressed:
-            input_length = regular_lead_time + expedited_lead_time
+            # add +1 to handle phase 
+            input_length = regular_lead_time + expedited_lead_time + 1 
         else:
-            input_length = regular_lead_time + expedited_lead_time + 1
+            input_length = regular_lead_time + expedited_lead_time + 2
 
         architecture = [
             torch.nn.Linear(input_length, self.hidden_layers[0]),
@@ -103,10 +108,10 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
                 ]
         architecture += [
             torch.nn.Linear(self.hidden_layers[-1], 2),
-            # TODO: Mention this ReLU layer in documentation
-            torch.nn.ReLU(),
+            # torch.nn.ReLU(), # handled with clamp
         ]
         self.model = torch.nn.Sequential(*architecture)
+        self.model
         logger.info(
             f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
             f"expedited_lead_time={expedited_lead_time}"
@@ -117,8 +122,11 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
         current_inventory: torch.Tensor,
         past_regular_orders: torch.Tensor,
         past_expedited_orders: torch.Tensor,
+        phase: int,
         sourcing_model: DualSourcingModel,
     ) -> torch.Tensor:
+
+        
         regular_lead_time = sourcing_model.get_regular_lead_time()
         expedited_lead_time = sourcing_model.get_expedited_lead_time()
 
@@ -149,13 +157,41 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
             inputs = torch.cat(
                 [inputs, past_expedited_orders[:, -expedited_lead_time:]], dim=1
             )
+
+        phase_value = 2 * (phase % 2) - 1  # odd → +1, even → -1
+
+        phase_tensor = torch.full(
+            (inputs.shape[0], 1),
+            float(phase_value),
+            dtype=inputs.dtype,
+        )
+
+        inputs = torch.cat([inputs, phase_tensor], dim=1)
+        
         return inputs
 
-    def forward(self, inputs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, inputs: torch.Tensor, phase: int) -> Tuple[torch.Tensor, torch.Tensor]:
         if self.model is None:
             raise AttributeError("Model not initialized. Call `init_layers()` first.")
 
         h = self.model(inputs)
+
+        if phase is not None:
+            mask = torch.full(
+                (inputs.shape[0], 1),
+                float(phase % 2),
+                dtype=inputs.dtype,
+            )
+
+            # split, mask, and re-concatenate
+            qr = h[:, [0]] * mask
+            qe = h[:, [1]]
+    
+            h = torch.cat([qr, qe], dim=1)
+
+        # hard cap
+        h = torch.clamp(h, 0.0, MAX_Q)
+
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]
         expedited_q = q[:, [1]]
@@ -166,9 +202,10 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
         current_inventory: Union[int, torch.Tensor],
         past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
         past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
+        phase: Optional[int] = None,
         output_tensor: bool = False,
     ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
-        """
+        f"""
         Forward pass of the neural network.
 
         Parameters
@@ -181,7 +218,7 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
             Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
         output_tensor : bool, default is False
             If True, the replenishment order quantity will be returned as a torch.Tensor. Otherwise, it will be returned as an integer.
-
+        phase : int, the current phase of the input - {0,1}
         Returns
         -------
         tuple
@@ -194,9 +231,10 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
+            phase,
             sourcing_model=self.sourcing_model,
         )
-        regular_q, expedited_q = self.forward(inputs)
+        regular_q, expedited_q = self.forward(inputs, phase)
 
         if output_tensor:
             return regular_q, expedited_q
@@ -214,7 +252,8 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
         log_freq: int = 100,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
-        parameters_lr: float = 3e-3,
+        weight_decay: float = 0.0,
+        parameters_lr: float = 1e-3,
         tensorboard_writer: Optional[SummaryWriter] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -247,6 +286,8 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
             Tensorboard writer for logging.
         """
         # Store sourcing model in self.sourcing_model
+    
+
         self.sourcing_model = sourcing_model
 
         if seed is not None:
@@ -270,10 +311,12 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
             f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}"
         )
 
+        
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
-        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
+        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr, weight_decay=weight_decay)
+
         min_loss = np.inf
 
         for epoch in tqdm(range(epochs)):
@@ -281,8 +324,8 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
             optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()
             # Reset the sourcing model with the learned init inventory
-            sourcing_model.reset()
-            train_loss = super().get_total_cost(sourcing_model, sourcing_periods)
+            sourcing_model.reset() # clean
+            train_loss = super().get_periodic_total_cost(sourcing_model, sourcing_periods)
             train_loss.backward()
             # Perform gradient descend
             if epoch % init_inventory_freq == 0:
@@ -291,7 +334,7 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
                 optimizer_parameters.step()
             # Save the best model
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                eval_loss = super().get_total_cost(
+                eval_loss = super().get_periodic_total_cost(
                     sourcing_model, validation_sourcing_periods
                 )
                 if eval_loss < min_loss:
@@ -301,19 +344,7 @@ class PeriodicNeuralController(torch.nn.Module, BasePeriodicDualController):
                 if train_loss < min_loss:
                     min_loss = train_loss
                     best_state = self.state_dict()
-            # Log train loss
-            if tensorboard_writer is not None:
-                tensorboard_writer.add_scalar(
-                    "Avg. cost per period/train", train_loss / sourcing_periods, epoch
-                )
-                if validation_sourcing_periods is not None and epoch % 10 == 0:
-                    # Log validation loss
-                    tensorboard_writer.add_scalar(
-                        "Avg. cost per period/val",
-                        eval_loss / validation_sourcing_periods,
-                        epoch,
-                    )
-                tensorboard_writer.flush()
+  
 
             end_time = datetime.now()
             duration = end_time - start_time

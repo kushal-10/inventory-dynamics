@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/2f5bcfabdf6e4550beedb1972bee3670/artifacts
+end_time: 1770212873617
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: 2f5bcfabdf6e4550beedb1972bee3670
+run_name: bittersweet-bird-334
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770212848997
+status: 3
+tags: []
+user_id: kushalkoshti
