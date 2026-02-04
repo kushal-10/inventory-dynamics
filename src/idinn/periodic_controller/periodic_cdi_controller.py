@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Union, no_type_check
 import torch
 
 from ..sourcing_model import DualSourcingModel
-from ..dual_controller.base import BasePeriodicDualController
+from .base import BasePeriodicDualController
 
 # Get root logger
 logger = logging.getLogger()

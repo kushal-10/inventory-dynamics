@@ -8,12 +8,12 @@ from typing import Optional, Tuple, Union, no_type_check
 
 import numpy as np
 import torch
-from numba import njit, types  # type: ignore
+from numba import njit, types 
 from numba.typed import Dict, List
 from tqdm import tqdm
 
 from ..sourcing_model import DualSourcingModel
-from ..dual_controller.base import BasePeriodicDualController
+from .base import BasePeriodicDualController
 
 # Get root logger
 logger = logging.getLogger()
@@ -268,9 +268,6 @@ class DynamicProgrammingController(BasePeriodicDualController):
 
                 if delta <= tolerance:
 
-                    # ================================
-                    # 🔧 NORMALIZE VALUE FUNCTION HERE
-                    # ================================
                     ref_vals = [
                         v for k, v in vf.items()
                         if k[-1] == 0 and v < 1e8   # phase = 0 reference
@@ -286,9 +283,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
 
                     for k in vf:
                         vf[k] -= baseline
-                    # ================================
 
-                    # 🔽 NOW extract optimal policy
                     for state in states:
                         qa = DynamicProgrammingController._vf_update(
                             demand_prob,
