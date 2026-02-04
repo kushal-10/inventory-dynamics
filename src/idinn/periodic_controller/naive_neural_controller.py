@@ -252,6 +252,7 @@ class PeriodicNaiveNeuralController(torch.nn.Module, BasePeriodicDualController)
         log_freq: int = 100,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
+        weight_decay: float = 0.0,
         parameters_lr: float = 1e-3,
         tensorboard_writer: Optional[SummaryWriter] = None,
         seed: Optional[int] = None,
@@ -314,7 +315,7 @@ class PeriodicNaiveNeuralController(torch.nn.Module, BasePeriodicDualController)
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
-        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
+        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr, weight_decay=weight_decay)
 
         min_loss = np.inf
 
