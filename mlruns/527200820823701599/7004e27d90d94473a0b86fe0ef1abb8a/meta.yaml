@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/7004e27d90d94473a0b86fe0ef1abb8a/artifacts
+end_time: 1770224766219
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: 7004e27d90d94473a0b86fe0ef1abb8a
+run_name: intelligent-shad-676
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770224738110
+status: 3
+tags: []
+user_id: kushalkoshti

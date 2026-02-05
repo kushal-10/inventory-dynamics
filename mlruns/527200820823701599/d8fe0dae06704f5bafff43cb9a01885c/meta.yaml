@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/d8fe0dae06704f5bafff43cb9a01885c/artifacts
+end_time: 1770224554007
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: d8fe0dae06704f5bafff43cb9a01885c
+run_name: nebulous-mink-692
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770224526040
+status: 3
+tags: []
+user_id: kushalkoshti

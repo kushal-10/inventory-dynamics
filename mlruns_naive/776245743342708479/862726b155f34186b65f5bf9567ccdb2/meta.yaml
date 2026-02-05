@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/862726b155f34186b65f5bf9567ccdb2/artifacts
+end_time: 1770213048589
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: 862726b155f34186b65f5bf9567ccdb2
+run_name: wise-dove-316
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770213024260
+status: 3
+tags: []
+user_id: kushalkoshti

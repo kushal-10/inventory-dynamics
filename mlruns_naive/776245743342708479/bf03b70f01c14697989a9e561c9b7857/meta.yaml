@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/bf03b70f01c14697989a9e561c9b7857/artifacts
+end_time: 1770212923216
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: bf03b70f01c14697989a9e561c9b7857
+run_name: mysterious-pug-361
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770212898393
+status: 3
+tags: []
+user_id: kushalkoshti

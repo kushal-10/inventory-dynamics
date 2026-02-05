@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/776245743342708479/afacb779a32847b7bb828e7fa2c12e01/artifacts
+end_time: 1770212848996
+entry_point_name: ''
+experiment_id: '776245743342708479'
+lifecycle_stage: active
+run_id: afacb779a32847b7bb828e7fa2c12e01
+run_name: clean-grouse-845
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770212822234
+status: 3
+tags: []
+user_id: kushalkoshti

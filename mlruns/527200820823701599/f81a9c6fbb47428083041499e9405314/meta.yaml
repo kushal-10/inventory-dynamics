@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/f81a9c6fbb47428083041499e9405314/artifacts
+end_time: 1770224654388
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: f81a9c6fbb47428083041499e9405314
+run_name: gregarious-mare-114
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770224624982
+status: 3
+tags: []
+user_id: kushalkoshti

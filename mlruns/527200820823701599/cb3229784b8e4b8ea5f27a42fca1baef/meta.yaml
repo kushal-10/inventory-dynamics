@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/cb3229784b8e4b8ea5f27a42fca1baef/artifacts
+end_time: 1770225050436
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: cb3229784b8e4b8ea5f27a42fca1baef
+run_name: bouncy-kite-354
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770225022408
+status: 3
+tags: []
+user_id: kushalkoshti

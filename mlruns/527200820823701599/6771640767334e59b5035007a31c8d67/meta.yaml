@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/6771640767334e59b5035007a31c8d67/artifacts
+end_time: 1770225105704
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: 6771640767334e59b5035007a31c8d67
+run_name: righteous-crane-527
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770225077664
+status: 3
+tags: []
+user_id: kushalkoshti

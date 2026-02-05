@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/9af5a06b2e364cb9a4d06fb8a51d7186/artifacts
+end_time: 1770224938343
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: 9af5a06b2e364cb9a4d06fb8a51d7186
+run_name: selective-quail-240
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770224910232
+status: 3
+tags: []
+user_id: kushalkoshti

@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/b1cc85b7d3f34567870e25551bc36d87/artifacts
+end_time: 1770224681762
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: b1cc85b7d3f34567870e25551bc36d87
+run_name: charming-grub-864
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770224654389
+status: 3
+tags: []
+user_id: kushalkoshti

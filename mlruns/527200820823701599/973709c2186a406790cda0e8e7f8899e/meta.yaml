@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/973709c2186a406790cda0e8e7f8899e/artifacts
+end_time: 1770224910231
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: 973709c2186a406790cda0e8e7f8899e
+run_name: likeable-carp-658
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770224881263
+status: 3
+tags: []
+user_id: kushalkoshti

@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kushalkoshti/Work/InventoryDynamics/inventory-dynamics/mlruns/527200820823701599/21f8dbf33b0f448ea59096c25e4f8383/artifacts
+end_time: 1770225077662
+entry_point_name: ''
+experiment_id: '527200820823701599'
+lifecycle_stage: active
+run_id: 21f8dbf33b0f448ea59096c25e4f8383
+run_name: thundering-squid-960
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770225050438
+status: 3
+tags: []
+user_id: kushalkoshti
