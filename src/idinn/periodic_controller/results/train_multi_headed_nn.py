@@ -32,11 +32,7 @@ sourcing_model = DualSourcingModel(
 def train_best_model():
     
     controller = MultiHeadedNeuralController(
-<<<<<<< HEAD
-        shared_layers=[32, 16],
-=======
-        shared_layers=[64, 32, 16],
->>>>>>> feat/nn_controllers
+        shared_layers=[64,32,16],
         head_even_layers=[8,4],
         head_odd_layers=[4]
     )
