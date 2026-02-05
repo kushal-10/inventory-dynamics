@@ -13,8 +13,7 @@ from .base import BasePeriodicDualController
 # Get root logger
 logger = logging.getLogger()
 
-MAX_Q = 20 # Hard cap on order quantities
-#TODO: calculate the same way used in DP
+
 
 
 class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
@@ -28,6 +27,8 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         head_even_layers: List[int] = [32, 16],
         head_odd_layers: List[int] = [32],
         activation: torch.nn.Module = torch.nn.CELU(alpha=1.0),
+        MAX_Q: int = 20, # Hard cap on order quantities
+        #TODO: calculate the same way used in DP
         compressed: bool = False,
     ):
         super().__init__()
@@ -39,6 +40,7 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
 
         self.activation = activation
         self.compressed = compressed
+        self.MAX_Q = MAX_Q
 
         self.shared: Optional[torch.nn.Sequential] = None
         self.head_even: Optional[torch.nn.Sequential] = None
@@ -193,7 +195,7 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
                 h = torch.cat([qr, qe], dim=1)
 
         # hard cap
-        h = torch.clamp(h, 0.0, MAX_Q)
+        h = torch.clamp(h, 0.0, self.MAX_Q)
 
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]
