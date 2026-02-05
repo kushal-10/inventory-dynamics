@@ -178,4 +178,6 @@ output/
 
 # uv
 .python-version
-uv.lock
+uv.
+
+mlruns*
