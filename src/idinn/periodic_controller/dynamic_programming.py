@@ -386,7 +386,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
         # ------------------
         ip_e = int(sourcing_model.init_inventory.item())
         pipeline = [0] * (lr - 1)
-        phase = 0
+        phase = 1
 
         total_cost = 0.0
         traj = []
