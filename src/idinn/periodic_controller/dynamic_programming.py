@@ -362,3 +362,70 @@ class DynamicProgrammingController(BasePeriodicDualController):
         self.qf = None
         self.vf = None
         self.sourcing_model = None
+
+    def simulate(
+        self,
+        sourcing_model: DualSourcingModel,
+        T: int,
+        seed: Optional[int] = None,
+    ):
+        assert self.qf is not None, "Controller not trained"
+
+        if seed is not None:
+            np.random.seed(seed)
+
+        lr = sourcing_model.get_regular_lead_time()
+        demand_gen = sourcing_model.demand_generator
+
+        h = sourcing_model.get_holding_cost()
+        b = sourcing_model.get_shortage_cost()
+        ce = sourcing_model.get_expedited_order_cost()
+
+        # ------------------
+        # initial state
+        # ------------------
+        ip_e = int(sourcing_model.init_inventory.item())
+        pipeline = [0] * (lr - 1)
+        phase = 1
+
+        total_cost = 0.0
+        traj = []
+
+        for t in range(T):
+
+            state = (ip_e, *pipeline, phase)
+
+            # optimal action
+            qr, qe = self.qf[state]
+
+            # ordering cost
+            cost = qe * ce
+
+            # arrivals (regular arrives before demand)
+            ip_e = ip_e + qe + pipeline[0]
+
+            # demand
+            d = demand_gen.sample()
+            ip_e -= d
+
+            # holding / backlog
+            inv_on_hand = ip_e - pipeline[0]
+            cost += h * inv_on_hand if inv_on_hand > 0 else b * (-inv_on_hand)
+
+            # update pipeline
+            pipeline = pipeline[1:] + [qr]
+            phase = 1 - phase
+
+            total_cost += cost
+
+            traj.append({
+                "t": t,
+                "state": state,
+                "qr": qr,
+                "qe": qe,
+                "demand": d,
+                "inventory": ip_e,
+                "cost": cost,
+            })
+
+        return total_cost / T, traj

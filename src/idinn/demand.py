@@ -36,7 +36,7 @@ class UniformDemand(BaseDemand):
         self.min_demand = low
         self.max_demand = high
 
-    def sample(self, batch_size: int, batch_width: int = 1) -> torch.Tensor:
+    def sample(self, batch_size: int = 1, batch_width: int = 1) -> torch.Tensor:
         return self.distribution.sample([batch_size, batch_width]).int()
 
     def enumerate_support(self) -> dict:

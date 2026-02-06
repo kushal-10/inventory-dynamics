@@ -26,15 +26,11 @@ def objective(trial):
         shared_layers = trial.suggest_categorical(
             "shared_layers",
             [
-<<<<<<< HEAD
-                [32, 16],
-=======
                 [128, 64, 32, 16, 8],
                 [64, 32, 16, 8],
                 [32, 16],
                 [32, 16, 8],
                 [16, 8],
->>>>>>> feat/nn_controllers
                 [64, 32],
                 [64, 32, 16],
             ],
@@ -58,11 +54,6 @@ def objective(trial):
             ],
         )
 
-<<<<<<< HEAD
-        parameters_lr_shared = trial.suggest_loguniform("parameters_lr_shared", 1e-4, 5e-3)
-        parameters_lr_even = trial.suggest_loguniform("parameters_lr_even", 1e-4, 5e-3)
-        parameters_lr_odd = trial.suggest_loguniform("parameters_lr_odd", 1e-4, 5e-3)
-=======
         MAX_Q = trial.suggest_categorical(
             "MAX_Q",
             [
@@ -73,7 +64,6 @@ def objective(trial):
         parameters_lr_shared = trial.suggest_loguniform("parameters_lr_shared", 1e-4, 1e-2)
         parameters_lr_even = trial.suggest_loguniform("parameters_lr_even", 1e-4, 1e-2)
         parameters_lr_odd = trial.suggest_loguniform("parameters_lr_odd", 1e-4, 1e-2)
->>>>>>> feat/nn_controllers
 
         weight_decay_shared = trial.suggest_loguniform("weight_decay_shared", 1e-6, 1e-3)
         weight_decay_even = trial.suggest_loguniform("weight_decay_even", 1e-6, 1e-3)
@@ -89,12 +79,8 @@ def objective(trial):
             "parameters_lr_odd": parameters_lr_odd,
             "parameters_lr_even": parameters_lr_even,
             "weight_decay_even": weight_decay_even,
-<<<<<<< HEAD
-            "weight_decay_odd": weight_decay_odd
-=======
             "weight_decay_odd": weight_decay_odd,
             "MAX_Q": MAX_Q
->>>>>>> feat/nn_controllers
         })
 
         sourcing_model = DualSourcingModel(
@@ -112,22 +98,14 @@ def objective(trial):
         controller = MultiHeadedNeuralController(
             shared_layers=shared_layers,
             head_even_layers=head_even_layers,
-<<<<<<< HEAD
-            head_odd_layers=head_odd_layers
-=======
             head_odd_layers=head_odd_layers,
             MAX_Q=MAX_Q
->>>>>>> feat/nn_controllers
         )
 
         controller.fit(
             sourcing_model=sourcing_model,
             sourcing_periods=100,
-<<<<<<< HEAD
-            epochs=800,
-=======
             epochs=600,
->>>>>>> feat/nn_controllers
             weight_decay_shared = weight_decay_shared,
             weight_decay_odd = weight_decay_odd,
             weight_decay_even = weight_decay_even,
@@ -155,11 +133,7 @@ def run_hpo():
     mlflow.set_experiment("PeriodicNaiveNN-HPO")
 
     study = optuna.create_study(direction="minimize")
-<<<<<<< HEAD
-    study.optimize(objective, n_trials=20)
-=======
     study.optimize(objective, n_trials=100)
->>>>>>> feat/nn_controllers
 
     logger.info(f"Best cost: {study.best_value}")
     logger.info(f"Best params: {study.best_params}")
@@ -169,9 +143,6 @@ def run_hpo():
 
 if __name__ == '__main__':
     best_params = run_hpo()
-<<<<<<< HEAD
-    logger.info(f"Best Parameters: {best_params}")
-=======
     logger.info(f"Best Parameters: {best_params}")
 
 
@@ -189,4 +160,3 @@ if __name__ == '__main__':
 
 }. Best is trial 13 with value: 26.93000030517578.
 """
->>>>>>> feat/nn_controllers
