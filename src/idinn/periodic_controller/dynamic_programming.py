@@ -38,6 +38,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
         state: Tuple[int, ...],
         vf: TypingDict[Tuple[int, ...], float],
         actions: TypingList[Tuple[int, int]],
+        n_cycles: int,
     ) -> Tuple[float, Optional[Tuple[int, int]]]:
         """
         vf_update is a function that calculates a single value iteration update.
@@ -51,8 +52,8 @@ class DynamicProgrammingController(BasePeriodicDualController):
 
         for qe, qr in actions:
 
-            if current_phase==0 and qr!=0:
-                continue # skip the instances where qr is placed in an even time period - this is restricted 
+            if current_phase!=0 and qr!=0:
+                continue # skip the instances where qr is placed in an invalid time period - this is restricted 
             
             # Immediate cost of action
             cost = qe * ce
@@ -67,7 +68,9 @@ class DynamicProgrammingController(BasePeriodicDualController):
 
                 inv_cost = h*inventory_on_hand if inventory_on_hand>0 else b*-inventory_on_hand
 
-                next_phase = 1-current_phase
+                next_phase = 1+current_phase
+                if(next_phase == n_cycles):
+                    next_phase = 0
                 next_state = (ipe_new,) + current_pipeline[1:] + (qr,) + (next_phase,)
 
                 if (next_state not in vf) or (vf[next_state] > 10e9 - 1.0):
@@ -102,6 +105,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
         tolerance: float = 10e-8,
         validation_freq: int = 100,
         log_freq: int = 100,
+        n_cycles: int = 2,
     ) -> None:
         """
         Fit the controller to the given sourcing model.
@@ -175,19 +179,20 @@ class DynamicProgrammingController(BasePeriodicDualController):
         #         *(range(int(max_demand) + 1),) * int(dim_pipeline),
         #     )
         # )
+        phase_list = tuple(range(n_cycles))
         states = []
         all_possible_states = []
         for state in product(
             range(-min_ip, max_ip + 1),
             *(range(int(max_demand) + 1),) * dim_pipeline,
-            (0, 1),
+            phase_list,
         ):
             *_, phase = state
             pipeline = state[1:-1]
 
             all_possible_states.append(state)
             # unreachable: regular order placed in even period
-            if phase == 1 and pipeline[-1] != 0:
+            if phase == 0 and pipeline[-1] != 0:
                 continue
 
             states.append(state)
@@ -223,7 +228,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
             # We first store each newly updated state
             for idx, state in enumerate(states):
                 these_values[idx] = DynamicProgrammingController._vf_update(
-                    demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions
+                    demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions, n_cycles
                 )[0]
             # After the minimum for each state has been calculated, we update the states
             # If done in the same loop, converge sucks even more
@@ -295,6 +300,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
                             state,
                             vf,
                             actions,
+                            n_cycles
                         )[1]
                         if qa is not None:
                             qf[state] = qa
@@ -367,6 +373,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
         self,
         sourcing_model: DualSourcingModel,
         T: int,
+        n_cycles: int,
         seed: Optional[int] = None,
     ):
         assert self.qf is not None, "Controller not trained"
@@ -386,7 +393,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
         # ------------------
         ip_e = int(sourcing_model.init_inventory.item())
         pipeline = [0] * (lr - 1)
-        phase = 1
+        phase = 0
 
         total_cost = 0.0
         traj = []
@@ -414,7 +421,9 @@ class DynamicProgrammingController(BasePeriodicDualController):
 
             # update pipeline
             pipeline = pipeline[1:] + [qr]
-            phase = 1 - phase
+            phase = 1 + phase
+            if phase==n_cycles:
+                phase = 0
 
             total_cost += cost
 

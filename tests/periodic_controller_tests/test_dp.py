@@ -17,7 +17,7 @@ def test_dynamic_programming():
     demand = UniformDemand(low=0, high=4)
 
     model = DualSourcingModel(
-        regular_lead_time=2,
+        regular_lead_time=5,
         expedited_lead_time=0,
         regular_order_cost=0,
         expedited_order_cost=20,

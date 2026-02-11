@@ -17,6 +17,7 @@ def simulate_dp(
     controller,
     model,
     T: int,
+    n_cycles: int = 2, 
     seed: int = 42,
 ):
     np.random.seed(seed)
@@ -54,7 +55,9 @@ def simulate_dp(
         cost += h * inv_on_hand if inv_on_hand > 0 else b * (-inv_on_hand)
 
         pipeline = pipeline[1:] + [qr]
-        phase = 1 - phase
+        phase = 1 + phase
+        if phase == n_cycles:
+            phase = 0
 
         total_cost += cost
 
@@ -96,12 +99,13 @@ def test_dynamic_programming_evaluation():
         )
 
         dp_controller = DynamicProgrammingController()
-        dp_controller.fit(sourcing_model=model)
+        dp_controller.fit(sourcing_model=model, n_cycles=2)
 
         sim_df, avg_sim_cost = simulate_dp(
             controller=dp_controller,
             model=model,
             T=50,
+            n_cycles=2,
             seed=42,
         )
 
@@ -126,7 +130,7 @@ def test_dynamic_programming_evaluation():
 
     results_df = pd.concat(all_results, ignore_index=True)
     results_df.to_csv(
-        "src/idinn/periodic_controller/results/sim_dp.csv", 
+        "src/idinn/periodic_controller/results/sim_dp_2_cyc.csv", 
         index=False,
     )
 
