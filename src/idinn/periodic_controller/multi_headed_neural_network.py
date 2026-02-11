@@ -24,8 +24,8 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
     def __init__(
         self,
         shared_layers: List[int] = [128, 64],
-        head_even_layers: List[int] = [32, 16],
-        head_odd_layers: List[int] = [32],
+        head_restricted_layers: List[int] = [32, 16],
+        head_regular_layers: List[int] = [32],
         activation: torch.nn.Module = torch.nn.CELU(alpha=1.0),
         MAX_Q: int = 20, # Hard cap on order quantities
         #TODO: calculate the same way used in DP
@@ -35,20 +35,20 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         self.sourcing_model = None
 
         self.shared_layers = shared_layers
-        self.head_even_layers = head_even_layers
-        self.head_odd_layers = head_odd_layers
+        self.head_regular_layers = head_regular_layers
+        self.head_restricted_layers = head_restricted_layers
 
         self.activation = activation
         self.compressed = compressed
         self.MAX_Q = MAX_Q
 
         self.shared: Optional[torch.nn.Sequential] = None
-        self.head_even: Optional[torch.nn.Sequential] = None
-        self.head_odd: Optional[torch.nn.Sequential] = None
+        self.head_regular: Optional[torch.nn.Sequential] = None
+        self.head_restricted: Optional[torch.nn.Sequential] = None
 
         logger.info(
             f"Initialized PeriodicNaiveNeuralController "
-            f"(shared={shared_layers}, even={head_even_layers}, odd={head_odd_layers})"
+            f"(shared={shared_layers}, even={head_regular_layers}, odd={head_restricted_layers})"
         )
 
 
@@ -92,16 +92,16 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         shared_out_dim = self.shared_layers[-1]
 
         # Heads
-        self.head_even = self._build_mlp(
+        self.head_regular = self._build_mlp(
             in_dim=shared_out_dim,
-            layers=self.head_even_layers,
+            layers=self.head_regular_layers,
             out_dim=2,
         )
 
-        self.head_odd = self._build_mlp(
+        self.head_restricted = self._build_mlp(
             in_dim=shared_out_dim,
-            layers=self.head_odd_layers,
-            out_dim=2,
+            layers=self.head_restricted_layers,
+            out_dim=1,
         )
 
         logger.info(
@@ -150,12 +150,10 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
                 [inputs, past_expedited_orders[:, -expedited_lead_time:]], dim=1
             )
 
-        phase_value = 2 * (phase % 2) - 1  # odd → +1, even → -1
-        # This is just a way of representing the phase, the phase value in cost calculations still use 0/1
 
         phase_tensor = torch.full(
             (inputs.shape[0], 1),
-            float(phase_value),
+            float(phase),
             dtype=inputs.dtype,
         )
 
@@ -164,43 +162,44 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         return inputs
 
     def forward(self, inputs: torch.Tensor, phase: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        if self.shared is None or self.head_even is None or self.head_odd is None:
+        if self.shared is None or self.head_regular is None or self.head_restricted is None:
             raise AttributeError("Model not initialized. Call `init_layers()` first.")
 
         h_shared = self.shared(inputs)
 
         if phase is not None:
 
-            if phase > 0: # odd time # Here phase shifts between 1 and 0 as this comes directly from cost iteration
-                h = self.head_odd(h_shared)
+            if phase > 0: # Restricted phases - 1,2,3....
+                h = self.head_restricted(h_shared)
 
-                # No masking at odd time periods
+                qe = h[:, [0]] 
+        
+                h = torch.cat([qe], dim=1)
+
+                # hard cap
+                h = torch.clamp(h, 0.0, self.MAX_Q)
+
+                q = h - torch.frac(h).clone().detach()
+                expedited_q = q[:, [0]]
+                return expedited_q
+                
+            else:
+                h = self.head_regular(h_shared)
+
                 qr = h[:, [0]] 
                 qe = h[:, [1]]
         
                 h = torch.cat([qr, qe], dim=1)
-            else:
-                h = self.head_even(h_shared)
 
-                mask = torch.full(
-                    (inputs.shape[0], 1),
-                    float(phase % 2),
-                    dtype=inputs.dtype,
-                )
+                # hard cap
+                h = torch.clamp(h, 0.0, self.MAX_Q)
 
-                # split, mask, and re-concatenate
-                qr = h[:, [0]] * mask
-                qe = h[:, [1]]
+                q = h - torch.frac(h).clone().detach()
+                regular_q = q[:, [0]]
+                expedited_q = q[:, [1]]
+                return regular_q, expedited_q
+
         
-                h = torch.cat([qr, qe], dim=1)
-
-        # hard cap
-        h = torch.clamp(h, 0.0, self.MAX_Q)
-
-        q = h - torch.frac(h).clone().detach()
-        regular_q = q[:, [0]]
-        expedited_q = q[:, [1]]
-        return regular_q, expedited_q
 
     def predict(
         self,
@@ -302,7 +301,7 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.shared is None or self.head_even is None or self.head_odd is None:
+        if self.shared is None or self.head_regular is None or self.head_restricted is None:
             self.init_layers(
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
@@ -333,12 +332,12 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
                     "weight_decay": weight_decay_shared,
                 },
                 {
-                    "params": self.head_odd.parameters(),
+                    "params": self.head_restricted.parameters(),
                     "lr": parameters_lr_odd,
                     "weight_decay": weight_decay_odd,
                 },
                 {
-                    "params": self.head_even.parameters(),
+                    "params": self.head_regular.parameters(),
                     "lr": parameters_lr_even,
                     "weight_decay": weight_decay_even,
                 },
@@ -407,6 +406,6 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         Reset the controller to the initial state.
         """
         self.shared = None
-        self.head_even = None
-        self.head_odd = None
+        self.head_regular = None
+        self.head_restricted = None
         self.sourcing_model = None
