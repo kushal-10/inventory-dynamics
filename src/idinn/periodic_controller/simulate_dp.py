@@ -137,3 +137,7 @@ def test_dynamic_programming_evaluation():
 
 if __name__ == "__main__":
     test_dynamic_programming_evaluation()
+
+"""
+possible extensions - stochastic lead times, random demand unmet, etc...
+"""

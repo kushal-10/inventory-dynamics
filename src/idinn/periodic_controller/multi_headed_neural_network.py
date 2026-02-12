@@ -182,7 +182,7 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
                 q = h - torch.frac(h).clone().detach()
                 expedited_q = q[:, [0]]
                 return expedited_q
-                
+
             else:
                 h = self.head_regular(h_shared)
 
@@ -238,12 +238,21 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
             phase,
             sourcing_model=self.sourcing_model,
         )
-        regular_q, expedited_q = self.forward(inputs, phase)
 
-        if output_tensor:
-            return regular_q, expedited_q
+        if phase>0:
+            expedited_q = self.forward(inputs, phase)
+
+            if output_tensor:
+                return expedited_q
+            else:
+                return int(expedited_q)
         else:
-            return int(regular_q), int(expedited_q)
+            regular_q, expedited_q = self.forward(inputs, phase)
+
+            if output_tensor:
+                return regular_q, expedited_q
+            else:
+                return int(regular_q), int(expedited_q)
 
     @no_type_check
     def fit(
@@ -257,11 +266,11 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
         weight_decay_shared: float = 0.0,
-        weight_decay_odd: float = 0.0,
-        weight_decay_even: float = 0.0,
+        weight_decay_restricted: float = 0.0,
+        weight_decay_regular: float = 0.0,
         parameters_lr_shared: float = 1e-3,
-        parameters_lr_odd: float = 1e-3,
-        parameters_lr_even: float = 1e-3,
+        parameters_lr_regular: float = 1e-3,
+        parameters_lr_restricted: float = 1e-3,
         tensorboard_writer: Optional[SummaryWriter] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -333,13 +342,13 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
                 },
                 {
                     "params": self.head_restricted.parameters(),
-                    "lr": parameters_lr_odd,
-                    "weight_decay": weight_decay_odd,
+                    "lr": parameters_lr_restricted,
+                    "weight_decay": weight_decay_restricted,
                 },
                 {
                     "params": self.head_regular.parameters(),
-                    "lr": parameters_lr_even,
-                    "weight_decay": weight_decay_even,
+                    "lr": parameters_lr_regular,
+                    "weight_decay": weight_decay_regular,
                 },
             ]
         )
@@ -409,3 +418,8 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         self.head_regular = None
         self.head_restricted = None
         self.sourcing_model = None
+
+
+"""
+Note: have N heads for each period in cycle
+"""
