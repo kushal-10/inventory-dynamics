@@ -3,8 +3,8 @@ import json
 import re
 
 FILE = "sample_1000.csv"
-START = 501
-END = 999
+START = 0
+END = 101
 
 df = pd.read_csv(FILE)
 
