@@ -40,6 +40,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         self.hidden_layers = hidden_layers
         self.activation = activation 
         self.n_periods = n_periods 
+        self.MAX_Q = 20
 
         self.model = None
 
@@ -118,6 +119,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             raise AttributeError("Model not initialized. Call `init_layers()` first.")
 
         h = self.model(inputs)
+        h = torch.clamp(h, 0.0, self.MAX_Q)
         q = h - torch.frac(h).clone().detach()
         regular_q = q[:, [0]]
         expedited_q = q[:, 1:] # Expedited Q0, Expedited Q1 ... depending on self.n_periods
