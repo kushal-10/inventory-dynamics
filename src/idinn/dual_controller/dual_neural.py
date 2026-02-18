@@ -5,7 +5,6 @@ from typing import List, Optional, Tuple, Union, no_type_check
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
@@ -275,7 +274,7 @@ class DualSourcingNeuralController(torch.nn.Module, BaseDualController):
         optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_loss = np.inf
 
-        for epoch in tqdm(range(epochs)):
+        for epoch in range(epochs):
             # Clear grad cache
             optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()

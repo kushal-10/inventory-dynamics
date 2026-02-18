@@ -17,8 +17,6 @@ def base_stock_controller():
         (2, 11, 29),
     ],
 )
-
-
 def test_base_stock_controller_fit_and_cost(
     base_stock_controller, lead_time, expected_z_star, expected_avg_cost
 ):

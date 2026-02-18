@@ -9,8 +9,8 @@ import numpy as np
 import torch
 from numba import njit, types  # type: ignore
 from numba.typed import Dict, List
-from tqdm import tqdm
 
+from ..demand import UniformDemand
 from ..sourcing_model import DualSourcingModel
 from .base import BaseDualController
 
@@ -109,10 +109,10 @@ class DynamicProgrammingController(BaseDualController):
         self.sourcing_model = sourcing_model
 
         # Check demand is uniform distributed
-        # if not isinstance(sourcing_model.demand_generator, UniformDemand):
-        #     raise ValueError(
-        #         "DynamicProgrammingController only supports uniform demand distribution."
-        #     )
+        if not isinstance(sourcing_model.demand_generator, UniformDemand):
+            raise ValueError(
+                "DynamicProgrammingController only supports uniform demand distribution."
+            )
         # Check if the expedited_lead_time is 0
         if sourcing_model.expedited_lead_time != 0:
             raise ValueError(
@@ -187,7 +187,7 @@ class DynamicProgrammingController(BaseDualController):
         qf = {}
         val = 0
 
-        for iteration in tqdm(range(max_iterations)):
+        for iteration in range(max_iterations):
             # We first store each newly updated state
             for idx, state in enumerate(states):
                 these_values[idx] = DynamicProgrammingController._vf_update(
