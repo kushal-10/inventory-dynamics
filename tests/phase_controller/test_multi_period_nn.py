@@ -32,7 +32,8 @@ sourcing_model = DualSourcingModel(
 def test_multi_period_model():
     
     controller = MultiPeriodNeuralController(
-        hidden_layers=[128, 64, 32, 16, 8]
+        hidden_layers=[128, 64, 32, 16, 8],
+        n_periods=2
     )
 
     controller.fit(

@@ -18,8 +18,6 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
     E.g. I_t, I_(t+n), I_(t+2n)....
     Demand is realized internally for the whole cycle
     Cost calculation is based on the whole cycle
-
-    n_periods - 2, 4, 6, 8... 
     """
 
     def __init__(
@@ -28,6 +26,15 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         activation: torch.nn.Module = torch.nn.CELU(alpha=1.0),
         n_periods: int = 2
         ) -> None:
+
+        """
+        Parameters
+        ----------
+        hidden_layers: Architecure of hidden layers. hidden_layer[n] represents the number of nerons in layer n.
+        activation: Activations betweeen layers
+        n_periods: Defines the number of time periods in 1 cycle. The output heads (and accordingly, the forward pass) will enumerate based on this value.
+        """
+        
         super().__init__()
 
         self.hidden_layers = hidden_layers
@@ -36,7 +43,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
         self.model = None
 
-        assert self.n_periods%2==0, f"Cycles should contain even periods. Got {self.n_periods}"
+        assert self.n_periods > 1, "Periods in a cycle should be > 1"
 
     def init_layers(self, regular_lead_time: int, expedited_lead_time: int) -> None:
         """
@@ -56,7 +63,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
                     self.activation,
                 ]
         architecture += [
-            torch.nn.Linear(self.hidden_layers[-1], 3), # 3 outputs for Qe0, Qr0 and Qe1
+            torch.nn.Linear(self.hidden_layers[-1], self.n_periods+1), # n_period outputs for Qe, +1 for Qr at t=0 in a cycle
             # TODO: Mention this ReLU layer in documentation
             torch.nn.ReLU(),
         ]
@@ -65,7 +72,8 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         
         logger.info(
             f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
-            f"expedited_lead_time={expedited_lead_time}"
+            f"expedited_lead_time={expedited_lead_time}, "
+            f"Periods in a Cycle : {self.n_periods}"
         )
 
 
@@ -111,11 +119,12 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
         h = self.model(inputs)
         q = h - torch.frac(h).clone().detach()
-        regular_q0 = q[:, [0]]
-        expedited_q0 = q[:, [1]]
-        expedited_q1 = q[:, [2]]
+        regular_q = q[:, [0]]
+        expedited_q = q[:, 1:] # Expedited Q0, Expedited Q1 ... depending on self.n_periods
 
-        return regular_q0, expedited_q0, expedited_q1
+        assert h.shape[1] == self.n_periods+1, f"Forward pass failed, check n periods and expedited q outputs. There are {self.n_periods} Periods and output tensor is of shape {h.shape}"
+
+        return regular_q, expedited_q
 
     def predict(
         self,
@@ -152,12 +161,14 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             past_expedited_orders,
             sourcing_model=self.sourcing_model,
         )
-        regular_q0, expedited_q0, expedited_q1 = self.forward(inputs)
+        regular_q, expedited_q = self.forward(inputs)
 
         if output_tensor:
-            return regular_q0, expedited_q0, expedited_q1
+            return regular_q, expedited_q
         else:
-            return int(regular_q0), int(expedited_q0), int(expedited_q1)
+            regular_int = int(regular_q.item())
+            expedited_ints = expedited_q.squeeze(0).tolist()
+            return regular_int, expedited_ints
 
 
     def fit(
@@ -213,7 +224,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             )
 
         start_time = datetime.now()
-        logger.info(f"Sourcing periods are reduced by a factor of {self.n_periods} to keep them aligned with other controllers")
+        logger.info(f"Sourcing periods are reduced by a factor of {self.n_periods} to keep them aligned with other non-periodic controllers")
         logger.info(f"Starting Multi-Period dual sourcing neural network training at {start_time}")
         logger.info(
             f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
@@ -322,32 +333,35 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         if seed is not None:
             torch.manual_seed(seed)
 
-        sourcing_periods = int(sourcing_periods/self.n_periods)
         
         total_cost = torch.tensor(0.0)
-        for t in range(sourcing_periods):
+        for t in range(int(sourcing_periods/self.n_periods)):
             current_inventory = sourcing_model.get_current_inventory()
             past_regular_orders = sourcing_model.get_past_regular_orders()
             past_expedited_orders = sourcing_model.get_past_expedited_orders()
-            regular_q0, expedited_q0, expedited_q1 = self.predict(
+            regular_q, expedited_q = self.predict(
                 current_inventory,
                 past_regular_orders,
                 past_expedited_orders,
                 output_tensor=True,
             )
 
-            # First pass for even time periods
-            sourcing_model.order(regular_q0, expedited_q0)
+            # First pass for first time period in the cycle
+            sourcing_model.order(regular_q, expedited_q[:, 0:1])
             last_cost = self.get_last_cost(sourcing_model)
             total_cost += last_cost.mean()
 
             # Update inventory here - Not needed, handeld by the sourcing model
             # Order generates random demand and updates current inventory, past invetory, past regular and expedited orders
             
-            # Second pass for odd time periods
-            sourcing_model.order(0, expedited_q1) # 0 regular orders allowed
-            last_cost = self.get_last_cost(sourcing_model)
-            total_cost += last_cost.mean()
+            for exp_q in expedited_q[:, 1:].split(1, dim=1):
+                # Second pass for remaining time periods
+                sourcing_model.order(
+                    torch.zeros_like(exp_q),  # 0 regular
+                    exp_q
+                )
+                last_cost = self.get_last_cost(sourcing_model)
+                total_cost += last_cost.mean()
 
         return total_cost
 
