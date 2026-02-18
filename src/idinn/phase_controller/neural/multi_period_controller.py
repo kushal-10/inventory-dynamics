@@ -341,6 +341,9 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             last_cost = self.get_last_cost(sourcing_model)
             total_cost += last_cost.mean()
 
+            # Update inventory here - Not needed, handeld by the sourcing model
+            # Order generates random demand and updates current inventory, past invetory, past regular and expedited orders
+            
             # Second pass for odd time periods
             sourcing_model.order(0, expedited_q1) # 0 regular orders allowed
             last_cost = self.get_last_cost(sourcing_model)
