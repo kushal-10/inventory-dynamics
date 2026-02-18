@@ -197,4 +197,3 @@ class BaseDualController(metaclass=ABCMeta):
         ax[1].legend()
 
         return fig, ax
-

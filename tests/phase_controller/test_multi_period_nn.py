@@ -1,8 +1,8 @@
 import logging
 import torch
+from tqdm import tqdm 
 
-from src.idinn.periodic_controller.naive_neural_controller import PeriodicNaiveNeuralController
-
+from src.idinn.phase_controller.neural.multi_period_controller import MultiPeriodNeuralController
 from src.idinn.sourcing_model import DualSourcingModel
 from src.idinn.demand import UniformDemand
 
@@ -10,7 +10,7 @@ from src.idinn.demand import UniformDemand
 # logging
 # ---------------------------------------------------------------------
 logging.basicConfig(
-    filename="src/idinn/periodic_controller/results/naive_nn.log",
+    filename="tests/phase_controller/test_multi_period.log",
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
 )
@@ -29,32 +29,26 @@ sourcing_model = DualSourcingModel(
         batch_size=1,
     )
 
-def train_best_model():
-    best_params = {
-        "hidden_layers": [32, 16],
-        "parameters_lr": 0.0046258,
-        "weight_decay":9.38279701e-6,
-    }
-    controller = PeriodicNaiveNeuralController(
-        hidden_layers=best_params["hidden_layers"]
+def test_multi_period_model():
+    
+    controller = MultiPeriodNeuralController(
+        hidden_layers=[128, 64, 32, 16, 8],
+        n_periods=2
     )
 
     controller.fit(
         sourcing_model=sourcing_model,
-        sourcing_periods=500,
-        epochs=3000,
-        parameters_lr=best_params["parameters_lr"],
-        weight_decay=best_params["weight_decay"],
-        seed=42,
+        sourcing_periods=100,
+        epochs=500,
     )
 
     # multi-seed evaluation
     costs = []
     with torch.no_grad():
-        for seed in range(500):
-            cost = controller.get_periodic_average_cost(
+        for seed in tqdm(range(50)):
+            cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
-                sourcing_periods=2000,
+                sourcing_periods=1000,
                 seed=seed,
             )
             costs.append(cost)
@@ -71,4 +65,4 @@ def train_best_model():
 
 
 if __name__ == '__main__':
-    train_best_model()
+    test_multi_period_model()

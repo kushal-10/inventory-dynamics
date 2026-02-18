@@ -1,124 +1,91 @@
-import logging
-from datetime import datetime
 from typing import List, Optional, Tuple, Union, no_type_check
+import logging 
+from datetime import datetime 
 
-import numpy as np
 import torch
-from torch.utils.tensorboard import SummaryWriter
+import numpy as np
 from tqdm import tqdm
 
-from ..sourcing_model import DualSourcingModel
-from .base import BasePeriodicDualController
+from .base import BaseNeuralController
+from ...sourcing_model import DualSourcingModel
 
 # Get root logger
 logger = logging.getLogger()
 
-
-
-
-class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
+class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
     """
-    MultiHeadedNeuralController is a neural network controller for dual sourcing inventory optimization with periodic restrictions.
+    Implements a multi-period nerual netowrk architecture. Input consists of periodic time states
+    E.g. I_t, I_(t+n), I_(t+2n)....
+    Demand is realized internally for the whole cycle
+    Cost calculation is based on the whole cycle
     """
 
     def __init__(
-        self,
-        shared_layers: List[int] = [128, 64],
-        head_restricted_layers: List[int] = [32, 16],
-        head_regular_layers: List[int] = [32],
+        self, 
+        hidden_layers: List[int] = [128, 64, ],
         activation: torch.nn.Module = torch.nn.CELU(alpha=1.0),
-        MAX_Q: int = 20, # Hard cap on order quantities
-        #TODO: calculate the same way used in DP
-        compressed: bool = False,
-    ):
+        n_periods: int = 2
+        ) -> None:
+
+        """
+        Parameters
+        ----------
+        hidden_layers: Architecure of hidden layers. hidden_layer[n] represents the number of nerons in layer n.
+        activation: Activations betweeen layers
+        n_periods: Defines the number of time periods in 1 cycle. The output heads (and accordingly, the forward pass) will enumerate based on this value.
+        """
+        
         super().__init__()
-        self.sourcing_model = None
 
-        self.shared_layers = shared_layers
-        self.head_regular_layers = head_regular_layers
-        self.head_restricted_layers = head_restricted_layers
+        self.hidden_layers = hidden_layers
+        self.activation = activation 
+        self.n_periods = n_periods 
+        self.MAX_Q = 20
 
-        self.activation = activation
-        self.compressed = compressed
-        self.MAX_Q = MAX_Q
+        self.model = None
 
-        self.shared: Optional[torch.nn.Sequential] = None
-        self.head_regular: Optional[torch.nn.Sequential] = None
-        self.head_restricted: Optional[torch.nn.Sequential] = None
-
-        logger.info(
-            f"Initialized PeriodicNaiveNeuralController "
-            f"(shared={shared_layers}, even={head_regular_layers}, odd={head_restricted_layers})"
-        )
-
-
-    def _build_mlp(self, in_dim: int, layers: List[int], out_dim: int) -> torch.nn.Sequential:
-        modules = []
-        prev = in_dim
-        for h in layers:
-            modules.append(torch.nn.Linear(prev, h))
-            modules.append(self.activation)
-            prev = h
-        modules.append(torch.nn.Linear(prev, out_dim))
-        return torch.nn.Sequential(*modules)
-
+        assert self.n_periods > 1, "Periods in a cycle should be > 1"
 
     def init_layers(self, regular_lead_time: int, expedited_lead_time: int) -> None:
         """
-        Initialize the layers of the neural network.
-
-        Parameters
-        ----------
-        regular_lead_time : int
-            Regular lead time.
-        expedited_lead_time : int
-            Expedited lead time.
+        Build NN architecture
         """
 
+        input_length = regular_lead_time+expedited_lead_time+1
+
+        architecture = [
+            torch.nn.Linear(input_length, self.hidden_layers[0]),
+            self.activation,
+        ]
+        for i in range(len(self.hidden_layers)):
+            if i < len(self.hidden_layers) - 1:
+                architecture += [
+                    torch.nn.Linear(self.hidden_layers[i], self.hidden_layers[i + 1]),
+                    self.activation,
+                ]
+        architecture += [
+            torch.nn.Linear(self.hidden_layers[-1], self.n_periods+1), # n_period outputs for Qe, +1 for Qr at t=0 in a cycle
+            # TODO: Mention this ReLU layer in documentation
+            torch.nn.ReLU(),
+        ]
+
+        self.model = torch.nn.Sequential(*architecture)
         
-        if self.compressed:
-            # add +1 to handle phase 
-            input_length = regular_lead_time + expedited_lead_time + 1 
-        else:
-            input_length = regular_lead_time + expedited_lead_time + 2
-
-        # Shared trunk
-        self.shared = self._build_mlp(
-            in_dim=input_length,
-            layers=self.shared_layers,
-            out_dim=self.shared_layers[-1],
-        )
-
-        shared_out_dim = self.shared_layers[-1]
-
-        # Heads
-        self.head_regular = self._build_mlp(
-            in_dim=shared_out_dim,
-            layers=self.head_regular_layers,
-            out_dim=2,
-        )
-
-        self.head_restricted = self._build_mlp(
-            in_dim=shared_out_dim,
-            layers=self.head_restricted_layers,
-            out_dim=1,
-        )
-
         logger.info(
-            f"Initialized two-headed network "
-            f"(input={input_length}, shared_out={shared_out_dim})"
+            f"Initialized neural network layers with regular_lead_time={regular_lead_time}, "
+            f"expedited_lead_time={expedited_lead_time}, "
+            f"Periods in a Cycle : {self.n_periods}"
         )
+
 
     def prepare_inputs(
         self,
         current_inventory: torch.Tensor,
         past_regular_orders: torch.Tensor,
         past_expedited_orders: torch.Tensor,
-        phase: int,
         sourcing_model: DualSourcingModel,
     ) -> torch.Tensor:
 
-        
         regular_lead_time = sourcing_model.get_regular_lead_time()
         expedited_lead_time = sourcing_model.get_expedited_lead_time()
 
@@ -130,87 +97,46 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
             past_expedited_orders, expedited_lead_time
         )
 
-        if regular_lead_time > 0:
-            if self.compressed:
-                inputs = past_regular_orders[:, -regular_lead_time:]
-                inputs[:, 0] += current_inventory
-            else:
-                inputs = torch.cat(
-                    [
-                        current_inventory,
-                        past_regular_orders[:, -regular_lead_time:],
-                    ],
-                    dim=1,
-                )
+        if expedited_lead_time > 0:
+            inputs = torch.cat(
+                [
+                    current_inventory,
+                    past_expedited_orders[:, -expedited_lead_time:],
+                ],
+                dim=1,
+            )
         else:
             inputs = current_inventory
 
-        if expedited_lead_time > 0:
+        if regular_lead_time > 0:
             inputs = torch.cat(
-                [inputs, past_expedited_orders[:, -expedited_lead_time:]], dim=1
+                [inputs, past_regular_orders[:, -regular_lead_time:]], dim=1
             )
-
-
-        phase_tensor = torch.full(
-            (inputs.shape[0], 1),
-            float(phase),
-            dtype=inputs.dtype,
-        )
-
-        inputs = torch.cat([inputs, phase_tensor], dim=1)
-        
         return inputs
 
-    def forward(self, inputs: torch.Tensor, phase: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        if self.shared is None or self.head_regular is None or self.head_restricted is None:
+    def forward(self, inputs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        if self.model is None:
             raise AttributeError("Model not initialized. Call `init_layers()` first.")
 
-        h_shared = self.shared(inputs)
+        h = self.model(inputs)
+        h = torch.clamp(h, 0.0, self.MAX_Q)
+        q = h - torch.frac(h).clone().detach()
+        regular_q = q[:, [0]]
+        expedited_q = q[:, 1:] # Expedited Q0, Expedited Q1 ... depending on self.n_periods
 
-        if phase is not None:
+        assert h.shape[1] == self.n_periods+1, f"Forward pass failed, check n periods and expedited q outputs. There are {self.n_periods} Periods and output tensor is of shape {h.shape}"
 
-            if phase > 0: # Restricted phases - 1,2,3....
-                h = self.head_restricted(h_shared)
-
-                qe = h[:, [0]] 
-        
-                h = torch.cat([qe], dim=1)
-
-                # hard cap
-                h = torch.clamp(h, 0.0, self.MAX_Q)
-
-                q = h - torch.frac(h).clone().detach()
-                expedited_q = q[:, [0]]
-                return expedited_q
-
-            else:
-                h = self.head_regular(h_shared)
-
-                qr = h[:, [0]] 
-                qe = h[:, [1]]
-        
-                h = torch.cat([qr, qe], dim=1)
-
-                # hard cap
-                h = torch.clamp(h, 0.0, self.MAX_Q)
-
-                q = h - torch.frac(h).clone().detach()
-                regular_q = q[:, [0]]
-                expedited_q = q[:, [1]]
-                return regular_q, expedited_q
-
-        
+        return regular_q, expedited_q
 
     def predict(
         self,
         current_inventory: Union[int, torch.Tensor],
         past_regular_orders: Optional[Union[List[int], torch.Tensor]] = None,
         past_expedited_orders: Optional[Union[List[int], torch.Tensor]] = None,
-        phase: Optional[int] = None,
         output_tensor: bool = False,
     ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
-        f"""
-        Forward pass of the neural network.
+        """
+        Predict order qunatities from the neural network.
 
         Parameters
         ----------
@@ -222,11 +148,11 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
             Past expedited orders. If the length of `past_expedited_orders` is lower than `expedited_lead_time`, it will be padded with zeros. If the length of `past_expedited_orders` is higher than `expedited_lead_time`, only the last `expedited_lead_time` orders will be used during inference.
         output_tensor : bool, default is False
             If True, the replenishment order quantity will be returned as a torch.Tensor. Otherwise, it will be returned as an integer.
-        phase : int, the current phase of the input - {0,1}
+
         Returns
         -------
         tuple
-            A tuple containing the regular order quantity and expedited order quantity.
+            A tuple containing the regular order quantity, expedited order quantity at time t, and expeditied order quantity at time t+1.
         """
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
@@ -235,26 +161,18 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
             current_inventory,
             past_regular_orders,
             past_expedited_orders,
-            phase,
             sourcing_model=self.sourcing_model,
         )
+        regular_q, expedited_q = self.forward(inputs)
 
-        if phase>0:
-            expedited_q = self.forward(inputs, phase)
-
-            if output_tensor:
-                return expedited_q
-            else:
-                return int(expedited_q)
+        if output_tensor:
+            return regular_q, expedited_q
         else:
-            regular_q, expedited_q = self.forward(inputs, phase)
+            regular_int = int(regular_q.item())
+            expedited_ints = expedited_q.squeeze(0).tolist()
+            return regular_int, expedited_ints
 
-            if output_tensor:
-                return regular_q, expedited_q
-            else:
-                return int(regular_q), int(expedited_q)
 
-    @no_type_check
     def fit(
         self,
         sourcing_model: DualSourcingModel,
@@ -265,13 +183,7 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         log_freq: int = 100,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
-        weight_decay_shared: float = 0.0,
-        weight_decay_restricted: float = 0.0,
-        weight_decay_regular: float = 0.0,
-        parameters_lr_shared: float = 1e-3,
-        parameters_lr_regular: float = 1e-3,
-        parameters_lr_restricted: float = 1e-3,
-        tensorboard_writer: Optional[SummaryWriter] = None,
+        parameters_lr: float = 3e-3,
         seed: Optional[int] = None,
     ) -> None:
         """
@@ -297,27 +209,25 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
             Learning rate for initial inventory.
         parameters_lr : float, default is 3e-3
             Learning rate for updating neural network parameters.
-        tensorboard_writer : tensorboard.SummaryWriter, optional
         seed : int, optional
             Random seed for reproducibility.
             Tensorboard writer for logging.
         """
         # Store sourcing model in self.sourcing_model
-    
-
         self.sourcing_model = sourcing_model
 
         if seed is not None:
             torch.manual_seed(seed)
 
-        if self.shared is None or self.head_regular is None or self.head_restricted is None:
+        if self.model is None:
             self.init_layers(
                 regular_lead_time=sourcing_model.get_regular_lead_time(),
                 expedited_lead_time=sourcing_model.get_expedited_lead_time(),
             )
 
         start_time = datetime.now()
-        logger.info(f"Starting dual sourcing neural network training at {start_time}")
+        logger.info(f"Sourcing periods are reduced by a factor of {self.n_periods} to keep them aligned with other non-periodic controllers")
+        logger.info(f"Starting Multi-Period dual sourcing neural network training at {start_time}")
         logger.info(
             f"Sourcing model parameters: batch_size={self.sourcing_model.batch_size}, "
             f"lead_time={self.sourcing_model.lead_time}, init_inventory={self.sourcing_model.init_inventory.int().item()}, "
@@ -325,34 +235,13 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         )
         logger.info(
             f"Training parameters: epochs={epochs}, sourcing_periods={sourcing_periods}, "
-            f"validation_periods={validation_sourcing_periods}"
+            f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}"
         )
 
-        
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
-        
-        optimizer_parameters = torch.optim.RMSprop(
-            [
-                {
-                    "params": self.shared.parameters(),
-                    "lr": parameters_lr_shared,
-                    "weight_decay": weight_decay_shared,
-                },
-                {
-                    "params": self.head_restricted.parameters(),
-                    "lr": parameters_lr_restricted,
-                    "weight_decay": weight_decay_restricted,
-                },
-                {
-                    "params": self.head_regular.parameters(),
-                    "lr": parameters_lr_regular,
-                    "weight_decay": weight_decay_regular,
-                },
-            ]
-        )
-
+        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_loss = np.inf
 
         for epoch in tqdm(range(epochs)):
@@ -360,17 +249,19 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
             optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()
             # Reset the sourcing model with the learned init inventory
-            sourcing_model.reset() # clean
-            train_loss = super().get_periodic_total_cost(sourcing_model, sourcing_periods)
+            sourcing_model.reset()
+            train_loss = self.get_total_cost(sourcing_model, sourcing_periods, seed=seed)
             train_loss.backward()
             # Perform gradient descend
             if epoch % init_inventory_freq == 0:
                 optimizer_init_inventory.step()
             else:
                 optimizer_parameters.step()
+
+            logger.info(f"Current Loss : {train_loss}")
             # Save the best model
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                eval_loss = super().get_periodic_total_cost(
+                eval_loss = self.get_total_cost(
                     sourcing_model, validation_sourcing_periods
                 )
                 if eval_loss < min_loss:
@@ -381,7 +272,6 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
                     min_loss = train_loss
                     best_state = self.state_dict()
   
-
             end_time = datetime.now()
             duration = end_time - start_time
             per_epoch_time = duration.total_seconds() / (epoch + 1)  # seconds per epoch
@@ -414,12 +304,77 @@ class MultiHeadedNeuralController(torch.nn.Module, BasePeriodicDualController):
         """
         Reset the controller to the initial state.
         """
-        self.shared = None
-        self.head_regular = None
-        self.head_restricted = None
+        self.model = None
         self.sourcing_model = None
 
 
-"""
-Note: have N heads for each period in cycle
-"""
+    def get_last_cost(self, sourcing_model: DualSourcingModel) -> torch.Tensor:
+        """Calculate the cost for the latest period."""
+        last_regular_q = sourcing_model.get_last_regular_order()
+        last_expedited_q = sourcing_model.get_last_expedited_order()
+        regular_order_cost = sourcing_model.get_regular_order_cost()
+        expedited_order_cost = sourcing_model.get_expedited_order_cost()
+        holding_cost = sourcing_model.get_holding_cost()
+        shortage_cost = sourcing_model.get_shortage_cost()
+        current_inventory = sourcing_model.get_current_inventory()
+        last_cost = (
+            regular_order_cost * last_regular_q
+            + expedited_order_cost * last_expedited_q
+            + holding_cost * torch.relu(current_inventory)
+            + shortage_cost * torch.relu(-current_inventory)
+        )
+        return last_cost
+
+    def get_total_cost(
+        self,
+        sourcing_model: DualSourcingModel,
+        sourcing_periods: int,
+        seed: Optional[int] = None,
+    ) -> torch.Tensor:
+        """Calculate the total cost."""
+        if seed is not None:
+            torch.manual_seed(seed)
+
+        
+        total_cost = torch.tensor(0.0)
+        for t in range(int(sourcing_periods/self.n_periods)):
+            current_inventory = sourcing_model.get_current_inventory()
+            past_regular_orders = sourcing_model.get_past_regular_orders()
+            past_expedited_orders = sourcing_model.get_past_expedited_orders()
+            regular_q, expedited_q = self.predict(
+                current_inventory,
+                past_regular_orders,
+                past_expedited_orders,
+                output_tensor=True,
+            )
+
+            # First pass for first time period in the cycle
+            sourcing_model.order(regular_q, expedited_q[:, 0:1])
+            last_cost = self.get_last_cost(sourcing_model)
+            total_cost += last_cost.mean()
+
+            # Update inventory here - Not needed, handeld by the sourcing model
+            # Order generates random demand and updates current inventory, past invetory, past regular and expedited orders
+            
+            for exp_q in expedited_q[:, 1:].split(1, dim=1):
+                # Second pass for remaining time periods
+                sourcing_model.order(
+                    torch.zeros_like(exp_q),  # 0 regular
+                    exp_q
+                )
+                last_cost = self.get_last_cost(sourcing_model)
+                total_cost += last_cost.mean()
+
+        return total_cost
+
+    def get_average_cost(
+        self,
+        sourcing_model: DualSourcingModel,
+        sourcing_periods: int,
+        seed: Optional[int] = None,
+    ) -> torch.Tensor:
+        """Calculate the average cost."""
+        return (
+            self.get_total_cost(sourcing_model, sourcing_periods, seed)
+            / sourcing_periods
+        )

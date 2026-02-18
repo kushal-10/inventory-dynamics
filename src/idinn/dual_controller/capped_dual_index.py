@@ -149,10 +149,11 @@ class CappedDualIndexController(BaseDualController):
                     self.s_r = s_r
                     self.q_r = q_r
                     total_cost = self.get_total_cost(sourcing_model, sourcing_periods)
-                    # logger.info(
-                    #     f"s_e={s_e}, s_r={s_r}, q_r={q_r}"
-                    #     f" - Training cost: {total_cost / sourcing_periods:.4f}"
-                    # )
+                    logger.info(
+                        f"s_e={s_e}, s_r={s_r}, q_r={q_r}"
+                        f" - Training cost: {total_cost / sourcing_periods:.4f}"
+                    )
+
                     if total_cost < min_cost:
                         min_cost = total_cost
                         s_e_optimal = s_e
@@ -171,8 +172,6 @@ class CappedDualIndexController(BaseDualController):
         logger.info(
             f"Final best parameters: s_e={s_e_optimal}, s_r={s_r_optimal}, q_r={q_r_optimal}"
         )
-
-        return duration
 
     def predict(
         self,
@@ -230,14 +229,7 @@ class CappedDualIndexController(BaseDualController):
             expedited_lead_time,
             limit=True,
         )
-        regular_q = int(
-            torch.clamp(
-                self.s_r - inventory_position_lm1,
-                min=0,
-                max=self.q_r
-            ).item()
-        ) # Works only with batch size = 1
-
+        regular_q = int(min(max(0, self.s_r - inventory_position_lm1), self.q_r))
         expedited_q = int(max(0, self.s_e - inventory_position))
 
         if output_tensor:
