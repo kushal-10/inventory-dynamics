@@ -258,11 +258,14 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             else:
                 optimizer_parameters.step()
 
-            logger.info(f"Current Loss : {train_loss}")
+            # logger.info(f"Current Loss : {train_loss}")
             # Save the best model
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                eval_loss = self.get_total_cost(
-                    sourcing_model, validation_sourcing_periods
+                # eval_loss = self.get_total_cost(
+                #     sourcing_model, validation_sourcing_periods
+                # )
+                eval_loss = self.get_average_cost(
+                    sourcing_model, validation_sourcing_periods # Normalize with sourcing periods
                 )
                 if eval_loss < min_loss:
                     min_loss = eval_loss

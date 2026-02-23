@@ -39,16 +39,17 @@ def test_multi_period_model():
     controller.fit(
         sourcing_model=sourcing_model,
         sourcing_periods=100,
-        epochs=500,
+        epochs=1500,
+        seed=42
     )
 
     # multi-seed evaluation
     costs = []
     with torch.no_grad():
-        for seed in tqdm(range(50)):
+        for seed in tqdm(range(500)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
-                sourcing_periods=1000,
+                sourcing_periods=100,
                 seed=seed,
             )
             costs.append(cost)
