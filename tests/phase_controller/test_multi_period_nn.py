@@ -32,15 +32,16 @@ sourcing_model = DualSourcingModel(
 def test_multi_period_model():
     
     controller = MultiPeriodNeuralController(
-        hidden_layers=[128, 64, 32, 16, 8],
+        hidden_layers=[256, 128, 64, 32, 16, 8],
         n_periods=2
     )
 
     controller.fit(
         sourcing_model=sourcing_model,
-        sourcing_periods=100,
-        epochs=1500,
-        seed=42
+        sourcing_periods=300,
+        epochs=2500,
+        seed=42,
+        parameters_lr=5e-4,
     )
 
     # multi-seed evaluation
