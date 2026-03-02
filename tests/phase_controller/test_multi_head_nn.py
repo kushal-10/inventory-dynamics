@@ -2,7 +2,11 @@ import logging
 import torch
 from tqdm import tqdm 
 
+<<<<<<<< HEAD:tests/phase_controller/test_multi_period_nn.py
 from src.idinn.phase_controller.neural.multi_period_controller import MultiPeriodNeuralController
+========
+from src.idinn.phase_controller.neural.multi_head_controller import MultiPeriodNeuralControllerV2
+>>>>>>>> main:tests/phase_controller/test_multi_head_nn.py
 from src.idinn.sourcing_model import DualSourcingModel
 from src.idinn.demand import UniformDemand
 
@@ -10,7 +14,11 @@ from src.idinn.demand import UniformDemand
 # logging
 # ---------------------------------------------------------------------
 logging.basicConfig(
+<<<<<<<< HEAD:tests/phase_controller/test_multi_period_nn.py
     filename="tests/phase_controller/test_multi_period.log",
+========
+    filename="tests/phase_controller/test_multi_head.log",
+>>>>>>>> main:tests/phase_controller/test_multi_head_nn.py
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
 )
@@ -29,28 +37,47 @@ sourcing_model = DualSourcingModel(
         batch_size=1,
     )
 
+<<<<<<<< HEAD:tests/phase_controller/test_multi_period_nn.py
 def test_multi_period_model():
     
     controller = MultiPeriodNeuralController(
+        hidden_layers=[128, 64, 32, 16, 8],
+========
+def test_multi_head_model():
+    
+    controller = MultiPeriodNeuralControllerV2(
         hidden_layers=[256, 128, 64, 32, 16, 8],
+>>>>>>>> main:tests/phase_controller/test_multi_head_nn.py
         n_periods=2
     )
 
     controller.fit(
         sourcing_model=sourcing_model,
+<<<<<<<< HEAD:tests/phase_controller/test_multi_period_nn.py
+        sourcing_periods=100,
+        epochs=500,
+========
         sourcing_periods=300,
-        epochs=2500,
+        epochs=500,
         seed=42,
         parameters_lr=5e-4,
+>>>>>>>> main:tests/phase_controller/test_multi_head_nn.py
     )
 
     # multi-seed evaluation
     costs = []
     with torch.no_grad():
+<<<<<<<< HEAD:tests/phase_controller/test_multi_period_nn.py
+        for seed in tqdm(range(50)):
+            cost = controller.get_average_cost(
+                sourcing_model=sourcing_model,
+                sourcing_periods=1000,
+========
         for seed in tqdm(range(500)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
                 sourcing_periods=100,
+>>>>>>>> main:tests/phase_controller/test_multi_head_nn.py
                 seed=seed,
             )
             costs.append(cost)
@@ -67,4 +94,8 @@ def test_multi_period_model():
 
 
 if __name__ == '__main__':
+<<<<<<<< HEAD:tests/phase_controller/test_multi_period_nn.py
     test_multi_period_model()
+========
+    test_multi_head_model()
+>>>>>>>> main:tests/phase_controller/test_multi_head_nn.py

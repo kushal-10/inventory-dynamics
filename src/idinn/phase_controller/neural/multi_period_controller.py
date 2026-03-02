@@ -180,7 +180,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         epochs: int,
         validation_sourcing_periods: Optional[int] = None,
         validation_freq: int = 50,
-        log_freq: int = 100,
+        log_freq: int = 10,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
         parameters_lr: float = 3e-3,
@@ -241,7 +241,10 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         optimizer_init_inventory = torch.optim.RMSprop(
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
-        optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
+
+        # ADD - adam instead of RMS prop
+        # optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
+        optimizer_parameters = torch.optim.Adam(self.parameters(), lr=parameters_lr )
         min_loss = np.inf
 
         for epoch in tqdm(range(epochs)):
@@ -252,17 +255,23 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             sourcing_model.reset()
             train_loss = self.get_total_cost(sourcing_model, sourcing_periods, seed=seed)
             train_loss.backward()
+
+            # ADD - gradient clipping 
+            torch.nn.utils.clip_grad_norm_(self.parameters(), 5.0)
             # Perform gradient descend
             if epoch % init_inventory_freq == 0:
                 optimizer_init_inventory.step()
             else:
                 optimizer_parameters.step()
 
-            logger.info(f"Current Loss : {train_loss}")
+            # logger.info(f"Current Loss : {train_loss}")
             # Save the best model
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                eval_loss = self.get_total_cost(
-                    sourcing_model, validation_sourcing_periods
+                # eval_loss = self.get_total_cost(
+                #     sourcing_model, validation_sourcing_periods
+                # )
+                eval_loss = self.get_average_cost(
+                    sourcing_model, validation_sourcing_periods # Normalize with sourcing periods
                 )
                 if eval_loss < min_loss:
                     min_loss = eval_loss
@@ -332,8 +341,8 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         seed: Optional[int] = None,
     ) -> torch.Tensor:
         """Calculate the total cost."""
-        if seed is not None:
-            torch.manual_seed(seed)
+        # if seed is not None:
+        #     torch.manual_seed(seed)
 
         
         total_cost = torch.tensor(0.0)
