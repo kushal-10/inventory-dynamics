@@ -12,8 +12,8 @@ from numba import njit, types  # type: ignore
 from numba.typed import Dict, List
 from tqdm import tqdm
 
-from ..sourcing_model import DualSourcingModel
-from ..dual_controller.base import BasePeriodicDualController
+from ...sourcing_model import DualSourcingModel
+from ...dual_controller.base import BasePeriodicDualController
 
 # Get root logger
 logger = logging.getLogger()
