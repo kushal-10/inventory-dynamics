@@ -79,6 +79,7 @@ class DynamicProgrammingController(BaseDualController):
         """
         n = lead_time + 1
         base_stock_ub = n * exp_demand + support * np.sqrt(n * np.log(1 + b / h) / 2)
+        logger.info(f"Base stock ceiling - {np.ceil(base_stock_ub)}")
         return np.ceil(base_stock_ub)
 
     @no_type_check
@@ -165,6 +166,9 @@ class DynamicProgrammingController(BaseDualController):
         states = List()
         for state in states_:
             states.append(state)
+
+        logger.info(f"States Generated : {states}")
+        logger.info(f"Total states generated : {len(states)}")
 
         actions_ = list(product(range(max_order), range(max_order)))
         actions = List()
@@ -260,8 +264,8 @@ class DynamicProgrammingController(BaseDualController):
             Past expedited orders. Since `expedited_lead_time` is assumed to be 0 for DynamicProgrammingController and the batch size is assumed to be 1, the input of `past_expedited_orders` is optional and will be ignored.
         output_tensor : bool, default is False
             If True, the replenishment order quantity will be returned as a torch.Tensor. Otherwise, it will be returned as an integer.
-
         """
+
         if self.sourcing_model is None:
             raise AttributeError("The controller is not trained.")
 

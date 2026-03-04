@@ -1,4 +1,3 @@
-
 import logging
 from datetime import datetime
 from itertools import product
@@ -10,16 +9,16 @@ import numpy as np
 import torch
 from numba import njit, types  # type: ignore
 from numba.typed import Dict, List
-from tqdm import tqdm
 
+from ...demand import UniformDemand
 from ...sourcing_model import DualSourcingModel
-from ...dual_controller.base import BasePeriodicDualController
+from .base import BaseDPController
 
 # Get root logger
 logger = logging.getLogger()
 
 
-class DynamicProgrammingController(BasePeriodicDualController):
+class DynamicProgrammingController(BaseDPController):
     def __init__(self) -> None:
         self.sourcing_model = None
         self.qf = None
@@ -45,41 +44,29 @@ class DynamicProgrammingController(BasePeriodicDualController):
         best_action = None
         best_cost = 10e9
 
-        current_phase = state[-1]
-        current_pipeline = state[1:-1]
-        ip_e = state[0]
-
         for qe, qr in actions:
-
-            if current_phase==0 and qr!=0:
-                continue # skip the instances where qr is placed in an even time period - this is restricted 
-            
             # Immediate cost of action
             cost = qe * ce
-            
-            # partial inventory update
-            ip_e_partial = ip_e + qe + current_pipeline[0] # Regular order arriving at time t 
+            # Partial state update
+            ip_e = state[0] + qe + state[1]
+            pipeline = state[2:]
 
             for dem in range(int(min_demand), int(max_demand) + 1):
-                ipe_new = int(ip_e_partial) - dem
-
-                inventory_on_hand = ipe_new - current_pipeline[0]
-
-                inv_cost = h*inventory_on_hand if inventory_on_hand>0 else b*-inventory_on_hand
-
-                next_phase = 1-current_phase
-                next_state = (ipe_new,) + current_pipeline[1:] + (qr,) + (next_phase,)
-
-                if (next_state not in vf) or (vf[next_state] > 10e9 - 1.0):
+                ipe_new = int(ip_e) - dem
+                this_state = (ipe_new,) + pipeline + (qr,)
+                # If we jump to a state that is not in our list, we are not playing optimal,
+                # so we can safely get out of here.
+                if (this_state not in vf) or (vf[this_state] > 10e9 - 1.0):
                     cost = 10e9
                     break
-
-                cost += demand_prob[dem] * (inv_cost + vf[next_state])
-
+                else:
+                    # Careful: qr(t-1) has not arrived yet, we need to take it out
+                    inv_on_hand = ipe_new - state[1]
+                    inv_cost = inv_on_hand * h if inv_on_hand >= 0 else -inv_on_hand * b
+                    cost += demand_prob[dem] * (inv_cost + vf[this_state])
             if cost < best_cost:
                 best_cost = cost
                 best_action = (qr, qe)
-
         return best_cost, best_action
 
     @staticmethod
@@ -122,10 +109,10 @@ class DynamicProgrammingController(BasePeriodicDualController):
         self.sourcing_model = sourcing_model
 
         # Check demand is uniform distributed
-        # if not isinstance(sourcing_model.demand_generator, UniformDemand):
-        #     raise ValueError(
-        #         "DynamicProgrammingController only supports uniform demand distribution."
-        #     )
+        if not isinstance(sourcing_model.demand_generator, UniformDemand):
+            raise ValueError(
+                "DynamicProgrammingController only supports uniform demand distribution."
+            )
         # Check if the expedited_lead_time is 0
         if sourcing_model.expedited_lead_time != 0:
             raise ValueError(
@@ -169,45 +156,26 @@ class DynamicProgrammingController(BasePeriodicDualController):
         for k, v in demand_prob_.items():
             demand_prob[k] = v
 
-        # states_ = list(
-        #     product(
-        #         range(-min_ip, max_ip + 1),
-        #         *(range(int(max_demand) + 1),) * int(dim_pipeline),
-        #     )
-        # )
-        states = []
-        all_possible_states = []
-        for state in product(
-            range(-min_ip, max_ip + 1),
-            *(range(int(max_demand) + 1),) * dim_pipeline,
-            (0, 1),
-        ):
-            *_, phase = state
-            pipeline = state[1:-1]
-
-            all_possible_states.append(state)
-            # unreachable: regular order placed in even period
-            if phase == 1 and pipeline[-1] != 0:
-                continue
-
+        states_ = list(
+            product(
+                range(-min_ip, max_ip + 1),
+                *(range(int(max_demand) + 1),) * int(dim_pipeline),
+            )
+        )
+        states = List()
+        for state in states_:
             states.append(state)
-
-        logger.info(f"All possible states : {len(all_possible_states)}, Pruned {len(all_possible_states)-len(states)} states")
-        logger.info(f"Generated {len(states)} states")
 
         actions_ = list(product(range(max_order), range(max_order)))
         actions = List()
         for action in actions_:
             actions.append(action)
-
-        logger.info(f"Possible actions : {actions}")
-        logger.info(f"Generated {len(actions)} actions")
-
+            
         # Values can be initiated arbitrarily
         vals = np.repeat(1.0, len(states))
         vf_ = dict(zip(states, vals))
         vf = Dict.empty(
-            key_type=types.UniTuple(types.int64, lr+1), value_type=types.float64
+            key_type=types.UniTuple(types.int64, lr), value_type=types.float64
         )
         for k, v in vf_.items():
             vf[k] = v
@@ -219,7 +187,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
         qf = {}
         val = 0
 
-        for iteration in tqdm(range(max_iterations)):
+        for iteration in range(max_iterations):
             # We first store each newly updated state
             for idx, state in enumerate(states):
                 these_values[idx] = DynamicProgrammingController._vf_update(
@@ -241,54 +209,11 @@ class DynamicProgrammingController(BasePeriodicDualController):
                     f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]:.4f}"
                 )
 
-            # if iteration > 1 and iteration % validation_freq == 0:
-            #     iteration_arr.append(iteration)
-            #     value_arr.append(all_values[iteration])
-            #     delta = all_values[iteration - 1] - all_values[iteration]
-            #     if delta <= tolerance:
-            #         for state in states:
-            #             qa = DynamicProgrammingController._vf_update(
-            #                 demand_prob,
-            #                 min_demand,
-            #                 max_demand,
-            #                 ce,
-            #                 h,
-            #                 b,
-            #                 state,
-            #                 vf,
-            #                 actions,
-            #             )[1]
-            #             if qa is not None:
-            #                 qf[state] = qa
-            #         break
             if iteration > 1 and iteration % validation_freq == 0:
                 iteration_arr.append(iteration)
                 value_arr.append(all_values[iteration])
                 delta = all_values[iteration - 1] - all_values[iteration]
-
                 if delta <= tolerance:
-
-                    # ================================
-                    # 🔧 NORMALIZE VALUE FUNCTION HERE
-                    # ================================
-                    ref_vals = [
-                        v for k, v in vf.items()
-                        if k[-1] == 0 and v < 1e8   # phase = 0 reference
-                    ]
-
-                    if len(ref_vals) == 0:
-                        raise RuntimeError(
-                            "No finite reference values found for phase=0. "
-                            "State space or transitions are inconsistent."
-                        )
-
-                    baseline = np.mean(ref_vals)
-
-                    for k in vf:
-                        vf[k] -= baseline
-                    # ================================
-
-                    # 🔽 NOW extract optimal policy
                     for state in states:
                         qa = DynamicProgrammingController._vf_update(
                             demand_prob,
@@ -303,9 +228,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
                         )[1]
                         if qa is not None:
                             qf[state] = qa
-
                     break
-
 
         self.qf = qf
         self.vf = val
@@ -315,7 +238,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
         logger.info(f"Dynamic programming completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
         logger.info(
-            f"Final best cost: {self.get_periodic_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}"
+            f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}"
         )
 
     def predict(
@@ -323,7 +246,6 @@ class DynamicProgrammingController(BasePeriodicDualController):
         current_inventory: Union[int, torch.Tensor],
         past_regular_orders: Optional[Union[TypingList[int], torch.Tensor]] = None,
         past_expedited_orders: Optional[Union[TypingList[int], torch.Tensor]] = None,
-        phase: int = 0,
         output_tensor: bool = False,
     ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
         """
@@ -355,9 +277,7 @@ class DynamicProgrammingController(BasePeriodicDualController):
             + past_regular_orders.squeeze()[-regular_lead_time]
         )
         second = past_regular_orders.squeeze()[-regular_lead_time + 1 :]
-
-        key = tuple([int(first)] + second.int().tolist() + [phase])
-
+        key = tuple([int(first)] + second.int().tolist())
         if output_tensor:
             return torch.tensor([[self.qf[key][0]]]), torch.tensor([[self.qf[key][1]]])
         else:

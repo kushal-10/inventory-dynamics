@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from numpy.typing import NDArray
+from tqdm import tqdm 
 
 from ..sourcing_model import DualSourcingModel
 
@@ -95,6 +96,7 @@ class BaseDualController(metaclass=ABCMeta):
             torch.manual_seed(seed)
 
         total_cost = torch.tensor(0.0)
+        # for _ in tqdm(range(sourcing_periods), desc=f"Calculating Average cost across {sourcing_periods} Time periods"):
         for _ in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
             past_regular_orders = sourcing_model.get_past_regular_orders()
