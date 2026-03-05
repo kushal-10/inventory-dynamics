@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from numba import njit, types  # type: ignore
 from numba.typed import Dict, List
+from tqdm import tqdm
 
 from ...demand import UniformDemand
 from ...sourcing_model import DualSourcingModel
@@ -36,38 +37,85 @@ class DynamicProgrammingController(BaseDPController):
         b: float,
         state: Tuple[int, ...],
         vf: TypingDict[Tuple[int, ...], float],
-        actions: TypingList[Tuple[int, int]],
-    ) -> Tuple[float, Optional[Tuple[int, int]]]:
+        actions: TypingList[Tuple[int, int, int]],
+    ) -> Tuple[float, Optional[Tuple[int, int, int]]]:
         """
-        vf_update is a function that calculates a single value iteration update.
+        Two-period cycle value iteration update.
+        
+        Even period: place (qr0, qe0). Odd period: place (qe1) only.
+        State: (ip, pipeline[0], ..., pipeline[dim-1])
         """
         best_action = None
         best_cost = 10e9
 
-        for qe, qr in actions:
-            # Immediate cost of action
-            cost = qe * ce
-            # Partial state update
-            ip_e = state[0] + qe + state[1]
-            pipeline = state[2:]
+        for qr0, qe0, qe1 in actions:
 
-            for dem in range(int(min_demand), int(max_demand) + 1):
-                ipe_new = int(ip_e) - dem
-                this_state = (ipe_new,) + pipeline + (qr,)
-                # If we jump to a state that is not in our list, we are not playing optimal,
-                # so we can safely get out of here.
-                if (this_state not in vf) or (vf[this_state] > 10e9 - 1.0):
-                    cost = 10e9
+            # Immediate costs are fixed regardless of demand realizations
+            immediate_cost = (qe0 + qe1) * ce
+            expected_cost = 0.0
+            valid = True
+
+            for dem0 in range(int(min_demand), int(max_demand) + 1):
+                if not valid:
                     break
-                else:
-                    # Careful: qr(t-1) has not arrived yet, we need to take it out
-                    inv_on_hand = ipe_new - state[1]
-                    inv_cost = inv_on_hand * h if inv_on_hand >= 0 else -inv_on_hand * b
-                    cost += demand_prob[dem] * (inv_cost + vf[this_state])
-            if cost < best_cost:
-                best_cost = cost
-                best_action = (qr, qe)
+                for dem1 in range(int(min_demand), int(max_demand) + 1):
+
+                    # -------------------------------------------------------
+                    # EVEN PERIOD TRANSITION
+                    # qe0 arrives immediately (le=0), pipeline[0] also arrives
+                    # qr0 enters the back of the pipeline
+                    # -------------------------------------------------------
+                    # Inventory position after qe0 and pipeline[0] arrive
+                    ip_even = state[0] + qe0 + state[1]
+                    pipeline_even = state[2:]  # remaining in-pipeline orders
+
+                    # Inventory position after demand dem0 is realized
+                    ipe_after_even = int(ip_even) - dem0
+
+                    # State entering the odd period
+                    # pipeline advances: pipeline_even moves up, qr0 joins the back
+                    state_odd = (ipe_after_even,) + pipeline_even + (qr0,)
+
+                    if (state_odd not in vf) or (vf[state_odd] > 10e9 - 1.0):
+                        valid = False
+                        break
+
+                    # On-hand inventory after even period
+                    inv_even = ipe_after_even - state[1]
+                    inv_cost_even = inv_even * h if inv_even >= 0 else -inv_even * b
+
+                    # -------------------------------------------------------
+                    # ODD PERIOD TRANSITION
+                    # qe1 arrives immediately (le=0), state_odd[1] also arrives
+                    # No qr placed this period, so 0 enters the back of the pipeline
+                    # -------------------------------------------------------
+                    ip_odd = state_odd[0] + qe1 + state_odd[1]
+                    pipeline_odd = state_odd[2:]  # remaining pipeline after even
+
+                    ipe_after_odd = int(ip_odd) - dem1
+
+                    # State entering the next even period
+                    state_next = (ipe_after_odd,) + pipeline_odd + (0,)
+
+                    if (state_next not in vf) or (vf[state_next] > 10e9 - 1.0):
+                        valid = False
+                        break
+
+                    inv_odd = ipe_after_odd - state_odd[1]
+                    inv_cost_odd = inv_odd * h if inv_odd >= 0 else -inv_odd * b
+
+                    # -------------------------------------------------------
+                    # Joint probability weighted cost for this demand realization
+                    # -------------------------------------------------------
+                    prob = demand_prob[dem0] * demand_prob[dem1]
+                    expected_cost += prob * (inv_cost_even + inv_cost_odd + vf[state_next])
+
+            if valid and (immediate_cost + expected_cost) < best_cost:
+                best_cost = immediate_cost + expected_cost
+                best_action = (qr0, qe0, qe1)
+
         return best_cost, best_action
+
 
     @staticmethod
     def _get_basestock_ub(
@@ -158,7 +206,7 @@ class DynamicProgrammingController(BaseDPController):
 
         states_ = list(
             product(
-                range(-min_ip, max_ip + 1),
+                range(-min_ip, max_ip + 1), 
                 *(range(int(max_demand) + 1),) * int(dim_pipeline),
             )
         )
@@ -166,7 +214,7 @@ class DynamicProgrammingController(BaseDPController):
         for state in states_:
             states.append(state)
 
-        actions_ = list(product(range(max_order), range(max_order)))
+        actions_ = list(product(range(max_order), range(max_order), range(max_order)))
         actions = List()
         for action in actions_:
             actions.append(action)
@@ -279,9 +327,80 @@ class DynamicProgrammingController(BaseDPController):
         second = past_regular_orders.squeeze()[-regular_lead_time + 1 :]
         key = tuple([int(first)] + second.int().tolist())
         if output_tensor:
-            return torch.tensor([[self.qf[key][0]]]), torch.tensor([[self.qf[key][1]]])
+            return (
+                torch.tensor([[self.qf[key][0]]]),
+                torch.tensor([[self.qf[key][1]]]),
+                torch.tensor([[self.qf[key][2]]]),
+            )
         else:
             return self.qf[key]
+
+    def get_last_cost(self, sourcing_model: DualSourcingModel) -> torch.Tensor:
+        """Calculate the cost for the latest period."""
+        last_regular_q = sourcing_model.get_last_regular_order()
+        last_expedited_q = sourcing_model.get_last_expedited_order()
+        regular_order_cost = sourcing_model.get_regular_order_cost()
+        expedited_order_cost = sourcing_model.get_expedited_order_cost()
+        holding_cost = sourcing_model.get_holding_cost()
+        shortage_cost = sourcing_model.get_shortage_cost()
+        current_inventory = sourcing_model.get_current_inventory()
+        last_cost = (
+            regular_order_cost * last_regular_q
+            + expedited_order_cost * last_expedited_q
+            + holding_cost * torch.relu(current_inventory)
+            + shortage_cost * torch.relu(-current_inventory)
+        )
+        return last_cost
+
+    @no_type_check
+    def get_total_cost(
+        self,
+        sourcing_model: DualSourcingModel,
+        sourcing_periods: int,
+        seed: Optional[int] = None,
+    ) -> torch.Tensor:
+        """Calculate the total cost."""
+        if seed is not None:
+            torch.manual_seed(seed)
+
+        total_cost = torch.tensor(0.0)
+        # for _ in tqdm(range(sourcing_periods), desc=f"Calculating Average cost across {sourcing_periods} Time periods"):
+        for _ in tqdm(range(sourcing_periods)): # // 2 aligns with the original paper
+
+            current_inventory = sourcing_model.get_current_inventory()
+            past_regular_orders = sourcing_model.get_past_regular_orders()
+            past_expedited_orders = sourcing_model.get_past_expedited_orders()
+
+            regular_q0, expedited_q0, expedited_q1 = self.predict(
+                current_inventory,
+                past_regular_orders,
+                past_expedited_orders,
+                output_tensor=True,
+            )
+
+            sourcing_model.order(regular_q0, expedited_q0)
+            last_cost = self.get_last_cost(sourcing_model)
+            total_cost += last_cost.mean()
+
+            sourcing_model.order(0, expedited_q1)
+            last_cost = self.get_last_cost(sourcing_model)
+            total_cost += last_cost.mean()
+
+        return total_cost
+
+    @no_type_check
+    def get_average_cost(
+        self,
+        sourcing_model: DualSourcingModel,
+        sourcing_periods: int,
+        seed: Optional[int] = None,
+    ) -> torch.Tensor:
+        """Calculate the average cost."""
+        return (
+            self.get_total_cost(sourcing_model, sourcing_periods, seed)
+            / sourcing_periods
+        )
+
 
     def reset(self) -> None:
         self.qf = None
