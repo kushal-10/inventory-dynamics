@@ -32,16 +32,17 @@ sourcing_model = DualSourcingModel(
 def test_multi_period_model():
     
     controller = MultiPeriodNeuralController(
-        hidden_layers=[256, 128, 64, 32, 16, 8],
+        hidden_layers=[128, 64, 32, 16, 8],
         n_periods=2
     )
 
     controller.fit(
         sourcing_model=sourcing_model,
-        sourcing_periods=300,
-        epochs=2500,
+        sourcing_periods=500,
+        epochs=1500,
+        parameters_lr=1e-3,
+        # init_inventory_lr=1e-4,
         seed=42,
-        parameters_lr=5e-4,
     )
 
     # multi-seed evaluation
@@ -50,7 +51,7 @@ def test_multi_period_model():
         for seed in tqdm(range(500)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
-                sourcing_periods=100,
+                sourcing_periods=1000,
                 seed=seed,
             )
             costs.append(cost)

@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
     """
-    Implements a multi-period nerual netowrk architecture. Input consists of periodic time states
+    Implements a multi-period nerual network architecture. Input consists of periodic time states
     E.g. I_t, I_(t+n), I_(t+2n)....
     Demand is realized internally for the whole cycle
     Cost calculation is based on the whole cycle
@@ -40,7 +40,6 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         self.hidden_layers = hidden_layers
         self.activation = activation 
         self.n_periods = n_periods 
-        self.MAX_Q = 20
 
         self.model = None
 
@@ -64,7 +63,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
                     self.activation,
                 ]
         architecture += [
-            torch.nn.Linear(self.hidden_layers[-1], self.n_periods+1), # n_period outputs for Qe, +1 for Qr at t=0 in a cycle
+            torch.nn.Linear(self.hidden_layers[-1], self.n_periods+1), # n_period outputs for Qe_n, +1 for Qr_0 at t=0 in a cycle
             # TODO: Mention this ReLU layer in documentation
             torch.nn.ReLU(),
         ]
@@ -114,13 +113,14 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             )
         return inputs
 
-    def forward(self, inputs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, inputs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         if self.model is None:
             raise AttributeError("Model not initialized. Call `init_layers()` first.")
 
         h = self.model(inputs)
-        h = torch.clamp(h, 0.0, self.MAX_Q)
+        h = torch.clamp(h, min=0.0, max=20.0)  
         q = h - torch.frac(h).clone().detach()
+    
         regular_q = q[:, [0]]
         expedited_q = q[:, 1:] # Expedited Q0, Expedited Q1 ... depending on self.n_periods
 
@@ -183,7 +183,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         log_freq: int = 10,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
-        parameters_lr: float = 3e-3,
+        parameters_lr: float = 1e-4,
         seed: Optional[int] = None,
     ) -> None:
         """
@@ -238,29 +238,33 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}"
         )
 
-        optimizer_init_inventory = torch.optim.RMSprop(
-            [sourcing_model.init_inventory], lr=init_inventory_lr
-        )
+        # optimizer_init_inventory = torch.optim.RMSprop(
+        #     [sourcing_model.init_inventory], lr=init_inventory_lr
+        # )
+
+        # optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
+
 
         # ADD - adam instead of RMS prop
-        # optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         optimizer_parameters = torch.optim.Adam(self.parameters(), lr=parameters_lr )
         min_loss = np.inf
 
-        for epoch in tqdm(range(epochs)):
+        for epoch in range(epochs):
             # Clear grad cache
-            optimizer_init_inventory.zero_grad()
+            # optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()
             # Reset the sourcing model with the learned init inventory
             sourcing_model.reset()
-            train_loss = self.get_total_cost(sourcing_model, sourcing_periods, seed=seed)
+            train_loss = self.get_total_cost(sourcing_model, sourcing_periods)
             train_loss.backward()
 
             # ADD - gradient clipping 
-            torch.nn.utils.clip_grad_norm_(self.parameters(), 5.0)
+            # torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
+
             # Perform gradient descend
             if epoch % init_inventory_freq == 0:
-                optimizer_init_inventory.step()
+                # optimizer_init_inventory.step()
+                pass
             else:
                 optimizer_parameters.step()
 
@@ -287,6 +291,12 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             remaining_time = (epochs - epoch) * per_epoch_time
             if epoch % log_freq == 0:
                 logger.info(
+                    f"Epoch {epoch}/{epochs}"
+                    f" - Training cost: {train_loss / sourcing_periods:.4f}"
+                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
+                    f" - Est. Remaining time: {int(remaining_time)} seconds."
+                )
+                print(
                     f"Epoch {epoch}/{epochs}"
                     f" - Training cost: {train_loss / sourcing_periods:.4f}"
                     f" - Per epoch time: {per_epoch_time:.2f} seconds"
@@ -341,12 +351,11 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         seed: Optional[int] = None,
     ) -> torch.Tensor:
         """Calculate the total cost."""
-        # if seed is not None:
-        #     torch.manual_seed(seed)
+        if seed is not None:
+            torch.manual_seed(seed)
 
-        
         total_cost = torch.tensor(0.0)
-        for t in range(int(sourcing_periods/self.n_periods)):
+        for t in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
             past_regular_orders = sourcing_model.get_past_regular_orders()
             past_expedited_orders = sourcing_model.get_past_expedited_orders()

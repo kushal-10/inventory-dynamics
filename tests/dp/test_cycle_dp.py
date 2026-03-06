@@ -31,7 +31,7 @@ def test_dp():
 
     dp_controller.fit(
         sourcing_model=sourcing_model,
-        tolerance=10e-4
+        tolerance=10e-6
     )
 
 

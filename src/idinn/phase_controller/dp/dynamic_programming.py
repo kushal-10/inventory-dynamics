@@ -235,7 +235,7 @@ class DynamicProgrammingController(BaseDPController):
         qf = {}
         val = 0
 
-        for iteration in range(max_iterations):
+        for iteration in tqdm(range(max_iterations)):
             # We first store each newly updated state
             for idx, state in enumerate(states):
                 these_values[idx] = DynamicProgrammingController._vf_update(
@@ -254,7 +254,7 @@ class DynamicProgrammingController(BaseDPController):
 
             if iteration > 1 and iteration % log_freq == 0:
                 logger.info(
-                    f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]:.4f}"
+                    f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]}"
                 )
 
             if iteration > 1 and iteration % validation_freq == 0:
