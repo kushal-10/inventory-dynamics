@@ -22,7 +22,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
     def __init__(
         self, 
-        hidden_layers: List[int] = [128, 64, ],
+        hidden_layers: List[int] = [128, 64, 32, 16, 8],
         activation: torch.nn.Module = torch.nn.CELU(alpha=1.0),
         n_periods: int = 2
         ) -> None:
@@ -180,7 +180,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         epochs: int,
         validation_sourcing_periods: Optional[int] = None,
         validation_freq: int = 50,
-        log_freq: int = 10,
+        log_freq: int = 100,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
         parameters_lr: float = 1e-4,
@@ -262,11 +262,12 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             # torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
 
             # Perform gradient descend
-            if epoch % init_inventory_freq == 0:
-                # optimizer_init_inventory.step()
-                pass
-            else:
-                optimizer_parameters.step()
+            # if epoch % init_inventory_freq == 0:
+            #     optimizer_init_inventory.step()
+            #     pass
+            # else:
+            #     optimizer_parameters.step()
+            optimizer_parameters.step()
 
             # logger.info(f"Current Loss : {train_loss}")
             # Save the best model
@@ -291,12 +292,6 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             remaining_time = (epochs - epoch) * per_epoch_time
             if epoch % log_freq == 0:
                 logger.info(
-                    f"Epoch {epoch}/{epochs}"
-                    f" - Training cost: {train_loss / sourcing_periods:.4f}"
-                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                    f" - Est. Remaining time: {int(remaining_time)} seconds."
-                )
-                print(
                     f"Epoch {epoch}/{epochs}"
                     f" - Training cost: {train_loss / sourcing_periods:.4f}"
                     f" - Per epoch time: {per_epoch_time:.2f} seconds"
