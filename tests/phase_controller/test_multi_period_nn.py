@@ -32,15 +32,15 @@ sourcing_model = DualSourcingModel(
 def test_multi_period_model():
     
     controller = MultiPeriodNeuralController(
-        hidden_layers=[128, 64, 32, 16, 8],
+        hidden_layers=[64, 32, 64],
         n_periods=2
     )
 
     controller.fit(
         sourcing_model=sourcing_model,
-        sourcing_periods=500,
+        sourcing_periods=100,
         epochs=1500,
-        parameters_lr=1e-3,
+        parameters_lr=0.00042470585622618684,
         # init_inventory_lr=1e-4,
         seed=42,
     )
@@ -48,7 +48,7 @@ def test_multi_period_model():
     # multi-seed evaluation
     costs = []
     with torch.no_grad():
-        for seed in tqdm(range(500)):
+        for seed in tqdm(range(50)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
                 sourcing_periods=1000,
@@ -69,3 +69,11 @@ def test_multi_period_model():
 
 if __name__ == '__main__':
     test_multi_period_model()
+
+"""
+Initialized neural network layers with regular_lead_time=2, expedited_lead_time=0, Periods in a Cycle : 2
+2026-03-09 11:21:27,312 | INFO | Sourcing periods are reduced by a factor of 2 to keep them aligned with other non-periodic controllers
+2026-03-09 11:21:27,312 | INFO | Starting Multi-Period dual sourcing neural network training at 2026-03-09 11:21:27.312566
+2026-03-09 11:21:27,312 | INFO | Sourcing model parameters: batch_size=1, lead_time=None, init_inventory=6, demand_generator=UniformDemand
+2026-03-09 11:21:27,312 | INFO | Training parameters: epochs=2000, sourcing_periods=10, validation_periods=None, learning_rate=0.00042470585622618684
+"""
