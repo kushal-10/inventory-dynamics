@@ -247,9 +247,11 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
         # ADD - adam instead of RMS prop
         optimizer_parameters = torch.optim.Adam(self.parameters(), lr=parameters_lr )
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer_parameters, step_size=500, gamma=0.5)
+
         min_loss = np.inf
 
-        for epoch in range(epochs):
+        for epoch in tqdm(range(epochs)):
             # Clear grad cache
             # optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()
@@ -268,6 +270,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             # else:
             #     optimizer_parameters.step()
             optimizer_parameters.step()
+            scheduler.step()
 
             # logger.info(f"Current Loss : {train_loss}")
             # Save the best model
