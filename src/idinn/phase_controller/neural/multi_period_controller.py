@@ -119,7 +119,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
         h = self.model(inputs)
         h = torch.clamp(h, min=0.0, max=20.0)  
-        q = h - torch.frac(h).clone().detach()
+        q = h - torch.frac(h).detach() # Straight through estimator style
     
         regular_q = q[:, [0]]
         expedited_q = q[:, 1:] # Expedited Q0, Expedited Q1 ... depending on self.n_periods
@@ -275,15 +275,15 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
                 # eval_loss = self.get_total_cost(
                 #     sourcing_model, validation_sourcing_periods
                 # )
-                eval_loss = self.get_average_cost(
+                eval_loss = self.get_total_cost(
                     sourcing_model, validation_sourcing_periods # Normalize with sourcing periods
                 )
                 if eval_loss < min_loss:
-                    min_loss = eval_loss
+                    min_loss = eval_loss / validation_sourcing_periods
                     best_state = self.state_dict()
             else:
                 if train_loss < min_loss:
-                    min_loss = train_loss
+                    min_loss = train_loss / sourcing_periods
                     best_state = self.state_dict()
   
             end_time = datetime.now()
@@ -293,7 +293,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             if epoch % log_freq == 0:
                 logger.info(
                     f"Epoch {epoch}/{epochs}"
-                    f" - Training cost: {train_loss / sourcing_periods:.4f}"
+                    f" - Training cost: {train_loss / (sourcing_periods):.4f}"
                     f" - Per epoch time: {per_epoch_time:.2f} seconds"
                     f" - Est. Remaining time: {int(remaining_time)} seconds."
                 )
@@ -301,7 +301,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             if validation_sourcing_periods is not None and epoch % validation_freq == 0:
                 logger.info(
                     f"Epoch {epoch}/{epochs}"
-                    f" - Validation cost: {eval_loss / validation_sourcing_periods:.4f}"
+                    f" - Validation cost: {eval_loss / (validation_sourcing_periods):.4f}"
                     f" - Per epoch time: {per_epoch_time:.2f} seconds"
                     f" - Est. Remaining time: {int(remaining_time)} seconds."
                 )
@@ -312,7 +312,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         duration = end_time - start_time
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
-        logger.info(f"Final best cost: {min_loss / sourcing_periods:.4f}")
+        logger.info(f"Final best cost: {min_loss:.4f}")
 
     def reset(self) -> None:
         """
