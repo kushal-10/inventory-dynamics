@@ -39,7 +39,7 @@ def test_multi_period_model():
     controller.fit(
         sourcing_model=sourcing_model,
         sourcing_periods=100,
-        epochs=3500,
+        epochs=10000,
         validation_sourcing_periods=1000,
         parameters_lr=3e-4,
         # init_inventory_lr=1e-4,
@@ -52,7 +52,7 @@ def test_multi_period_model():
         for seed in tqdm(range(50)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
-                sourcing_periods=100,
+                sourcing_periods=1000,
                 seed=seed,
             )
             costs.append(cost)

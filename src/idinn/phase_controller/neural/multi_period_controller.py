@@ -298,6 +298,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
         end_time = datetime.now()
         duration = end_time - start_time
+        self.save_checkpoint(f"models/trained/check1.pt")
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
         logger.info(f"Final best cost: {min_loss/validation_sourcing_periods:.4f}")
@@ -372,3 +373,33 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             self.get_total_cost(sourcing_model, sourcing_periods, seed)
             / sourcing_periods
         )
+
+    def save_checkpoint(self, path: str) -> None:
+        """Save model checkpoint including state dict and sourcing model config."""
+        import os
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        torch.save({
+            'model_state_dict': self.state_dict(),
+            'hidden_layers': self.hidden_layers,
+            'n_periods': self.n_periods,
+            'init_inventory': self.sourcing_model.init_inventory.item(),
+        }, path)
+        logger.info(f"Checkpoint saved to {path}")
+
+    @classmethod
+    def load_checkpoint(cls, path: str, sourcing_model: DualSourcingModel) -> 'MultiPeriodNeuralController':
+        """Load a saved checkpoint for inference."""
+        checkpoint = torch.load(path, map_location='cpu')
+        controller = cls(
+            hidden_layers=checkpoint['hidden_layers'],
+            n_periods=checkpoint['n_periods'],
+        )
+        controller.init_layers(
+            regular_lead_time=sourcing_model.get_regular_lead_time(),
+            expedited_lead_time=sourcing_model.get_expedited_lead_time(),
+        )
+        controller.load_state_dict(checkpoint['model_state_dict'])
+        controller.sourcing_model = sourcing_model
+        sourcing_model.init_inventory.data.fill_(checkpoint['init_inventory'])
+        logger.info(f"Checkpoint loaded from {path}")
+        return controller
