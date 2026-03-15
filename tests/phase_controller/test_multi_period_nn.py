@@ -1,6 +1,8 @@
 import logging
+import argparse
 import torch
-from tqdm import tqdm 
+from tqdm import tqdm
+import os
 
 from src.idinn.phase_controller.neural.multi_period_controller import MultiPeriodNeuralController
 from src.idinn.sourcing_model import DualSourcingModel
@@ -16,8 +18,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+CHECKPOINT_PATH = "models/trained/check2.pt"
 
-sourcing_model = DualSourcingModel(
+
+def get_sourcing_model() -> DualSourcingModel:
+    return DualSourcingModel(
         regular_lead_time=2,
         expedited_lead_time=0,
         regular_order_cost=0,
@@ -29,8 +34,15 @@ sourcing_model = DualSourcingModel(
         batch_size=1,
     )
 
-def test_multi_period_model():
-    
+
+def train():
+
+    if os.path.exists(CHECKPOINT_PATH):
+        raise RuntimeError(f"Path : {CHECKPOINT_PATH} already exists! Please sleect a different name, or move the file")
+
+
+    sourcing_model = get_sourcing_model()
+
     controller = MultiPeriodNeuralController(
         hidden_layers=[64, 32, 16, 8],
         n_periods=2
@@ -39,17 +51,27 @@ def test_multi_period_model():
     controller.fit(
         sourcing_model=sourcing_model,
         sourcing_periods=100,
-        epochs=10000,
+        epochs=8500,
         validation_sourcing_periods=1000,
         parameters_lr=3e-4,
-        # init_inventory_lr=1e-4,
         seed=42,
+        checkpoint_path=CHECKPOINT_PATH,
     )
 
-    # multi-seed evaluation
+    print(f"Training complete. Checkpoint saved to {CHECKPOINT_PATH}")
+
+
+def infer():
+    sourcing_model = get_sourcing_model()
+
+    controller = MultiPeriodNeuralController.load_checkpoint(
+        path=CHECKPOINT_PATH,
+        sourcing_model=sourcing_model,
+    )
+
     costs = []
     with torch.no_grad():
-        for seed in tqdm(range(50)):
+        for seed in tqdm(range(100)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
                 sourcing_periods=1000,
@@ -60,13 +82,28 @@ def test_multi_period_model():
     mean_cost = torch.mean(torch.stack(costs))
     std_cost = torch.std(torch.stack(costs))
 
-    logger.info(f"Final mean cost: {mean_cost}") 
+    logger.info(f"Final mean cost: {mean_cost}")
     logger.info(f"Final std cost: {std_cost}")
 
     print("Final mean:", mean_cost.item())
     print("Final std:", std_cost.item())
 
 
-
 if __name__ == '__main__':
-    test_multi_period_model()
+    parser = argparse.ArgumentParser(description="Multi-Period Neural Controller")
+    parser.add_argument(
+        "--train", action="store_true",
+        help="Train the controller and save checkpoint"
+    )
+    parser.add_argument(
+        "--infer", action="store_true",
+        help="Load checkpoint and run inference"
+    )
+    args = parser.parse_args()
+
+    if args.train:
+        train()
+    elif args.infer:
+        infer()
+    else:
+        parser.print_help()

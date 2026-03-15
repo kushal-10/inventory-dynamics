@@ -186,6 +186,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         init_inventory_lr: float = 1e-1,
         parameters_lr: float = 1e-4,
         seed: Optional[int] = None,
+        checkpoint_path: Optional[str] = None,
     ) -> None:
         """
         Train the neural network controller using the sourcing model and specified parameters.
@@ -298,7 +299,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
         end_time = datetime.now()
         duration = end_time - start_time
-        self.save_checkpoint(f"models/trained/check1.pt")
+        self.save_checkpoint(checkpoint_path)
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
         logger.info(f"Final best cost: {min_loss/validation_sourcing_periods:.4f}")
