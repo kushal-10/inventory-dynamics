@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-CHECKPOINT_PATH = "models/trained/check2.pt"
+CHECKPOINT_PATH = "models/trained/best_model.pt"
 SEEDED_DIR = "models/trained/seeded"
 BEST_MODEL_PATH = "models/trained/best_model.pt"
 N_SEEDS = 10
@@ -136,10 +136,10 @@ def infer():
 
     costs = []
     with torch.no_grad():
-        for seed in tqdm(range(100)):
+        for seed in tqdm(range(5)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
-                sourcing_periods=1000,
+                sourcing_periods=100000,
                 seed=seed,
             )
             costs.append(cost)
