@@ -155,7 +155,7 @@ if __name__ == "__main__":
     study = optuna.create_study(
         direction="minimize",
         sampler=TPESampler(seed=42),
-        pruner=optuna.pruners.NopPruner(),  # no early pruning
+        # pruner=optuna.pruners.NopPruner(),  # no early pruning
         study_name="multi_period_hpo",
         storage="sqlite:///multi_period_hpo.db",  # remove for in-memory only
         load_if_exists=True,
