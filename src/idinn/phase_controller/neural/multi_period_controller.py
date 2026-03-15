@@ -264,6 +264,9 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             train_loss = self.get_total_cost(sourcing_model, sourcing_periods)
             train_loss.backward()
 
+            # add gradient clipping to stop exploding gradients
+            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+
             optimizer_init_inventory.step()
             optimizer_parameters.step()
 
