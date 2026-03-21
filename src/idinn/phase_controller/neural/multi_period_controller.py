@@ -63,7 +63,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
                     self.activation,
                 ]
         architecture += [
-            torch.nn.Linear(self.hidden_layers[-1], self.n_periods+1), # n_period outputs for Qe_n, +1 for Qr_0 at t=0 in a cycle
+            torch.nn.Linear(self.hidden_layers[-1], 3), # Generalize "3" to self.n_periods+1
             # TODO: Mention this ReLU layer in documentation
             torch.nn.ReLU(),
         ]
@@ -119,14 +119,13 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
 
         h = self.model(inputs)
         h = torch.clamp(h, min=0.0, max=20.0)  
-        q = h - torch.frac(h).clone().detach()
+        q = h - torch.frac(h).detach() # Straight through estimator style
     
-        regular_q = q[:, [0]]
-        expedited_q = q[:, 1:] # Expedited Q0, Expedited Q1 ... depending on self.n_periods
+        regular_q0 = q[:, [0]]
+        expedited_q0 = q[:, [1]] 
+        expedited_q1 = q[:, [2]]
 
-        assert h.shape[1] == self.n_periods+1, f"Forward pass failed, check n periods and expedited q outputs. There are {self.n_periods} Periods and output tensor is of shape {h.shape}"
-
-        return regular_q, expedited_q
+        return regular_q0, expedited_q0, expedited_q1
 
     def predict(
         self,
@@ -163,14 +162,16 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             past_expedited_orders,
             sourcing_model=self.sourcing_model,
         )
-        regular_q, expedited_q = self.forward(inputs)
+        regular_q0, expedited_q0, expedited_q1 = self.forward(inputs)
 
         if output_tensor:
-            return regular_q, expedited_q
+            return regular_q0, expedited_q0, expedited_q1
         else:
-            regular_int = int(regular_q.item())
-            expedited_ints = expedited_q.squeeze(0).tolist()
-            return regular_int, expedited_ints
+            regular0_int = int(regular_q0.item())
+            expedited0_int = int(expedited_q0.item())
+            expedited1_int = int(expedited_q1.item())
+
+            return regular0_int, expedited0_int, expedited1_int
 
 
     def fit(
@@ -178,13 +179,14 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
         sourcing_model: DualSourcingModel,
         sourcing_periods: int,
         epochs: int,
-        validation_sourcing_periods: Optional[int] = None,
+        validation_sourcing_periods: int = 1000,
         validation_freq: int = 50,
-        log_freq: int = 100,
+        log_freq: int = 10,
         init_inventory_freq: int = 4,
         init_inventory_lr: float = 1e-1,
         parameters_lr: float = 1e-4,
         seed: Optional[int] = None,
+        checkpoint_path: Optional[str] = None,
     ) -> None:
         """
         Train the neural network controller using the sourcing model and specified parameters.
@@ -213,6 +215,10 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             Random seed for reproducibility.
             Tensorboard writer for logging.
         """
+
+        assert validation_freq is not None, "Validation frequency set to None, please provide an int value <= epochs"
+        assert validation_freq <= epochs, "Validation frequency > epochs, please provide an int value <= epochs"
+
         # Store sourcing model in self.sourcing_model
         self.sourcing_model = sourcing_model
 
@@ -238,54 +244,48 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             f"validation_periods={validation_sourcing_periods}, learning_rate={parameters_lr}"
         )
 
-        # optimizer_init_inventory = torch.optim.RMSprop(
-        #     [sourcing_model.init_inventory], lr=init_inventory_lr
-        # )
-
         # optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
-
-
         # ADD - adam instead of RMS prop
+        optimizer_init_inventory = torch.optim.RMSprop(
+            [sourcing_model.init_inventory], lr=init_inventory_lr
+        )
         optimizer_parameters = torch.optim.Adam(self.parameters(), lr=parameters_lr )
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer_parameters, T_max=epochs, eta_min=1e-5
+        )
+
         min_loss = np.inf
 
-        for epoch in range(epochs):
-            # Clear grad cache
-            # optimizer_init_inventory.zero_grad()
+        for epoch in tqdm(range(epochs)):
+            
+            optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()
-            # Reset the sourcing model with the learned init inventory
             sourcing_model.reset()
             train_loss = self.get_total_cost(sourcing_model, sourcing_periods)
             train_loss.backward()
 
-            # ADD - gradient clipping 
-            # torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
+            # add gradient clipping to stop exploding gradients
+            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
 
-            # Perform gradient descend
-            # if epoch % init_inventory_freq == 0:
-            #     optimizer_init_inventory.step()
-            #     pass
-            # else:
-            #     optimizer_parameters.step()
+            optimizer_init_inventory.step()
             optimizer_parameters.step()
 
-            # logger.info(f"Current Loss : {train_loss}")
+            scheduler.step()
+
             # Save the best model
-            if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                # eval_loss = self.get_total_cost(
-                #     sourcing_model, validation_sourcing_periods
-                # )
-                eval_loss = self.get_average_cost(
-                    sourcing_model, validation_sourcing_periods # Normalize with sourcing periods
+            if epoch % validation_freq == 0:
+                eval_loss = self.get_total_cost(
+                    sourcing_model, validation_sourcing_periods
+                )
+                logger.info(
+                    f"Epoch {epoch}/{epochs}"
+                    f" - Validation cost: {eval_loss / validation_sourcing_periods:.4f}"
                 )
                 if eval_loss < min_loss:
-                    min_loss = eval_loss
+                    min_loss = eval_loss 
                     best_state = self.state_dict()
-            else:
-                if train_loss < min_loss:
-                    min_loss = train_loss
-                    best_state = self.state_dict()
-  
+
+           
             end_time = datetime.now()
             duration = end_time - start_time
             per_epoch_time = duration.total_seconds() / (epoch + 1)  # seconds per epoch
@@ -298,21 +298,14 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
                     f" - Est. Remaining time: {int(remaining_time)} seconds."
                 )
 
-            if validation_sourcing_periods is not None and epoch % validation_freq == 0:
-                logger.info(
-                    f"Epoch {epoch}/{epochs}"
-                    f" - Validation cost: {eval_loss / validation_sourcing_periods:.4f}"
-                    f" - Per epoch time: {per_epoch_time:.2f} seconds"
-                    f" - Est. Remaining time: {int(remaining_time)} seconds."
-                )
-
         self.load_state_dict(best_state)
 
         end_time = datetime.now()
         duration = end_time - start_time
+        self.save_checkpoint(checkpoint_path)
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
-        logger.info(f"Final best cost: {min_loss / sourcing_periods:.4f}")
+        logger.info(f"Final best cost: {min_loss/validation_sourcing_periods:.4f}")
 
     def reset(self) -> None:
         """
@@ -354,7 +347,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             current_inventory = sourcing_model.get_current_inventory()
             past_regular_orders = sourcing_model.get_past_regular_orders()
             past_expedited_orders = sourcing_model.get_past_expedited_orders()
-            regular_q, expedited_q = self.predict(
+            regular_q0, expedited_q0, expedited_q1 = self.predict(
                 current_inventory,
                 past_regular_orders,
                 past_expedited_orders,
@@ -362,21 +355,14 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             )
 
             # First pass for first time period in the cycle
-            sourcing_model.order(regular_q, expedited_q[:, 0:1])
+            sourcing_model.order(regular_q0, expedited_q0)
             last_cost = self.get_last_cost(sourcing_model)
             total_cost += last_cost.mean()
 
-            # Update inventory here - Not needed, handeld by the sourcing model
             # Order generates random demand and updates current inventory, past invetory, past regular and expedited orders
-            
-            for exp_q in expedited_q[:, 1:].split(1, dim=1):
-                # Second pass for remaining time periods
-                sourcing_model.order(
-                    torch.zeros_like(exp_q),  # 0 regular
-                    exp_q
-                )
-                last_cost = self.get_last_cost(sourcing_model)
-                total_cost += last_cost.mean()
+            sourcing_model.order(torch.zeros_like(expedited_q1), expedited_q1)
+            last_cost = self.get_last_cost(sourcing_model)
+            total_cost += last_cost.mean()
 
         return total_cost
 
@@ -391,3 +377,33 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             self.get_total_cost(sourcing_model, sourcing_periods, seed)
             / sourcing_periods
         )
+
+    def save_checkpoint(self, path: str) -> None:
+        """Save model checkpoint including state dict and sourcing model config."""
+        import os
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        torch.save({
+            'model_state_dict': self.state_dict(),
+            'hidden_layers': self.hidden_layers,
+            'n_periods': self.n_periods,
+            'init_inventory': self.sourcing_model.init_inventory.item(),
+        }, path)
+        logger.info(f"Checkpoint saved to {path}")
+
+    @classmethod
+    def load_checkpoint(cls, path: str, sourcing_model: DualSourcingModel) -> 'MultiPeriodNeuralController':
+        """Load a saved checkpoint for inference."""
+        checkpoint = torch.load(path, map_location='cpu')
+        controller = cls(
+            hidden_layers=checkpoint['hidden_layers'],
+            n_periods=checkpoint['n_periods'],
+        )
+        controller.init_layers(
+            regular_lead_time=sourcing_model.get_regular_lead_time(),
+            expedited_lead_time=sourcing_model.get_expedited_lead_time(),
+        )
+        controller.load_state_dict(checkpoint['model_state_dict'])
+        controller.sourcing_model = sourcing_model
+        sourcing_model.init_inventory.data.fill_(checkpoint['init_inventory'])
+        logger.info(f"Checkpoint loaded from {path}")
+        return controller
