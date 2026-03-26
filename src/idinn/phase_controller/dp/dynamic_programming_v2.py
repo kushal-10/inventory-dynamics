@@ -1,3 +1,4 @@
+
 import logging
 from datetime import datetime
 from itertools import product
@@ -11,20 +12,18 @@ from numba import njit, types  # type: ignore
 from numba.typed import Dict, List
 from tqdm import tqdm
 
-from ...demand import UniformDemand
 from ...sourcing_model import DualSourcingModel
-from .base import BaseDPController
+from ...dual_controller.base import BasePeriodicDualController
 
 # Get root logger
 logger = logging.getLogger()
 
 
-class DynamicProgrammingController(BaseDPController):
+class DynamicProgrammingController(BasePeriodicDualController):
     def __init__(self) -> None:
         self.sourcing_model = None
         self.qf = None
         self.vf = None
-        self.cycle_length = None
         logger.info("Initialized DynamicProgrammingController")
 
     @staticmethod
@@ -38,94 +37,50 @@ class DynamicProgrammingController(BaseDPController):
         b: float,
         state: Tuple[int, ...],
         vf: TypingDict[Tuple[int, ...], float],
-        actions: TypingList[Tuple[int, ...]],
-        ip_lower: int,
-        ip_upper: int,
-        max_pipeline: int,
-        cycle_length: int,
-        demand_combos: TypingList[Tuple[int, ...]],
-    ) -> Tuple[float, Optional[Tuple[int, ...]]]:
+        actions: TypingList[Tuple[int, int]],
+    ) -> Tuple[float, Optional[Tuple[int, int]]]:
         """
-        C-period cycle value iteration update.
-
-        At the start of each cycle, all decisions are pre-committed:
-            action = (qr0, qe0, qe1, ..., qe_{C-1})
-
-        The rollout simulates C periods of transitions before reaching state_next.
-        ip_lower, ip_upper, max_pipeline define the enumerated state space bounds.
-        Actions that push any intermediate state outside these bounds are rejected.
+        vf_update is a function that calculates a single value iteration update.
         """
         best_action = None
         best_cost = 10e9
 
-        for action in actions:
-            qr0 = action[0]
+        current_phase = state[-1]
+        current_pipeline = state[1:-1]
+        ip_e = state[0]
 
-            # qr0 enters the pipeline at period 0 — reject if it exceeds pipeline bounds
-            if qr0 > max_pipeline:
-                continue
+        for qe, qr in actions:
 
-            # Immediate expedited cost: sum of all qe_t * ce (pre-committed for full cycle)
-            immediate_cost = 0.0
-            for t in range(cycle_length):
-                immediate_cost += action[t + 1] * ce
+            if current_phase==0 and qr!=0:
+                continue # skip the instances where qr is placed in an even time period - this is restricted 
+            
+            # Immediate cost of action
+            cost = qe * ce
+            
+            # partial inventory update
+            ip_e_partial = ip_e + qe + current_pipeline[0] # Regular order arriving at time t 
 
-            expected_cost = 0.0
-            valid = True
+            for dem in range(int(min_demand), int(max_demand) + 1):
+                ipe_new = int(ip_e_partial) - dem
 
-            for demand_combo in demand_combos:
-                # Joint probability of this C-period demand sequence
-                prob = 1.0
-                for t in range(cycle_length):
-                    prob *= demand_prob[demand_combo[t]]
+                inventory_on_hand = ipe_new - current_pipeline[0]
 
-                state_t = state
-                combo_valid = True
-                inv_cost_combo = 0.0
+                inv_cost = h*inventory_on_hand if inventory_on_hand>0 else b*-inventory_on_hand
 
-                for t in range(cycle_length):
-                    qet = action[t + 1]
-                    dem_t = demand_combo[t]
+                next_phase = 1-current_phase
+                next_state = (ipe_new,) + current_pipeline[1:] + (qr,) + (next_phase,)
 
-                    # Oldest pipeline item and expedited order arrive (le=0)
-                    ip_t = state_t[0] + state_t[1] + qet
-                    ipe_after_t = ip_t - dem_t
-
-                    # Reject if intermediate IP is outside enumerated bounds
-                    if ipe_after_t < ip_lower or ipe_after_t > ip_upper:
-                        combo_valid = False
-                        break
-
-                    # Pipeline advances: shift left, append new item at back
-                    # qr0 placed only at period 0 (cycle start); 0 for all other periods
-                    if t == 0:
-                        new_pipeline = state_t[2:] + (qr0,)
-                    else:
-                        new_pipeline = state_t[2:] + (0,)
-
-                    # On-hand holding/backlog cost for this period
-                    inv_t = ipe_after_t - state_t[1]
-                    inv_cost_combo += inv_t * h if inv_t >= 0 else -inv_t * b
-
-                    state_t = (ipe_after_t,) + new_pipeline
-
-                if not combo_valid:
-                    valid = False
+                if (next_state not in vf) or (vf[next_state] > 10e9 - 1.0):
+                    cost = 10e9
                     break
 
-                # state_t is now state_next (start of next cycle)
-                if (state_t not in vf) or (vf[state_t] > 10e9 - 1.0):
-                    valid = False
-                    break
+                cost += demand_prob[dem] * (inv_cost + vf[next_state])
 
-                expected_cost += prob * (inv_cost_combo + vf[state_t])
-
-            if valid and (immediate_cost + expected_cost) < best_cost:
-                best_cost = immediate_cost + expected_cost
-                best_action = action
+            if cost < best_cost:
+                best_cost = cost
+                best_action = (qr, qe)
 
         return best_cost, best_action
-
 
     @staticmethod
     def _get_basestock_ub(
@@ -143,11 +98,10 @@ class DynamicProgrammingController(BaseDPController):
     def fit(
         self,
         sourcing_model: DualSourcingModel,
-        cycle_length: int = 2,
         max_iterations: int = 1000000,
         tolerance: float = 10e-8,
         validation_freq: int = 100,
-        log_freq: int = 10,
+        log_freq: int = 100,
     ) -> None:
         """
         Fit the controller to the given sourcing model.
@@ -156,9 +110,6 @@ class DynamicProgrammingController(BaseDPController):
         ----------
         sourcing_model : DualSourcingModel
             The sourcing model to fit the controller to.
-        cycle_length : int, default is 2
-            Number of periods per cycle. All decisions (qr0, qe0, ..., qe_{C-1}) are
-            pre-committed at the start of each cycle.
         max_iterations : int, default is 1000000
             Specifies the maximum number of iterations to run.
         tolerance : float, default is 10e-8
@@ -171,10 +122,10 @@ class DynamicProgrammingController(BaseDPController):
         self.sourcing_model = sourcing_model
 
         # Check demand is uniform distributed
-        if not isinstance(sourcing_model.demand_generator, UniformDemand):
-            raise ValueError(
-                "DynamicProgrammingController only supports uniform demand distribution."
-            )
+        # if not isinstance(sourcing_model.demand_generator, UniformDemand):
+        #     raise ValueError(
+        #         "DynamicProgrammingController only supports uniform demand distribution."
+        #     )
         # Check if the expedited_lead_time is 0
         if sourcing_model.expedited_lead_time != 0:
             raise ValueError(
@@ -189,7 +140,7 @@ class DynamicProgrammingController(BaseDPController):
             f"demand_generator={self.sourcing_model.demand_generator.__class__.__name__}"
         )
         logger.info(
-            f"Training parameters: max_iterations={max_iterations}, tolerance={tolerance}, cycle_length={cycle_length}"
+            f"Training parameters: max_iterations={max_iterations}, tolerance={tolerance}"
         )
 
         min_demand = int(sourcing_model.demand_generator.get_min_demand())
@@ -211,9 +162,6 @@ class DynamicProgrammingController(BaseDPController):
         min_ip = int(min(base_r, base_e) - max_demand)
         max_ip = int(max(base_r, base_e))
         max_order = max_ip + min_ip
-        ip_lower = -min_ip
-        ip_upper = max_ip
-        max_pipeline = max_demand
         dim_pipeline = lr - le - 1
 
         demand_prob = Dict.empty(key_type=types.int64, value_type=types.float64)
@@ -221,31 +169,45 @@ class DynamicProgrammingController(BaseDPController):
         for k, v in demand_prob_.items():
             demand_prob[k] = v
 
-        states_ = list(
-            product(
-                range(-min_ip, max_ip + 1),
-                *(range(int(max_demand) + 1),) * int(dim_pipeline),
-            )
-        )
-        states = List()
-        for state in states_:
+        # states_ = list(
+        #     product(
+        #         range(-min_ip, max_ip + 1),
+        #         *(range(int(max_demand) + 1),) * int(dim_pipeline),
+        #     )
+        # )
+        states = []
+        all_possible_states = []
+        for state in product(
+            range(-min_ip, max_ip + 1),
+            *(range(int(max_demand) + 1),) * dim_pipeline,
+            (0, 1),
+        ):
+            *_, phase = state
+            pipeline = state[1:-1]
+
+            all_possible_states.append(state)
+            # unreachable: regular order placed in even period
+            if phase == 1 and pipeline[-1] != 0:
+                continue
+
             states.append(state)
 
-        demand_combos_ = list(product(range(min_demand, max_demand + 1), repeat=cycle_length))
-        demand_combos = List()
-        for combo in demand_combos_:
-            demand_combos.append(combo)
+        logger.info(f"All possible states : {len(all_possible_states)}, Pruned {len(all_possible_states)-len(states)} states")
+        logger.info(f"Generated {len(states)} states")
 
-        actions_ = list(product(range(max_order), repeat=cycle_length + 1))
+        actions_ = list(product(range(max_order), range(max_order)))
         actions = List()
         for action in actions_:
             actions.append(action)
-            
+
+        logger.info(f"Possible actions : {actions}")
+        logger.info(f"Generated {len(actions)} actions")
+
         # Values can be initiated arbitrarily
         vals = np.repeat(1.0, len(states))
         vf_ = dict(zip(states, vals))
         vf = Dict.empty(
-            key_type=types.UniTuple(types.int64, lr), value_type=types.float64
+            key_type=types.UniTuple(types.int64, lr+1), value_type=types.float64
         )
         for k, v in vf_.items():
             vf[k] = v
@@ -261,8 +223,7 @@ class DynamicProgrammingController(BaseDPController):
             # We first store each newly updated state
             for idx, state in enumerate(states):
                 these_values[idx] = DynamicProgrammingController._vf_update(
-                    demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions,
-                    ip_lower, ip_upper, max_pipeline, cycle_length, demand_combos,
+                    demand_prob, min_demand, max_demand, ce, h, b, state, vf, actions
                 )[0]
             # After the minimum for each state has been calculated, we update the states
             # If done in the same loop, converge sucks even more
@@ -277,14 +238,57 @@ class DynamicProgrammingController(BaseDPController):
 
             if iteration > 1 and iteration % log_freq == 0:
                 logger.info(
-                    f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]}"
+                    f"Epoch {iteration}/{max_iterations} - Value: {all_values[iteration]:.4f}"
                 )
 
+            # if iteration > 1 and iteration % validation_freq == 0:
+            #     iteration_arr.append(iteration)
+            #     value_arr.append(all_values[iteration])
+            #     delta = all_values[iteration - 1] - all_values[iteration]
+            #     if delta <= tolerance:
+            #         for state in states:
+            #             qa = DynamicProgrammingController._vf_update(
+            #                 demand_prob,
+            #                 min_demand,
+            #                 max_demand,
+            #                 ce,
+            #                 h,
+            #                 b,
+            #                 state,
+            #                 vf,
+            #                 actions,
+            #             )[1]
+            #             if qa is not None:
+            #                 qf[state] = qa
+            #         break
             if iteration > 1 and iteration % validation_freq == 0:
                 iteration_arr.append(iteration)
                 value_arr.append(all_values[iteration])
                 delta = all_values[iteration - 1] - all_values[iteration]
+
                 if delta <= tolerance:
+
+                    # ================================
+                    # 🔧 NORMALIZE VALUE FUNCTION HERE
+                    # ================================
+                    ref_vals = [
+                        v for k, v in vf.items()
+                        if k[-1] == 0 and v < 1e8   # phase = 0 reference
+                    ]
+
+                    if len(ref_vals) == 0:
+                        raise RuntimeError(
+                            "No finite reference values found for phase=0. "
+                            "State space or transitions are inconsistent."
+                        )
+
+                    baseline = np.mean(ref_vals)
+
+                    for k in vf:
+                        vf[k] -= baseline
+                    # ================================
+
+                    # 🔽 NOW extract optimal policy
                     for state in states:
                         qa = DynamicProgrammingController._vf_update(
                             demand_prob,
@@ -296,26 +300,22 @@ class DynamicProgrammingController(BaseDPController):
                             state,
                             vf,
                             actions,
-                            ip_lower,
-                            ip_upper,
-                            max_pipeline,
-                            cycle_length,
-                            demand_combos,
                         )[1]
                         if qa is not None:
                             qf[state] = qa
+
                     break
+
 
         self.qf = qf
         self.vf = val
-        self.cycle_length = cycle_length
 
         end_time = datetime.now()
         duration = end_time - start_time
         logger.info(f"Dynamic programming completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
         logger.info(
-            f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}"
+            f"Final best cost: {self.get_periodic_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}"
         )
 
     def predict(
@@ -323,6 +323,7 @@ class DynamicProgrammingController(BaseDPController):
         current_inventory: Union[int, torch.Tensor],
         past_regular_orders: Optional[Union[TypingList[int], torch.Tensor]] = None,
         past_expedited_orders: Optional[Union[TypingList[int], torch.Tensor]] = None,
+        phase: int = 0,
         output_tensor: bool = False,
     ) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[int, int]]:
         """
@@ -354,88 +355,15 @@ class DynamicProgrammingController(BaseDPController):
             + past_regular_orders.squeeze()[-regular_lead_time]
         )
         second = past_regular_orders.squeeze()[-regular_lead_time + 1 :]
-        key = tuple([int(first)] + second.int().tolist())
+
+        key = tuple([int(first)] + second.int().tolist() + [phase])
+
         if output_tensor:
-            return tuple(
-                torch.tensor([[self.qf[key][i]]]) for i in range(self.cycle_length + 1)
-            )
+            return torch.tensor([[self.qf[key][0]]]), torch.tensor([[self.qf[key][1]]])
         else:
             return self.qf[key]
-
-    def get_last_cost(self, sourcing_model: DualSourcingModel) -> torch.Tensor:
-        """Calculate the cost for the latest period."""
-        last_regular_q = sourcing_model.get_last_regular_order()
-        last_expedited_q = sourcing_model.get_last_expedited_order()
-        regular_order_cost = sourcing_model.get_regular_order_cost()
-        expedited_order_cost = sourcing_model.get_expedited_order_cost()
-        holding_cost = sourcing_model.get_holding_cost()
-        shortage_cost = sourcing_model.get_shortage_cost()
-        current_inventory = sourcing_model.get_current_inventory()
-        last_cost = (
-            regular_order_cost * last_regular_q
-            + expedited_order_cost * last_expedited_q
-            + holding_cost * torch.relu(current_inventory)
-            + shortage_cost * torch.relu(-current_inventory)
-        )
-        return last_cost
-
-    @no_type_check
-    def get_total_cost(
-        self,
-        sourcing_model: DualSourcingModel,
-        sourcing_periods: int,
-        seed: Optional[int] = None,
-    ) -> torch.Tensor:
-        """Calculate the total cost."""
-        if seed is not None:
-            torch.manual_seed(seed)
-
-        total_cost = torch.tensor(0.0)
-        for _ in tqdm(range(sourcing_periods)):
-
-            current_inventory = sourcing_model.get_current_inventory()
-            past_regular_orders = sourcing_model.get_past_regular_orders()
-            past_expedited_orders = sourcing_model.get_past_expedited_orders()
-
-            action = self.predict(
-                current_inventory,
-                past_regular_orders,
-                past_expedited_orders,
-                output_tensor=True,
-            )
-            qr0 = action[0]
-            qe_list = action[1:]
-
-            # First period of cycle: place regular + first expedited order
-            sourcing_model.order(qr0, qe_list[0])
-            last_cost = self.get_last_cost(sourcing_model)
-            total_cost += last_cost.mean()
-
-            # Remaining periods of cycle: expedited only (regular order was pre-committed)
-            for qet in qe_list[1:]:
-                sourcing_model.order(0, qet)
-                last_cost = self.get_last_cost(sourcing_model)
-                total_cost += last_cost.mean()
-
-        return total_cost
-
-    @no_type_check
-    def get_average_cost(
-        self,
-        sourcing_model: DualSourcingModel,
-        sourcing_periods: int,
-        seed: Optional[int] = None,
-    ) -> torch.Tensor:
-        """Calculate the average cost."""
-        return (
-            self.get_total_cost(sourcing_model, sourcing_periods, seed)
-            / sourcing_periods
-        )
-
 
     def reset(self) -> None:
         self.qf = None
         self.vf = None
         self.sourcing_model = None
-        self.cycle_length = None
-

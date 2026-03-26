@@ -20,7 +20,7 @@ def test_dp():
         regular_order_cost=0,
         expedited_order_cost=20,
         holding_cost=5,
-        shortage_cost=95,
+        shortage_cost=495,
         init_inventory=0,
         demand_generator=UniformDemand(0,4),
         batch_size=1 
@@ -31,7 +31,8 @@ def test_dp():
 
     dp_controller.fit(
         sourcing_model=sourcing_model,
-        tolerance=10e-7
+        tolerance=10e-7,
+        cycle_length=2,
     )
 
 
