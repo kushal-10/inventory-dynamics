@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from numba import njit, types  # type: ignore
 from numba.typed import Dict, List
+from tqdm import tqdm
 
 from ..demand import UniformDemand
 from ..sourcing_model import DualSourcingModel
@@ -191,7 +192,7 @@ class DynamicProgrammingController(BaseDualController):
         qf = {}
         val = 0
 
-        for iteration in range(max_iterations):
+        for iteration in tqdm(range(max_iterations)):
             # We first store each newly updated state
             for idx, state in enumerate(states):
                 these_values[idx] = DynamicProgrammingController._vf_update(
@@ -239,10 +240,14 @@ class DynamicProgrammingController(BaseDualController):
 
         end_time = datetime.now()
         duration = end_time - start_time
+        print(self.vf)
         logger.info(f"Dynamic programming completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
+        avg_cost = self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42)
+        print(avg_cost)
+
         logger.info(
-            f"Final best cost: {self.get_average_cost(self.sourcing_model, sourcing_periods=1000, seed=42):.4f}"
+            f"Final best cost: {avg_cost:.4f}"
         )
 
     def predict(

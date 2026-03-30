@@ -26,12 +26,12 @@ logging.basicConfig(level=logging.WARNING)
 # ---------------------------------------------------------------------------
 N_SEEDS = 1           # single shared demand sequence across all models
 SOURCING_PERIODS = 50  # 2 actual periods per cycle → 100 periods total
-DP_TOLERANCE = 10e-6
+DP_TOLERANCE = 10e-3
 OUTPUT_DIR = "results/simulation"
 
 # Shared sourcing model parameters (both models differ only in shortage_cost)
 BASE_PARAMS = dict(
-    regular_lead_time=2,
+    regular_lead_time=3,
     expedited_lead_time=0,
     regular_order_cost=0,
     expedited_order_cost=20,
@@ -111,10 +111,10 @@ def run_nn_simulation(shortage_cost: float, checkpoint_path: str, output_path: s
 
 if __name__ == "__main__":
     # DP — b=95
-    run_dp_simulation(
-        shortage_cost=95,
-        output_path=f"{OUTPUT_DIR}/dp_b95.csv",
-    )
+    # run_dp_simulation(
+    #     shortage_cost=95,
+    #     output_path=f"{OUTPUT_DIR}/dp_b95.csv",
+    # )
 
     # DP — b=495
     run_dp_simulation(
@@ -122,18 +122,18 @@ if __name__ == "__main__":
         output_path=f"{OUTPUT_DIR}/dp_b495.csv",
     )
 
-    # NN — b=95
-    run_nn_simulation(
-        shortage_cost=95,
-        checkpoint_path="models/trained/finetuned_b95.pt",
-        output_path=f"{OUTPUT_DIR}/nn_b95.csv",
-    )
+    # # NN — b=95
+    # run_nn_simulation(
+    #     shortage_cost=95,
+    #     checkpoint_path="models/trained/finetuned_b95.pt",
+    #     output_path=f"{OUTPUT_DIR}/nn_b95.csv",
+    # )
 
-    # NN — b=495
-    run_nn_simulation(
-        shortage_cost=495,
-        checkpoint_path="models/trained/best_model.pt",
-        output_path=f"{OUTPUT_DIR}/nn_b495.csv",
-    )
+    # # NN — b=495
+    # run_nn_simulation(
+    #     shortage_cost=495,
+    #     checkpoint_path="models/trained/best_model.pt",
+    #     output_path=f"{OUTPUT_DIR}/nn_b495.csv",
+    # )
 
     print("\nAll simulations complete. Results saved to:", OUTPUT_DIR)

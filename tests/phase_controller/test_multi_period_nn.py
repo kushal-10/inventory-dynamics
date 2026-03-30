@@ -136,10 +136,10 @@ def infer():
 
     costs = []
     with torch.no_grad():
-        for seed in tqdm(range(500)):
+        for seed in tqdm(range(100)):
             cost = controller.get_average_cost(
                 sourcing_model=sourcing_model,
-                sourcing_periods=1000,
+                sourcing_periods=100,
                 seed=seed,
             )
             costs.append(cost)

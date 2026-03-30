@@ -1,7 +1,7 @@
 import logging
 
 from src.idinn.sourcing_model import DualSourcingModel
-from src.idinn.phase_controller.dp.dynamic_programming_v2 import DynamicProgrammingController
+from src.idinn.dual_controller.dynamic_programming import DynamicProgrammingController
 from src.idinn.demand import UniformDemand
 
 logging.basicConfig(
@@ -15,17 +15,16 @@ logger = logging.getLogger(__name__)
 def test_dp():
 
     sourcing_model = DualSourcingModel(
-        regular_lead_time=3,
+        regular_lead_time=2,
         expedited_lead_time=0,
         regular_order_cost=0,
-        expedited_order_cost=20,
-        holding_cost=5,
-        shortage_cost=495,
+        expedited_order_cost=100,
+        holding_cost=20,
+        shortage_cost=80,
         init_inventory=0,
         demand_generator=UniformDemand(0,4),
         batch_size=1 
     )
-
 
     dp_controller = DynamicProgrammingController()
 
