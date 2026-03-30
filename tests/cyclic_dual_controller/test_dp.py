@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def test_dp():
 
     sourcing_model = DualSourcingModel(
-        regular_lead_time=2,
+        regular_lead_time=3,
         expedited_lead_time=0,
         regular_order_cost=0,
         expedited_order_cost=20,
