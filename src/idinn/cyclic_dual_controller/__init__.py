@@ -1,2 +1,2 @@
-from .cyclic_dual_neural import CyclicDualSourcingNeuralController
+from .cyclic_dual_neural import CyclicDualNeuralController
 from .dynamic_programming import DynamicProgrammingController
