@@ -38,6 +38,9 @@ build-backend = "hatchling.build"
 path = "src/idinn/__init__.py"
 
 [dependency-groups]
+tuning = [
+    "optuna>=3.6",
+]
 dev = [
     "ipykernel>=6.29.5",
     "pytest>=8.3.4",
