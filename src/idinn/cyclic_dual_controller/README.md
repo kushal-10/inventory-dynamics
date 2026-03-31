@@ -166,17 +166,17 @@ controller = CyclicDualNeuralController.load_checkpoint(
 
 ## Seed Tuning CLI
 
-`src/idinn/tuning/seed_tuning.py` automates training and evaluation of `CyclicDualNeuralController` across multiple random seeds. **Run from the repository root.**
+`src/idinn/finetuning/pre_training.py` automates training and evaluation of `CyclicDualNeuralController` across multiple random seeds. **Run from the repository root.**
 
 ```bash
 # Train a single model (seed=42) → saves to models/trained/best_model.pt
-python src/idinn/tuning/seed_tuning.py --train
+python src/idinn/finetuning/pre_training.py --train
 
 # Train 10 models (seeds 0–9), evaluate each, keep the best
-python src/idinn/tuning/seed_tuning.py --seed_train
+python src/idinn/finetuning/pre_training.py --seed_train
 
 # Load best_model.pt and run inference over 100 seeds
-python src/idinn/tuning/seed_tuning.py --infer
+python src/idinn/finetuning/pre_training.py --infer
 ```
 
 ### Checkpoint layout
@@ -197,11 +197,11 @@ models/
 `--infer` loads `models/trained/best_model.pt`. This file must exist before running inference — create it with `--train` or `--seed_train` first:
 
 ```bash
-python src/idinn/tuning/seed_tuning.py --train   # or --seed_train
-python src/idinn/tuning/seed_tuning.py --infer
+python src/idinn/finetuning/pre_training.py --train   # or --seed_train
+python src/idinn/finetuning/pre_training.py --infer
 ```
 
-Training logs are written to `src/idinn/tuning/tune_cyclic_neural.log`.
+Training logs are written to `src/idinn/finetuning/tune_cyclic_neural.log`.
 
 ---
 
