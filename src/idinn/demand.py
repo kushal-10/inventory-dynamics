@@ -101,3 +101,50 @@ class CustomDemand(BaseDemand):
 
     def get_max_demand(self) -> int:
         return max(self.demand_prob.keys())
+
+class PoissonDemand(BaseDemand):
+    def __init__(self, lam: float, max_demand: int = None):
+        """
+        Parameters
+        ----------
+        lam : float
+            The Poisson rate parameter (λ), i.e. the expected demand per period.
+        max_demand : int, optional
+            Upper truncation point for support enumeration and min/max queries.
+            Defaults to the 99.9th percentile of the distribution if not provided.
+        """
+        if lam <= 0:
+            raise ValueError(f"Lambda must be positive, got {lam}.")
+
+        self.lam = lam
+        self.distribution = torch.distributions.Poisson(rate=lam)
+
+        if max_demand is not None:
+            self.max_demand = max_demand
+        else:
+            # Use 99.9th percentile as a sensible default cutoff
+            import scipy.stats as stats
+            self.max_demand = int(stats.poisson.ppf(0.999, mu=lam))
+
+    def sample(self, batch_size: int, batch_width: int = 1) -> torch.Tensor:
+        return self.distribution.sample([batch_size, batch_width]).int()
+
+    def enumerate_support(self) -> dict:
+        """
+        Returns a truncated probability mass function up to max_demand.
+        Probabilities are renormalized so they sum to 1 within the support.
+        """
+        import math
+
+        raw = {
+            x: (self.lam ** x * math.exp(-self.lam)) / math.factorial(x)
+            for x in range(0, self.max_demand + 1)
+        }
+        total = sum(raw.values())
+        return {x: p / total for x, p in raw.items()}
+
+    def get_min_demand(self) -> int:
+        return 0
+
+    def get_max_demand(self) -> int:
+        return self.max_demand

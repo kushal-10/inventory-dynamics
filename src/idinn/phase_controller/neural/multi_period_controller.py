@@ -250,6 +250,7 @@ class MultiPeriodNeuralController(torch.nn.Module, BaseNeuralController):
             [sourcing_model.init_inventory], lr=init_inventory_lr
         )
         optimizer_parameters = torch.optim.Adam(self.parameters(), lr=parameters_lr )
+        
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer_parameters, T_max=epochs, eta_min=1e-5
         )

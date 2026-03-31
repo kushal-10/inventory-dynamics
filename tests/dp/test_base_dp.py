@@ -2,7 +2,7 @@ import logging
 
 from src.idinn.sourcing_model import DualSourcingModel
 from src.idinn.dual_controller.dynamic_programming import DynamicProgrammingController
-from src.idinn.demand import UniformDemand
+from src.idinn.demand import UniformDemand, PoissonDemand
 
 logging.basicConfig(
     filename="tests/dp/test_base_dp.log",
@@ -18,11 +18,11 @@ def test_dp():
         regular_lead_time=2,
         expedited_lead_time=0,
         regular_order_cost=0,
-        expedited_order_cost=100,
-        holding_cost=20,
-        shortage_cost=80,
+        expedited_order_cost=20,
+        holding_cost=5,
+        shortage_cost=495,
         init_inventory=0,
-        demand_generator=UniformDemand(0,4),
+        demand_generator=PoissonDemand(2, 4),
         batch_size=1 
     )
 

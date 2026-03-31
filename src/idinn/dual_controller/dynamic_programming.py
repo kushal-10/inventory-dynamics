@@ -111,10 +111,10 @@ class DynamicProgrammingController(BaseDualController):
         self.sourcing_model = sourcing_model
 
         # Check demand is uniform distributed
-        if not isinstance(sourcing_model.demand_generator, UniformDemand):
-            raise ValueError(
-                "DynamicProgrammingController only supports uniform demand distribution."
-            )
+        # if not isinstance(sourcing_model.demand_generator, UniformDemand):
+        #     raise ValueError(
+        #         "DynamicProgrammingController only supports uniform demand distribution."
+        #     )
         # Check if the expedited_lead_time is 0
         if sourcing_model.expedited_lead_time != 0:
             raise ValueError(
