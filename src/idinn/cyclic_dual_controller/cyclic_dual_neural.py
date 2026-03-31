@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union, no_type_check
+from typing import List, Optional, Tuple, Union
 import logging 
 from datetime import datetime 
 
@@ -63,8 +63,7 @@ class CyclicDualNeuralController(torch.nn.Module, BaseNeuralController):
                     self.activation,
                 ]
         architecture += [
-            torch.nn.Linear(self.hidden_layers[-1], 3), # Generalize "3" to self.n_cycles+1
-            # TODO: Mention this ReLU layer in documentation
+            torch.nn.Linear(self.hidden_layers[-1], self.n_cycles + 1),
             torch.nn.ReLU(),
         ]
 
@@ -118,14 +117,11 @@ class CyclicDualNeuralController(torch.nn.Module, BaseNeuralController):
             raise AttributeError("Model not initialized. Call `init_layers()` first.")
 
         h = self.model(inputs)
-        h = torch.clamp(h, min=0.0, max=20.0)  
-        q = h - torch.frac(h).detach() # Straight through estimator style
-    
-        regular_q0 = q[:, [0]]
-        expedited_q0 = q[:, [1]] 
-        expedited_q1 = q[:, [2]]
+        # h = torch.clamp(h, min=0.0, max=20.0)
+        q = h - torch.frac(h).detach()  # straight-through estimator
 
-        return regular_q0, expedited_q0, expedited_q1
+        # index 0: regular_q for period 0; indices 1..n_cycles: expedited_q per period
+        return tuple(q[:, [i]] for i in range(self.n_cycles + 1))
 
     def predict(
         self,
@@ -162,16 +158,12 @@ class CyclicDualNeuralController(torch.nn.Module, BaseNeuralController):
             past_expedited_orders,
             sourcing_model=self.sourcing_model,
         )
-        regular_q0, expedited_q0, expedited_q1 = self.forward(inputs)
+        orders = self.forward(inputs)  # tuple of (n_cycles + 1) tensors
 
         if output_tensor:
-            return regular_q0, expedited_q0, expedited_q1
+            return orders
         else:
-            regular0_int = int(regular_q0.item())
-            expedited0_int = int(expedited_q0.item())
-            expedited1_int = int(expedited_q1.item())
-
-            return regular0_int, expedited0_int, expedited1_int
+            return tuple(int(q.item()) for q in orders)
 
 
     def fit(
@@ -273,17 +265,22 @@ class CyclicDualNeuralController(torch.nn.Module, BaseNeuralController):
 
             scheduler.step()
 
-            # Save the best model
+            # Save the best model — average over N_VAL_SEEDS fixed seeds so the
+            # comparison is deterministic and not biased by lucky demand draws.
             if epoch % validation_freq == 0:
-                eval_loss = self.get_total_cost(
-                    sourcing_model, validation_sourcing_periods
-                )
+                N_VAL_SEEDS = 10 # eval for 10 random seeds
+                with torch.no_grad():
+                    val_losses = [
+                        self.get_total_cost(sourcing_model, validation_sourcing_periods, seed=s)
+                        for s in range(N_VAL_SEEDS)
+                    ]
+                eval_loss = torch.stack(val_losses).mean()
                 logger.info(
                     f"Epoch {epoch}/{epochs}"
                     f" - Validation cost: {eval_loss / validation_sourcing_periods:.4f}"
                 )
                 if eval_loss < min_loss:
-                    min_loss = eval_loss 
+                    min_loss = eval_loss
                     best_state = self.state_dict()
 
            
@@ -306,7 +303,7 @@ class CyclicDualNeuralController(torch.nn.Module, BaseNeuralController):
         self.save_checkpoint(checkpoint_path)
         logger.info(f"Training completed at {end_time}")
         logger.info(f"Total training duration: {duration}")
-        logger.info(f"Final best cost: {min_loss/validation_sourcing_periods:.4f}")
+        logger.info(f"Final best cost (avg over {N_VAL_SEEDS} seeds): {min_loss/validation_sourcing_periods:.4f}")
 
     def reset(self) -> None:
         """
@@ -340,30 +337,33 @@ class CyclicDualNeuralController(torch.nn.Module, BaseNeuralController):
         seed: Optional[int] = None,
     ) -> torch.Tensor:
         """Calculate the total cost."""
+        sourcing_model.reset()
+
         if seed is not None:
             torch.manual_seed(seed)
 
         total_cost = torch.tensor(0.0)
-        for t in range(sourcing_periods):
+        for _ in range(sourcing_periods):
             current_inventory = sourcing_model.get_current_inventory()
             past_regular_orders = sourcing_model.get_past_regular_orders()
             past_expedited_orders = sourcing_model.get_past_expedited_orders()
-            regular_q0, expedited_q0, expedited_q1 = self.predict(
+            orders = self.predict(
                 current_inventory,
                 past_regular_orders,
                 past_expedited_orders,
                 output_tensor=True,
             )
+            regular_q0    = orders[0]
+            expedited_qs  = orders[1:]  # one per period in the cycle
 
-            # First pass for first time period in the cycle
-            sourcing_model.order(regular_q0, expedited_q0)
-            last_cost = self.get_last_cost(sourcing_model)
-            total_cost += last_cost.mean()
+            # Period 0: place regular + expedited order
+            sourcing_model.order(regular_q0, expedited_qs[0])
+            total_cost += self.get_last_cost(sourcing_model).mean()
 
-            # Order generates random demand and updates current inventory, past invetory, past regular and expedited orders
-            sourcing_model.order(torch.zeros_like(expedited_q1), expedited_q1)
-            last_cost = self.get_last_cost(sourcing_model)
-            total_cost += last_cost.mean()
+            # Periods 1..n_cycles-1: no regular order, only expedited
+            for expedited_q in expedited_qs[1:]:
+                sourcing_model.order(torch.zeros_like(expedited_q), expedited_q)
+                total_cost += self.get_last_cost(sourcing_model).mean()
 
         return total_cost
 

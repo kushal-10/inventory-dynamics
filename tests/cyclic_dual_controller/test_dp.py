@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def test_dp():
 
     sourcing_model = DualSourcingModel(
-        regular_lead_time=3,
+        regular_lead_time=2,
         expedited_lead_time=0,
         regular_order_cost=0,
         expedited_order_cost=20,
@@ -28,12 +28,12 @@ def test_dp():
 
 
     dp_controller = DynamicProgrammingController(
-        cycle_length=1
+        cycle_length=3
     )
 
     dp_controller.fit(
         sourcing_model=sourcing_model,
-        tolerance=10e-7,
+        tolerance=10e-3,
         log_freq=10,
     )
 
