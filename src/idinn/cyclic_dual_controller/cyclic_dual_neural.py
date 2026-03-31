@@ -122,8 +122,8 @@ class CyclicDualSourcingNeuralController(torch.nn.Module, BaseDPController):
 
         if regular_lead_time > 0:
             if self.compressed:
-                inputs = past_regular_orders[:, -regular_lead_time:]
-                inputs[:, 0] += current_inventory
+                inputs = past_regular_orders[:, -regular_lead_time:].clone()
+                inputs[:, 0] += current_inventory.squeeze(1)
             else:
                 inputs = torch.cat(
                     [current_inventory, past_regular_orders[:, -regular_lead_time:]],
@@ -340,13 +340,29 @@ class CyclicDualSourcingNeuralController(torch.nn.Module, BaseDPController):
         optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
         min_loss = np.inf
         best_state = self.state_dict()
+        best_init_inventory = sourcing_model.init_inventory.data.clone()
 
         for epoch in range(epochs):
             optimizer_init_inventory.zero_grad()
             optimizer_parameters.zero_grad()
             sourcing_model.reset()
             train_loss = self.get_total_cost(sourcing_model, sourcing_periods)
+
+            if torch.isnan(train_loss):
+                logger.warning(
+                    f"Epoch {epoch}: NaN loss detected, restoring best state and resetting optimizers"
+                )
+                self.load_state_dict(best_state)
+                sourcing_model.init_inventory.data.copy_(best_init_inventory)
+                optimizer_init_inventory = torch.optim.RMSprop(
+                    [sourcing_model.init_inventory], lr=init_inventory_lr
+                )
+                optimizer_parameters = torch.optim.RMSprop(self.parameters(), lr=parameters_lr)
+                continue
+
             train_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_([sourcing_model.init_inventory], max_norm=1.0)
 
             if epoch % init_inventory_freq == 0:
                 optimizer_init_inventory.step()
@@ -358,10 +374,12 @@ class CyclicDualSourcingNeuralController(torch.nn.Module, BaseDPController):
                 if eval_loss < min_loss:
                     min_loss = eval_loss
                     best_state = self.state_dict()
+                    best_init_inventory = sourcing_model.init_inventory.data.clone()
             else:
                 if train_loss < min_loss:
                     min_loss = train_loss
                     best_state = self.state_dict()
+                    best_init_inventory = sourcing_model.init_inventory.data.clone()
 
             if tensorboard_writer is not None:
                 tensorboard_writer.add_scalar(
